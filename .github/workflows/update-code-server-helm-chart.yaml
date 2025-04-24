@@ -11,11 +11,13 @@ permissions:
   pull-requests: write
 
 jobs:
-  update-helm-charts:
+  update-helm-charts-code-server:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          token: ${{ github.token }}
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
@@ -27,7 +29,7 @@ jobs:
         with:
           repository: coder/code-server
           path: ./temp-code-server-source
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
       
       - name: Extract Helm chart version
         id: extract_version
@@ -77,7 +79,7 @@ jobs:
         run: |
           echo "BRANCH_NAME=update-code-server-helm-v${{ env.CHART_VERSION }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
       
-      - name: Commit and push changes
+      - name: Commit changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
           git config --global user.name 'GitHub Action'
@@ -85,16 +87,21 @@ jobs:
           git add helm-charts/code-server
           git commit -m "chore(helm): v${{ env.CHART_VERSION }}"
           
-          # 새 브랜치 생성 및 푸시
+          # 새 브랜치 생성
           git checkout -b ${{ env.BRANCH_NAME }}
-          git push origin ${{ env.BRANCH_NAME }}
+
+      - name: Push changes
+        if: steps.check_changes.outputs.changes == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ github.token }}
+          branch: ${{ env.BRANCH_NAME }}
           
       - name: Create Pull Request
         if: steps.check_changes.outputs.changes == 'true'
-        id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
           title: 'Code-Server Helm 차트 업데이트: v${{ env.CHART_VERSION }}'
           body: |
             이 PR은 GitHub Action에 의해 자동으로 생성되었으며, 최신 Code-Server Helm 차트 버전 v${{ env.CHART_VERSION }}으로 업데이트합니다.
