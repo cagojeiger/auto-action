@@ -2,9 +2,9 @@ name: Update Code-Server Helm Charts
 
 on:
   schedule:
-    # 매일 UTC 기준 00:00에 실행 (한국 시간으로는 오전 9시)
+    # 매일 00:00 UTC (한국 09:00)에 실행되도록 설정되어있음
     - cron: '0 0 * * *'
-  workflow_dispatch: # 수동 실행 옵션
+  workflow_dispatch:  # 수동 실행 옵션 포함되어있음
 
 permissions:
   contents: write
@@ -13,99 +13,102 @@ permissions:
 jobs:
   update-helm-charts:
     runs-on: ubuntu-latest
+    env:
+      # gh CLI 인증용 토큰
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
+      # 1) 리포지터리 체크아웃
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ github.token }}
 
+      # 2) Helm 설치
       - name: Set up Helm
         uses: azure/setup-helm@v3
         with:
-          version: 'latest'
+          version: latest
 
+      # 3) GitHub CLI 설치
+      - name: Install GitHub CLI
+        uses: cli/cli@v2
+
+      # 4) gh 인증
+      - name: Authenticate gh
+        run: echo "${GITHUB_TOKEN}" | gh auth login --with-token
+
+      # 5) code-server 소스 체크아웃
       - name: Checkout code-server repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: coder/code-server
           path: ./temp-code-server-source
           token: ${{ github.token }}
 
+      # 6) 차트 버전 추출
       - name: Extract Helm chart version
         id: extract_version
         run: |
-          # Chart.yaml에서 버전 정보 추출
-          CHART_VERSION=$(grep -E '^version:' ./temp-code-server-source/ci/helm-chart/Chart.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | xargs)
+          CHART_VERSION=$(grep -E '^version:' ./temp-code-server-source/ci/helm-chart/Chart.yaml \
+                          | awk '{print $2}' | tr -d "\"'" | xargs)
           echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
           echo "추출된 차트 버전: $CHART_VERSION"
 
+      # 7) 차트 파일 복사
       - name: Copy Helm chart files
         run: |
-          # 대상 디렉토리 생성 (없는 경우)
           mkdir -p helm-charts/code-server
-
-          # 기존 파일 삭제
           rm -rf helm-charts/code-server/*
-
-          # 차트 복사
           cp -r ./temp-code-server-source/ci/helm-chart/* helm-charts/code-server/
-
-          # 임시 파일 정리
           rm -rf ./temp-code-server-source
 
+      # 8) 변경 사항 확인
       - name: Check for changes
         id: check_changes
         run: |
-          # 디렉토리가 존재하는지 확인
-          if [ ! -d "helm-charts/code-server" ]; then
-            echo "디렉토리가 존재하지 않음: helm-charts/code-server"
-            exit 1
-          fi
-
-          # 디버깅을 위해 상태 출력
-          git status
-
-          # git diff로 변경 사항 확인 (파일이 추적되지 않는 경우 변경으로 간주)
-          if [[ -n "$(git status --porcelain helm-charts/code-server)" ]]; then
-            echo "변경 사항이 감지되었습니다"
-            echo "changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "변경 사항이 없습니다"
+          git add -N helm-charts/code-server
+          if git diff --quiet --exit-code -- helm-charts/code-server; then
+            echo "변경 사항이 없음"
             echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "변경 사항이 있음"
+            echo "changes=true" >> $GITHUB_OUTPUT
           fi
 
+      # 9) 브랜치명 생성
       - name: Set branch name
         if: steps.check_changes.outputs.changes == 'true'
         run: |
           echo "BRANCH_NAME=update-code-server-helm-v${{ env.CHART_VERSION }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
 
+      # 10) 새 브랜치 생성 후 커밋
       - name: Commit changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
+          git checkout -b "${BRANCH_NAME}"
           git add helm-charts/code-server
           git commit -m "chore(helm): v${{ env.CHART_VERSION }}"
 
+      # 11) 푸시 및 PR 생성
       - name: Push changes and create PR
         if: steps.check_changes.outputs.changes == 'true'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          # 새 브랜치 생성
-          git checkout -b ${{ env.BRANCH_NAME }}
-          # 브랜치 푸시
-          git push -u origin ${{ env.BRANCH_NAME }}
+          git push -u origin "${BRANCH_NAME}"
 
-          # PR 생성
-          PR_URL=$(gh pr create --title "chore(helm): Code-Server Helm 차트 업데이트 - v${{ env.CHART_VERSION }}" \
-                      --body "이 PR은 GitHub Action에 의해 자동으로 생성되었으며, 최신 Code-Server Helm 차트 버전 v${{ env.CHART_VERSION }}으로 업데이트합니다." \
-                      --base main \
-                      --head ${{ env.BRANCH_NAME }})
+          PR_URL=$(gh pr create \
+            --title "chore(helm): Code-Server Helm 차트 업데이트 - v${{ env.CHART_VERSION }}" \
+            --body "이 PR은 GitHub Action에 의해 자동으로 생성되었으며, 최신 Code-Server Helm 차트(v${{ env.CHART_VERSION }})로 업데이트되었음." \
+            --base main \
+            --head "${BRANCH_NAME}")
 
           echo "생성된 PR URL: $PR_URL"
-          # URL에서 PR 번호 추출
-          PR_NUMBER=$(echo $PR_URL | grep -o '[0-9]\+$')
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
 
-          # 자동 머지 활성화
-          gh pr merge $PR_NUMBER --auto --merge
+          # 상태 체크가 등록될 시간을 확보하기 위해 10초 지연
+          sleep 10
+
+          # 자동 머지(조건 충족 시) 설정
+          gh pr merge "$PR_NUMBER" --auto --merge
