@@ -1,0 +1,85 @@
+name: Update Code-Server Helm Charts
+
+on:
+  schedule:
+    # 매일 UTC 기준 00:00에 실행 (한국 시간으로는 오전 9시)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 수동 실행 옵션
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-helm-charts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+      
+      - name: Create temporary directory
+        run: mkdir -p /tmp/code-server-helm
+
+      - name: Checkout code-server repository
+        uses: actions/checkout@v3
+        with:
+          repository: coder/code-server
+          path: /tmp/code-server
+      
+      - name: Extract Helm chart version
+        id: extract_version
+        run: |
+          # Chart.yaml에서 버전 정보 추출
+          CHART_VERSION=$(grep -E '^version:' /tmp/code-server/ci/helm-chart/Chart.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | xargs)
+          echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
+          echo "추출된 차트 버전: $CHART_VERSION"
+      
+      - name: Copy Helm chart files
+        run: |
+          # 대상 디렉토리 생성 (없는 경우)
+          mkdir -p helm-charts/code-server
+          
+          # 기존 파일 삭제
+          rm -rf helm-charts/code-server/*
+          
+          # 차트 복사
+          cp -r /tmp/code-server/ci/helm-chart/* helm-charts/code-server/
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git diff --quiet helm-charts/code-server || echo "changes=true" >> $GITHUB_OUTPUT
+      
+      - name: Set branch name
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          echo "BRANCH_NAME=update-code-server-helm-v${{ env.CHART_VERSION }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+      
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add helm-charts/code-server
+          git commit -m "v${{ env.CHART_VERSION }}"
+          
+          # 새 브랜치 생성 및 푸시
+          git checkout -b ${{ env.BRANCH_NAME }}
+          git push origin ${{ env.BRANCH_NAME }}
+          
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changes == 'true'
+        id: create-pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: 'Code-Server Helm 차트 업데이트: v${{ env.CHART_VERSION }}'
+          body: |
+            이 PR은 GitHub Action에 의해 자동으로 생성되었으며, 최신 Code-Server Helm 차트 버전 v${{ env.CHART_VERSION }}으로 업데이트합니다.
+          branch: ${{ env.BRANCH_NAME }}
+          base: main 
