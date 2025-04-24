@@ -22,20 +22,18 @@ jobs:
         with:
           version: 'latest'
       
-      - name: Create temporary directory
-        run: mkdir -p /tmp/code-server-helm
-
       - name: Checkout code-server repository
         uses: actions/checkout@v3
         with:
           repository: coder/code-server
-          path: /tmp/code-server
+          path: ./temp-code-server-source
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Extract Helm chart version
         id: extract_version
         run: |
           # Chart.yaml에서 버전 정보 추출
-          CHART_VERSION=$(grep -E '^version:' /tmp/code-server/ci/helm-chart/Chart.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | xargs)
+          CHART_VERSION=$(grep -E '^version:' ./temp-code-server-source/ci/helm-chart/Chart.yaml | awk '{print $2}' | tr -d '"' | tr -d "'" | xargs)
           echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
           echo "추출된 차트 버전: $CHART_VERSION"
       
@@ -48,7 +46,10 @@ jobs:
           rm -rf helm-charts/code-server/*
           
           # 차트 복사
-          cp -r /tmp/code-server/ci/helm-chart/* helm-charts/code-server/
+          cp -r ./temp-code-server-source/ci/helm-chart/* helm-charts/code-server/
+
+          # 임시 파일 정리
+          rm -rf ./temp-code-server-source
       
       - name: Check for changes
         id: check_changes
