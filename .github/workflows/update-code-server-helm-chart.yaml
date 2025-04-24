@@ -66,7 +66,7 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git add helm-charts/code-server
-          git commit -m "v${{ env.CHART_VERSION }}"
+          git commit -m "chore(helm): v${{ env.CHART_VERSION }}"
           
           # 새 브랜치 생성 및 푸시
           git checkout -b ${{ env.BRANCH_NAME }}
