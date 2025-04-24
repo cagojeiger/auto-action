@@ -44,7 +44,7 @@ jobs:
           
           # 기존 파일 삭제
           rm -rf helm-charts/code-server/*
-          
+
           # 차트 복사
           cp -r ./temp-code-server-source/ci/helm-chart/* helm-charts/code-server/
 
@@ -54,7 +54,23 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          git diff --quiet helm-charts/code-server || echo "changes=true" >> $GITHUB_OUTPUT
+          # 디렉토리가 존재하는지 확인
+          if [ ! -d "helm-charts/code-server" ]; then
+            echo "디렉토리가 존재하지 않음: helm-charts/code-server"
+            exit 1
+          fi
+
+          # 디버깅을 위해 상태 출력
+          git status
+
+          # git diff로 변경 사항 확인 (파일이 추적되지 않는 경우 변경으로 간주)
+          if [[ -n "$(git status --porcelain helm-charts/code-server)" ]]; then
+            echo "변경 사항이 감지되었습니다"
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "변경 사항이 없습니다"
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
       
       - name: Set branch name
         if: steps.check_changes.outputs.changes == 'true'
