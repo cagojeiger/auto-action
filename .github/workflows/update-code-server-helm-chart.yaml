@@ -98,13 +98,12 @@ jobs:
           git push -u origin ${{ env.BRANCH_NAME }}
 
           # PR 생성
-          PR_URL=$(gh pr create --title "Code-Server Helm 차트 업데이트: v${{ env.CHART_VERSION }}" \
+          PR_URL=$(gh pr create --title "chore(helm): Code-Server Helm 차트 업데이트 - v${{ env.CHART_VERSION }}" \
                       --body "이 PR은 GitHub Action에 의해 자동으로 생성되었으며, 최신 Code-Server Helm 차트 버전 v${{ env.CHART_VERSION }}으로 업데이트합니다." \
                       --base main \
                       --head ${{ env.BRANCH_NAME }})
 
           echo "생성된 PR URL: $PR_URL"
-
           # URL에서 PR 번호 추출
           PR_NUMBER=$(echo $PR_URL | grep -o '[0-9]\+$')
 
