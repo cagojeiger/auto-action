@@ -97,15 +97,16 @@ jobs:
           # 브랜치 푸시
           git push -u origin ${{ env.BRANCH_NAME }}
 
-          # PR 생성 및 자동 머지 활성화
+          # PR 생성
           PR_URL=$(gh pr create --title "Code-Server Helm 차트 업데이트: v${{ env.CHART_VERSION }}" \
-                     --body "이 PR은 GitHub Action에 의해 자동으로 생성되었으며, 최신 Code-Server Helm 차트 버전 v${{ env.CHART_VERSION }}으로 업데이트합니다." \
-                     --base main \
-                     --head ${{ env.BRANCH_NAME }} \
-                     --json url -q '.url')
+                      --body "이 PR은 GitHub Action에 의해 자동으로 생성되었으며, 최신 Code-Server Helm 차트 버전 v${{ env.CHART_VERSION }}으로 업데이트합니다." \
+                      --base main \
+                      --head ${{ env.BRANCH_NAME }})
 
           echo "생성된 PR URL: $PR_URL"
 
-          # PR 자동 머지 활성화 (PR이 검토 요구사항을 만족하면 자동으로 머지)
+          # URL에서 PR 번호 추출
           PR_NUMBER=$(echo $PR_URL | grep -o '[0-9]\+$')
+
+          # 자동 머지 활성화
           gh pr merge $PR_NUMBER --auto --merge
