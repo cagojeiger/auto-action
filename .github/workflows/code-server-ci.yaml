@@ -38,8 +38,8 @@ jobs:
           file: ./container/code-server/Dockerfile
           platforms: linux/amd64,linux/arm64 # 멀티 아키텍처 빌드 설정
           build-args: |
-            APP_VERSION=${{ steps.get_chart_version.outputs.result }}
+            APP_VERSION=${{ steps.get_version.outputs.result }}
           push: true
           tags: |
-            cagojeiger/code-server:${{ steps.get_chart_version.outputs.result }}
+            cagojeiger/code-server:${{ steps.get_version.outputs.result }}
             cagojeiger/code-server:latest
