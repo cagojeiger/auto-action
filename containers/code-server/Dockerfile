@@ -68,5 +68,3 @@ COPY gen_kube_config.sh /home/coder/gen_kube_config.sh
 RUN chmod +x /home/coder/gen_kube_config.sh
 
 USER coder
-
-ENTRYPOINT ["/usr/bin/entrypoint.sh", "--bind-addr", "0.0.0.0:8080", "."]
