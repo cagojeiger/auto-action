@@ -23,12 +23,6 @@ jobs:
         with:
           token: ${{ github.token }}
 
-      # 2) Helm 설치되어있음
-      - name: Set up Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: latest
-
       # 3) code-server 소스 체크아웃
       - name: Checkout code-server repository
         uses: actions/checkout@v4
