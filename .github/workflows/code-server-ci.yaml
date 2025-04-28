@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'helm-charts/code-server/**'
-      - 'container/code-server/**' # Dockerfile 변경 시에도 빌드
+      - 'containers/code-server/**' # Dockerfile 변경 시에도 빌드
     branches:
       - main # 또는 기본 브랜치 이름
   workflow_dispatch:
