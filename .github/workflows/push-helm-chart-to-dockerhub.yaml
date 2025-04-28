@@ -1,22 +1,16 @@
 name: Push Helm Chart to Docker Hub
 
 on:
-  workflow_run:
-    workflows: ["Update Code-Server Helm Charts"]
-    types:
-      - completed
+  push:
+    paths:
+      - 'helm-charts/code-server/**'
     branches:
-      - main
+      - main # 또는 기본 브랜치 이름
   workflow_dispatch:
 
 jobs:
   push-to-dockerhub:
-    # update-code-server-helm-chart 워크플로우가 성공했을 때만 실행
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read # 코드를 체크아웃하기 위해 필요
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
