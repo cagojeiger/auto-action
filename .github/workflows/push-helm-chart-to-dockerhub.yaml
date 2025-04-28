@@ -44,7 +44,7 @@ jobs:
 
       - name: Push Helm chart to Docker Hub (OCI)
         run: |
-          OCI_REPO_PATH="oci://docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.CHART_NAME }}-original"
+          OCI_REPO_PATH="docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.CHART_NAME }}-original"
           TGZ_FILE="${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz"
 
           # Push with version tag
