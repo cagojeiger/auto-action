@@ -66,5 +66,6 @@ COPY --from=builder /usr/local/bin/mc     /usr/local/bin/mc
 
 COPY gen_kube_config.sh /home/coder/gen_kube_config.sh
 RUN chmod +x /home/coder/gen_kube_config.sh
+RUN chown coder:coder /home/coder/gen_kube_config.sh
 
 USER coder
