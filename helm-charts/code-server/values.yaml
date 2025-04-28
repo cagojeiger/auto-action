@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: codercom/code-server
+  repository: cagojeiger/code-server
   tag: '4.99.3'
   pullPolicy: Always
 
