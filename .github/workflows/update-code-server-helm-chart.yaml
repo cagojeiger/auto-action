@@ -48,6 +48,12 @@ jobs:
           cp -r ./temp-code-server-source/ci/helm-chart/* helm-charts/code-server/
           rm -rf ./temp-code-server-source
 
+      # Repository 값 수정 (추가된 단계)
+      - name: Modify Helm chart repository value
+        run: |
+          sed -i 's|repository: codercom/code-server|repository: cagojeiger/code-server|' helm-charts/code-server/values.yaml
+          echo "Helm 차트의 repository 값을 cagojeiger/code-server로 수정했습니다."
+
       # 6) 변경 확인
       - name: Check for changes
         id: check_changes
