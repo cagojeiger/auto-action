@@ -64,7 +64,7 @@ COPY --from=builder /usr/local/bin/k9s    /usr/local/bin/k9s
 COPY --from=builder /usr/local/bin/skopeo /usr/local/bin/skopeo
 COPY --from=builder /usr/local/bin/mc     /usr/local/bin/mc
 
-USER coder
-
 COPY gen_kube_config.sh /home/coder/gen_kube_config.sh
 RUN chmod +x /home/coder/gen_kube_config.sh
+
+USER coder
