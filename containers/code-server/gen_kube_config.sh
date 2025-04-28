@@ -8,7 +8,7 @@ kind: Config
 clusters:
 - cluster:
     certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    server: https://\$KUBERNETES_SERVICE_HOST:\$KUBERNETES_SERVICE_PORT
+    server: https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT
   name: kubernetes
 contexts:
 - context:
@@ -19,5 +19,5 @@ current-context: default
 users:
 - name: default
   user:
-    token: \$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+    token: $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 EOF
