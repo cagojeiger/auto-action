@@ -50,7 +50,3 @@ jobs:
           # Push with version tag
           helm push "${TGZ_FILE}" "${OCI_REPO_PATH}:${{ env.CHART_VERSION }}"
           echo "Helm 차트 푸시 완료 (버전): ${OCI_REPO_PATH}:${{ env.CHART_VERSION }}"
-
-          # Push with latest tag
-          helm push "${TGZ_FILE}" "${OCI_REPO_PATH}:latest"
-          echo "Helm 차트 푸시 완료 (latest): ${OCI_REPO_PATH}:latest"
