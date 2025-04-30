@@ -1,17 +1,17 @@
 {{- range $idx, $values := .Values.templates }}
 ---
-{{- if $values.autoscaling.enabled }}
+{{- if and $values.autoscaling $values.autoscaling.enabled }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "base-template.fullname" (dict "root" $ "values" $values) }}
+  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
   labels:
-    {{- include "base-template.labels" (dict "root" $ "values" $values) | nindent 4 }}
+    {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "base-template.fullname" (dict "root" $ "values" $values) }}
+    name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
   minReplicas: {{ $values.autoscaling.minReplicas }}
   maxReplicas: {{ $values.autoscaling.maxReplicas }}
   metrics:
@@ -21,7 +21,7 @@ spec:
         target:
           type: Utilization
           averageUtilization: {{ $values.autoscaling.metrics.percentage }}  
-   behavior:
+  behavior:
     {{- with $values.autoscaling.behavior.scaleUp }}
     scaleUp:
       {{- if .policies }}

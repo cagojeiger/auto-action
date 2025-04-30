@@ -3,16 +3,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "base-template.fullname" (dict "root" $ "values" $values) }}
+  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
   labels:
-    {{- include "base-template.labels" (dict "root" $ "values" $values) | nindent 4 }}
+    {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
 spec:
   {{- if not $values.autoscaling.enabled }}
   replicas: {{ $values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "base-template.selectorLabels" (dict "root" $ "values" $values) | nindent 6 }}
+      {{- include "template-deployment.selectorLabels" (dict "root" $ "values" $values) | nindent 6 }}
   template:
     metadata:
       {{- with $values.podAnnotations }}
@@ -20,7 +20,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "base-template.labels" (dict "root" $ "values" $values) | nindent 8 }}
+        {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 8 }}
         {{- with $values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -29,7 +29,9 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "base-template.serviceAccountName" (dict "root" $ "values" $values) }}
+      {{- if and $values.serviceAccount $values.serviceAccount.create }}
+      serviceAccountName: {{ include "template-deployment.serviceAccountName" (dict "root" $ "values" $values) }}
+      {{- end }}
       {{- with $values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -54,9 +56,14 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with $values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with $values.workingDir }}
           workingDir: {{ . }}
           {{- end }}
+          {{- if and $values.service $values.service.enabled }}
           ports:
             {{- if $values.service.ports }}
             {{- range $values.service.ports }}
@@ -69,6 +76,7 @@ spec:
               containerPort: {{ $values.service.port }}
               protocol: TCP
             {{- end }}
+          {{- end }}
           {{- with $values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
@@ -83,10 +91,6 @@ spec:
           {{- end }}
           {{- with $values.volumeMounts }}
           volumeMounts:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with $values.env }}
-          env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
       {{- with $values.volumes }}

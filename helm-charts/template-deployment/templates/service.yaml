@@ -1,12 +1,12 @@
 {{- range $idx, $values := .Values.templates }}
 ---
-{{- if $values.service.enabled }}
+{{- if and $values.service $values.service.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "base-template.fullname" (dict "root" $ "values" $values) }}
+  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
   labels:
-    {{- include "base-template.labels" (dict "root" $ "values" $values) | nindent 4 }}
+    {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
 spec:
   type: {{ $values.service.type }}
   ports:
@@ -30,6 +30,6 @@ spec:
       {{- end }}
     {{- end }}
   selector:
-    {{- include "base-template.selectorLabels" (dict "root" $ "values" $values) | nindent 4 }}
+    {{- include "template-deployment.selectorLabels" (dict "root" $ "values" $values) | nindent 4 }}
 {{- end }}
 {{- end }}

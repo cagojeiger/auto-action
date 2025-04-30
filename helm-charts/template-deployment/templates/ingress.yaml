@@ -1,12 +1,12 @@
 {{- range $idx, $values := .Values.templates }}
 ---
-{{- if $values.ingress.enabled }}
+{{- if and $values.ingress $values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "base-template.fullname" (dict "root" $ "values" $values) }}
+  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
   labels:
-    {{- include "base-template.labels" (dict "root" $ "values" $values) | nindent 4 }}
+    {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
   {{- with $values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -37,7 +37,7 @@ spec:
             {{- end }}
             backend:
               service:
-                name: {{ include "base-template.fullname" (dict "root" $ "values" $values) }}
+                name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
                 port:
                   number: {{ $values.service.port }}
           {{- end }}

@@ -1,0 +1,16 @@
+{{- range $idx, $values := .Values.templates }}
+---
+{{- if and $values.configMap $values.configMap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $values.configMap.name }}
+  labels:
+    {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
+data:
+  {{- range $key, $value := $values.configMap.data }}
+  {{ $key }}: |-
+    {{- $value | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}

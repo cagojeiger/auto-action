@@ -1,0 +1,129 @@
+nameOverride: ""
+fullnameOverride: ""
+
+templates:
+  - name: nginx-echo
+    replicaCount: 1
+    image:
+      repository: nginx
+      pullPolicy: IfNotPresent
+      tag: "latest"
+    imagePullSecrets: []
+    nameOverride: ""
+    fullnameOverride: ""
+    serviceAccount:
+      create: true
+      automount: true
+      annotations: {}
+      name: ""
+    podAnnotations: {}
+    podLabels: {}
+    podSecurityContext: {}
+    securityContext: {}
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+      portName: http
+    ingress:
+      enabled: true
+      className: ""
+      annotations: {}
+      hosts:
+        - host: nginx-echo.local
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+      tls: []
+    resources: {}
+    configMap:
+      enabled: true
+      name: "nginx-config"
+      data:
+        default.conf: |
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              server_name _;
+
+              location / {
+                  root /usr/share/nginx/html;
+                  index index.html index.htm;
+              }
+
+              location /echo {
+                  default_type text/plain;
+                  return 200 "Request Info:\nMethod: $request_method\nURI: $request_uri\nArgs: $args\nRemote Addr: $remote_addr\nHost: $host\nHeaders:\n$http_user_agent\n$http_referer";
+              }
+
+              location /healthz {
+                  access_log off;
+                  return 200 "OK";
+              }
+
+              error_page 500 502 503 504 /50x.html;
+              location = /50x.html {
+                  root /usr/share/nginx/html;
+              }
+          }
+    livenessProbe:
+      httpGet:
+        path: /
+        port: http
+    readinessProbe:
+      httpGet:
+        path: /
+        port: http
+    autoscaling:
+      enabled: false
+    volumes:
+      - name: nginx-config
+        configMap:
+          name: "nginx-config"
+    volumeMounts:
+      - name: nginx-config
+        mountPath: /etc/nginx/conf.d/default.conf
+        subPath: default.conf
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    env: []
+
+  - name: netshoot
+    replicaCount: 1
+    image:
+      repository: nicolaka/netshoot
+      pullPolicy: IfNotPresent
+      tag: "latest"
+    imagePullSecrets: []
+    nameOverride: ""
+    fullnameOverride: ""
+    serviceAccount:
+      create: true
+      automount: true
+      annotations: {}
+      name: ""
+    podAnnotations: {}
+    podLabels: {}
+    podSecurityContext: {}
+    securityContext: {}
+    command: ["/bin/sh"]
+    args: ["-c", "trap : TERM INT; sleep infinity & wait"]
+    service:
+      enabled: false
+    ingress:
+      enabled: false
+    resources: {}
+    livenessProbe: null
+    readinessProbe: null
+    autoscaling:
+      enabled: false
+    volumes: []
+    volumeMounts: []
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    env:
+      - name: TEST
+        value: test
