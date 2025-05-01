@@ -1,0 +1,31 @@
+{{- range $key, $values := .Values.templates }}
+---
+{{- if and $values.istioIngress $values.istioIngress.enabled $values.istioIngress.gateway.create }}
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}-gateway
+  labels:
+    {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
+  {{- with $values.istioIngress.gateway.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    istio: {{ $values.istioIngress.gateway.istioLabel | default "ingressgateway" }}
+  servers:
+    - port:
+        number: {{ $values.istioIngress.gateway.port | default 80 }}
+        name: {{ $values.istioIngress.gateway.portName | default "http" }}
+        protocol: {{ $values.istioIngress.gateway.protocol | default "HTTP" }}
+      hosts:
+        {{- range $values.istioIngress.hosts }}
+        - {{ .host | quote }}
+        {{- end }}
+      {{- if $values.istioIngress.tls }}
+      tls:
+        {{- toYaml $values.istioIngress.gateway.tls | nindent 10 }}
+      {{- end }}
+{{- end }}
+{{- end }}

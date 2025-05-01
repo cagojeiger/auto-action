@@ -1,0 +1,46 @@
+{{- range $key, $values := .Values.templates }}
+---
+{{- if and $values.istioIngress $values.istioIngress.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
+  labels:
+    {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
+  {{- with $values.istioIngress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  hosts:
+    {{- range $values.istioIngress.hosts }}
+    - {{ .host | quote }}
+    {{- end }}
+  {{- if $values.istioIngress.gateways }}
+  gateways:
+    {{- toYaml $values.istioIngress.gateways | nindent 4 }}
+  {{- else if $values.istioIngress.gateway }}
+  gateways:
+    - {{ $values.istioIngress.gateway | quote }}
+  {{- end }}
+  http:
+    {{- range $values.istioIngress.hosts }}
+    {{- range .paths }}
+    - match:
+        - uri:
+            {{- if eq .pathType "Prefix" }}
+            prefix: {{ .path }}
+            {{- else if eq .pathType "Exact" }}
+            exact: {{ .path }}
+            {{- else }}
+            prefix: {{ .path }}
+            {{- end }}
+      route:
+        - destination:
+            host: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
+            port:
+              number: {{ $values.service.port }}
+    {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
