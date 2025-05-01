@@ -178,8 +178,8 @@ templates:
         mountPath: /etc/nginx/conf.d/default.conf
         subPath: default.conf
 
-  deployment-istio-multi-protocol:
-    name: istio-multi-protocol
+  deployment-istio-simplified:
+    name: istio-simplified
     image:
       repository: nginx
       pullPolicy: IfNotPresent
@@ -191,31 +191,20 @@ templates:
     istioIngress:
       enabled: true
       hosts:
-        - host: multi-protocol.example.com
+        - host: example.local
           paths:
             - path: /
               pathType: Prefix
+            - path: /api
+              pathType: Prefix
+              rewrite:
+                uri: /
       gateway:
         create: true
         istioLabel: ingressgateway
-        protocols: ["HTTP", "HTTPS", "TCP", "MYSQL"]
-        httpPort: 80
-        httpPortName: http
-        httpsPort: 443
-        httpsPortName: https
-        tcpPort: 9000
-        tcpPortName: tcp
-        mysqlPort: 3306
-        mysqlPortName: mysql
-        autoTLS: true
-        autoTLSMode: "SIMPLE"  # Can be SIMPLE, MUTUAL, PASSTHROUGH, AUTO_PASSTHROUGH
-        servers:
-          - port:
-              number: 5000
-              name: grpc
-              protocol: GRPC
-            hosts:
-              - "grpc.example.com"
+        enableHttps: true
+        autoGenerateCert: true
+        certManager: true  # 인증서 자동 갱신 활성화
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt-prod
       annotations:
@@ -255,6 +244,84 @@ templates:
           name: "istio-multi-protocol-config"
     volumeMounts:
       - name: istio-multi-protocol-config
+        mountPath: /etc/nginx/conf.d/default.conf
+        subPath: default.conf
+
+  deployment-istio-multiport:
+    name: istio-multiport
+    image:
+      repository: nginx
+      pullPolicy: IfNotPresent
+      tag: "latest"
+    service:
+      enabled: true
+      port: 80
+      portName: http
+    istioIngress:
+      enabled: true
+      hosts:
+        - host: multiport.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+      gateway:
+        create: true
+        istioLabel: ingressgateway
+        http:
+          - port: 80
+            name: http-main
+          - port: 8080
+            name: http-alt
+            hosts:
+              - "api.multiport.example.com"
+        https:
+          - port: 443
+            name: https-main
+          - port: 8443
+            name: https-alt
+            hosts:
+              - "secure.multiport.example.com"
+        autoGenerateCert: true
+        certManager: true
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+    configMap:
+      enabled: true
+      name: "istio-multiport-config"
+      data:
+        default.conf: |
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              server_name _;
+
+              location / {
+                  root /usr/share/nginx/html;
+                  index index.html index.htm;
+              }
+
+              location /healthz {
+                  access_log off;
+                  return 200 "OK";
+              }
+          }
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: http
+    readinessProbe:
+      httpGet:
+        path: /healthz
+        port: http
+    volumes:
+      - name: istio-multiport-config
+        configMap:
+          name: "istio-multiport-config"
+    volumeMounts:
+      - name: istio-multiport-config
         mountPath: /etc/nginx/conf.d/default.conf
         subPath: default.conf
 
