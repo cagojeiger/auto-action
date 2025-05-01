@@ -12,43 +12,15 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
-  minReplicas: {{ $values.autoscaling.minReplicas }}
+  minReplicas: {{ $values.autoscaling.minReplicas | default 1 }}
   maxReplicas: {{ $values.autoscaling.maxReplicas }}
+  {{- with $values.autoscaling.metrics }}
   metrics:
-    - type: Resource
-      resource:
-        name: {{ $values.autoscaling.metrics.name }}
-        target:
-          type: Utilization
-          averageUtilization: {{ $values.autoscaling.metrics.percentage }}  
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $values.autoscaling.behavior }}
   behavior:
-    {{- with $values.autoscaling.behavior.scaleUp }}
-    scaleUp:
-      {{- if .policies }}
-      policies:
-        {{- range .policies }}
-        - type: {{ .type }}
-          value: {{ .value }}
-          periodSeconds: {{ .periodSeconds }}
-        {{- end }}
-      {{- end }}
-      stabilizationWindowSeconds: {{ .stabilizationWindowSeconds }}
-    {{- end }}
-
-    {{- with $values.autoscaling.behavior.scaleDown }}
-    scaleDown:
-      {{- if .policies }}
-      policies:
-        {{- range .policies }}
-        - type: {{ .type }}
-          value: {{ .value }}
-          periodSeconds: {{ .periodSeconds }}
-        {{- end }}
-      {{- end }}
-      {{- if .selectPolicy }}
-      selectPolicy: {{ .selectPolicy }}
-      {{- end }}
-      stabilizationWindowSeconds: {{ .stabilizationWindowSeconds }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}
 {{- end }}

@@ -1,25 +1,13 @@
-nameOverride: ""
-fullnameOverride: ""
-
 templates:
   - name: nginx-echo
-    replicaCount: 1
     image:
       repository: nginx
       pullPolicy: IfNotPresent
       tag: "latest"
-    imagePullSecrets: []
-    nameOverride: ""
-    fullnameOverride: ""
     serviceAccount:
       create: true
       automount: true
       annotations: {}
-      name: ""
-    podAnnotations: {}
-    podLabels: {}
-    podSecurityContext: {}
-    securityContext: {}
     service:
       enabled: true
       type: ClusterIP
@@ -35,7 +23,26 @@ templates:
             - path: /
               pathType: ImplementationSpecific
       tls: []
-    resources: {}
+    resources:
+      requests:
+        cpu: 100m
+        ephemeral-storage: 100Mi
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        ephemeral-storage: 200Mi
+        memory: 256Mi
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 5
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 80
     configMap:
       enabled: true
       name: "nginx-config"
@@ -75,8 +82,6 @@ templates:
       httpGet:
         path: /
         port: http
-    autoscaling:
-      enabled: false
     volumes:
       - name: nginx-config
         configMap:
@@ -91,39 +96,11 @@ templates:
     env: []
 
   - name: netshoot
-    replicaCount: 1
     image:
       repository: nicolaka/netshoot
-      pullPolicy: IfNotPresent
       tag: "latest"
-    imagePullSecrets: []
-    nameOverride: ""
-    fullnameOverride: ""
-    serviceAccount:
-      create: true
-      automount: true
-      annotations: {}
-      name: ""
-    podAnnotations: {}
-    podLabels: {}
-    podSecurityContext: {}
-    securityContext: {}
     command: ["/bin/sh"]
     args: ["-c", "trap : TERM INT; sleep infinity & wait"]
-    service:
-      enabled: false
-    ingress:
-      enabled: false
-    resources: {}
-    livenessProbe: null
-    readinessProbe: null
-    autoscaling:
-      enabled: false
-    volumes: []
-    volumeMounts: []
-    nodeSelector: {}
-    tolerations: []
-    affinity: {}
     env:
       - name: TEST
         value: test

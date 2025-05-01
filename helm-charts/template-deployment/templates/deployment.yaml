@@ -7,8 +7,8 @@ metadata:
   labels:
     {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
 spec:
-  {{- if not $values.autoscaling.enabled }}
-  replicas: {{ $values.replicaCount }}
+  {{- if not (and $values.autoscaling $values.autoscaling.enabled) }}
+  replicas: {{ $values.replicaCount | default 1 }}
   {{- end }}
   selector:
     matchLabels:
@@ -43,7 +43,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ $values.image.repository }}:{{ $values.image.tag }}"
-          imagePullPolicy: {{ $values.image.pullPolicy }}
+          imagePullPolicy: {{ $values.image.pullPolicy | default "IfNotPresent" }}
           {{- with $values.command }}
           command:
             {{- toYaml . | nindent 12 }}
