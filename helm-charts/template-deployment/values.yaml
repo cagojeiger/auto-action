@@ -97,6 +97,87 @@ templates:
       - name: TEST
         value: test
 
+  deployment-istio-example:
+    name: istio-example
+    image:
+      repository: nginx
+      pullPolicy: IfNotPresent
+      tag: "latest"
+    service:
+      enabled: true
+      port: 80
+      portName: http
+    istioIngress:
+      enabled: true
+      hosts:
+        - host: istio-example.local
+          paths:
+            - path: /
+              pathType: Prefix
+            - path: /api
+              pathType: Prefix
+              rewrite:
+                uri: /
+            - path: /v1
+              pathType: Prefix
+              headers:
+                request:
+                  set:
+                    x-api-version: "v1"
+              timeout: 5s
+      gateway:
+        create: true
+        istioLabel: ingressgateway
+        protocols: ["HTTP", "HTTPS"]
+        httpPort: 80
+        httpPortName: http
+        httpsPort: 443
+        httpsPortName: https
+        tls:
+          mode: SIMPLE
+          credentialName: istio-example-cert
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+    configMap:
+      enabled: true
+      name: "istio-example-config"
+      data:
+        default.conf: |
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              server_name _;
+
+              location / {
+                  root /usr/share/nginx/html;
+                  index index.html index.htm;
+              }
+
+              location /healthz {
+                  access_log off;
+                  return 200 "OK";
+              }
+          }
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: http
+    readinessProbe:
+      httpGet:
+        path: /healthz
+        port: http
+    volumes:
+      - name: istio-example-config
+        configMap:
+          name: "istio-example-config"
+    volumeMounts:
+      - name: istio-example-config
+        mountPath: /etc/nginx/conf.d/default.conf
+        subPath: default.conf
+
   deployment-code-server:
     name: code-server
     initContainers:

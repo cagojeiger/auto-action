@@ -40,6 +40,21 @@ spec:
             host: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
             port:
               number: {{ $values.service.port }}
+      {{- if .rewrite }}
+      rewrite:
+        {{- toYaml .rewrite | nindent 8 }}
+      {{- end }}
+      {{- if .headers }}
+      headers:
+        {{- toYaml .headers | nindent 8 }}
+      {{- end }}
+      {{- if .retries }}
+      retries:
+        {{- toYaml .retries | nindent 8 }}
+      {{- end }}
+      {{- if .timeout }}
+      timeout: {{ .timeout }}
+      {{- end }}
     {{- end }}
     {{- end }}
 {{- end }}
