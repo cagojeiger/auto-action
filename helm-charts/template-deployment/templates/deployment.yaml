@@ -74,7 +74,7 @@ spec:
             {{- end }}
             {{- else }}
             - name: {{ $values.service.portName | default "http" }}
-              containerPort: {{ $values.service.port }}
+              containerPort: {{ $values.service.port | default 80 }}
               protocol: TCP
             {{- end }}
           {{- end }}

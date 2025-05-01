@@ -7,7 +7,6 @@ templates:
       tag: "latest"
     service:
       enabled: true
-      type: ClusterIP
       port: 80
       portName: http
     ingress:
@@ -123,7 +122,6 @@ templates:
       fsGroup: 1000
     service:
       enabled: true
-      type: ClusterIP
       port: 8080
     serviceAccount:
       create: true

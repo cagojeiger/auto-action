@@ -8,19 +8,8 @@ metadata:
   labels:
     {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
 spec:
-  type: {{ $values.service.type }}
+  type: {{ $values.service.type | default "ClusterIP" }}
   ports:
-    {{- if $values.service.ports }}
-    {{- range $values.service.ports }}
-    - name: {{ .name | default "http" }}
-      port: {{ .port }}
-      targetPort: {{ .targetPort | default .port }}
-      protocol: TCP
-      {{- if eq $values.service.type "NodePort" }}
-      nodePort: {{ .nodePort | default "null" }}
-      {{- end }}
-    {{- end }}
-    {{- else }}
     - name: {{ $values.service.portName | default "http" }}
       port: {{ $values.service.port }}
       targetPort: {{ $values.service.port }}
@@ -28,7 +17,6 @@ spec:
       {{- if eq $values.service.type "NodePort" }}
       nodePort: {{ $values.service.nodePort | default "null" }}
       {{- end }}
-    {{- end }}
   selector:
     {{- include "template-deployment.selectorLabels" (dict "root" $ "values" $values) | nindent 4 }}
 {{- end }}
