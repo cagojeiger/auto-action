@@ -1,4 +1,4 @@
-{{- range $idx, $values := .Values.templates }}
+{{- range $key, $values := .Values.templates }}
 ---
 {{- if and $values.service $values.service.enabled }}
 apiVersion: v1

@@ -1,4 +1,4 @@
-{{- range $idx, $values := .Values.templates }}
+{{- range $key, $values := .Values.templates }}
 ---
 {{- if and $values.clusterRole $values.clusterRole.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1

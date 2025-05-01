@@ -3,16 +3,34 @@
   "type": "object",
   "properties": {
     "templates": {
-      "type": "array",
-      "items": {
+      "type": "object",
+      "additionalProperties": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
             "description": "Template name"
+          },
+          "image": {
+            "type": "object",
+            "properties": {
+              "repository": {
+                "type": "string",
+                "description": "Image repository"
+              },
+              "tag": {
+                "type": "string",
+                "description": "Image tag"
+              },
+              "pullPolicy": {
+                "type": "string",
+                "description": "Image pull policy"
+              }
+            },
+            "required": ["repository", "tag"]
           }
         },
-        "required": ["name"]
+        "required": ["name", "image"]
       }
     }
   }

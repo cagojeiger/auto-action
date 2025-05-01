@@ -1,4 +1,4 @@
-{{- range $idx, $values := .Values.templates }}
+{{- range $key, $values := .Values.templates }}
 ---
 {{- if and $values.persistence $values.persistence.enabled }}
 apiVersion: v1

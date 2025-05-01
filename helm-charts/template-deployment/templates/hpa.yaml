@@ -1,4 +1,4 @@
-{{- range $idx, $values := .Values.templates }}
+{{- range $key, $values := .Values.templates }}
 ---
 {{- if and $values.autoscaling $values.autoscaling.enabled }}
 apiVersion: autoscaling/v2

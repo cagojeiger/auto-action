@@ -1,5 +1,6 @@
 templates:
-  - name: nginx-echo
+  deployment-nginx-echo:
+    name: nginx-echo
     image:
       repository: nginx
       pullPolicy: IfNotPresent
@@ -86,7 +87,8 @@ templates:
         mountPath: /etc/nginx/conf.d/default.conf
         subPath: default.conf
 
-  - name: netshoot
+  deployment-netshoot:
+    name: netshoot
     image:
       repository: nicolaka/netshoot
       tag: "latest"
@@ -96,7 +98,8 @@ templates:
       - name: TEST
         value: test
 
-  - name: code-server
+  deployment-code-server:
+    name: code-server
     initContainers:
       - name: init-chmod-data
         image: busybox:latest

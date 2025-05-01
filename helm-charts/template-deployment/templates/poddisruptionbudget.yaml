@@ -1,4 +1,4 @@
-{{- range $idx, $values := .Values.templates }}
+{{- range $key, $values := .Values.templates }}
 ---
 {{- if and $values.podDisruptionBudget $values.podDisruptionBudget.enabled }}
 apiVersion: policy/v1

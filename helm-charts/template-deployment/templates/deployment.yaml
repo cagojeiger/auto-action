@@ -1,4 +1,4 @@
-{{- range $name, $values := .Values.templates }}
+{{- range $key, $values := .Values.templates }}
 ---
 apiVersion: apps/v1
 kind: Deployment
