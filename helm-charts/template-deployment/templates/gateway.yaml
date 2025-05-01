@@ -15,6 +15,10 @@ spec:
   selector:
     istio: {{ $values.istioIngress.gateway.istioLabel | default "ingressgateway" }}
   servers:
+    {{- if $values.istioIngress.gateway.servers }}
+    {{- toYaml $values.istioIngress.gateway.servers | nindent 4 }}
+    {{- else }}
+    {{- /* Default HTTP server if no protocols specified or HTTP is in the list */}}
     {{- if or (not $values.istioIngress.gateway.protocols) (has "HTTP" $values.istioIngress.gateway.protocols) }}
     - port:
         number: {{ $values.istioIngress.gateway.httpPort | default 80 }}
@@ -25,6 +29,7 @@ spec:
         - {{ .host | quote }}
         {{- end }}
     {{- end }}
+    {{- /* HTTPS server if HTTPS is in the protocols list */}}
     {{- if and $values.istioIngress.gateway.protocols (has "HTTPS" $values.istioIngress.gateway.protocols) }}
     - port:
         number: {{ $values.istioIngress.gateway.httpsPort | default 443 }}
@@ -37,10 +42,46 @@ spec:
       tls:
         {{- if $values.istioIngress.gateway.tls }}
         {{- toYaml $values.istioIngress.gateway.tls | nindent 8 }}
+        {{- else if $values.istioIngress.gateway.autoTLS }}
+        mode: {{ $values.istioIngress.gateway.autoTLSMode | default "SIMPLE" }}
+        {{- if eq ($values.istioIngress.gateway.autoTLSMode | default "SIMPLE") "PASSTHROUGH" }}
+        {{- else if eq ($values.istioIngress.gateway.autoTLSMode | default "SIMPLE") "AUTO_PASSTHROUGH" }}
+        {{- else }}
+        credentialName: {{ $values.istioIngress.gateway.credentialName | default (printf "%s-cert" (include "template-deployment.fullname" (dict "root" $ "values" $values))) }}
+        {{- end }}
         {{- else }}
         mode: SIMPLE
         credentialName: {{ $values.istioIngress.gateway.credentialName | default (printf "%s-cert" (include "template-deployment.fullname" (dict "root" $ "values" $values))) }}
         {{- end }}
+    {{- end }}
+    {{- /* Generate servers for additional protocols */}}
+    {{- range $protocol := $values.istioIngress.gateway.protocols }}
+    {{- if and (ne $protocol "HTTP") (ne $protocol "HTTPS") }}
+    - port:
+        number: {{ index $values.istioIngress.gateway (printf "%sPort" ($protocol | lower)) | default 0 }}
+        name: {{ index $values.istioIngress.gateway (printf "%sPortName" ($protocol | lower)) | default ($protocol | lower) }}
+        protocol: {{ $protocol }}
+      hosts:
+        {{- range $values.istioIngress.hosts }}
+        - {{ .host | quote }}
+        {{- end }}
+      {{- if eq $protocol "TLS" }}
+      tls:
+        {{- if $values.istioIngress.gateway.tlsConfig }}
+        {{- toYaml $values.istioIngress.gateway.tlsConfig | nindent 8 }}
+        {{- else if $values.istioIngress.gateway.autoTLS }}
+        mode: {{ $values.istioIngress.gateway.autoTLSMode | default "SIMPLE" }}
+        {{- if eq ($values.istioIngress.gateway.autoTLSMode | default "SIMPLE") "PASSTHROUGH" }}
+        {{- else if eq ($values.istioIngress.gateway.autoTLSMode | default "SIMPLE") "AUTO_PASSTHROUGH" }}
+        {{- else }}
+        credentialName: {{ $values.istioIngress.gateway.credentialName | default (printf "%s-cert" (include "template-deployment.fullname" (dict "root" $ "values" $values))) }}
+        {{- end }}
+        {{- else }}
+        mode: PASSTHROUGH
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- end }}
     {{- end }}
 {{- end }}
 {{- end }}
