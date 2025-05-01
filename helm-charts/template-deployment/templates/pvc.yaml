@@ -1,0 +1,23 @@
+{{- range $idx, $values := .Values.templates }}
+---
+{{- if and $values.persistence $values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $values.persistence.name }}
+  labels:
+    {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+    {{- with $values.persistence.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  accessModes:
+    - {{ $values.persistence.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ $values.persistence.size }}
+  storageClassName: {{ $values.persistence.storageClassName }}
+{{- end }}
+{{- end }}

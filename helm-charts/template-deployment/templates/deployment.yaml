@@ -32,8 +32,12 @@ spec:
       {{- if and $values.serviceAccount $values.serviceAccount.create }}
       serviceAccountName: {{ include "template-deployment.serviceAccountName" (dict "root" $ "values" $values) }}
       {{- end }}
-      {{- with $values.podSecurityContext }}
+      {{- with $values.securityContext }}
       securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $values.initContainers }}
+      initContainers:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
@@ -59,9 +63,6 @@ spec:
           {{- with $values.env }}
           env:
             {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with $values.workingDir }}
-          workingDir: {{ . }}
           {{- end }}
           {{- if and $values.service $values.service.enabled }}
           ports:

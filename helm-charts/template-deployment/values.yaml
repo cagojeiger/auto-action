@@ -4,10 +4,6 @@ templates:
       repository: nginx
       pullPolicy: IfNotPresent
       tag: "latest"
-    serviceAccount:
-      create: true
-      automount: true
-      annotations: {}
     service:
       enabled: true
       type: ClusterIP
@@ -15,14 +11,13 @@ templates:
       portName: http
     ingress:
       enabled: true
-      className: ""
+      className: "nginx"
       annotations: {}
       hosts:
         - host: nginx-echo.local
           paths:
             - path: /
               pathType: ImplementationSpecific
-      tls: []
     resources:
       requests:
         cpu: 100m
@@ -90,10 +85,6 @@ templates:
       - name: nginx-config
         mountPath: /etc/nginx/conf.d/default.conf
         subPath: default.conf
-    nodeSelector: {}
-    tolerations: []
-    affinity: {}
-    env: []
 
   - name: netshoot
     image:
@@ -104,3 +95,52 @@ templates:
     env:
       - name: TEST
         value: test
+
+  - name: code-server
+    initContainers:
+      - name: init-chmod-data
+        image: busybox:latest
+        imagePullPolicy: IfNotPresent
+        command:
+          - sh
+          - -c
+          - |
+            chown -R 1000:1000 /home/coder/workspace
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+          - name: data
+            mountPath: /home/coder/workspace
+    image:
+      repository: cagojeiger/code-server
+      tag: "latest"
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    serviceAccount:
+      create: true
+      automount: true
+    clusterRole:
+      enabled: true
+      rules:
+        - apiGroups: ["*"]
+          resources: ["*"]
+          verbs: ["*"]
+    volumeMounts:
+      - name: data
+        mountPath: /home/coder/workspace
+    volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: code-server-pvc
+    persistence:
+      enabled: true
+      name: code-server-pvc
+      size: 10Gi
+      storageClassName: microk8s-hostpath
+      accessMode: ReadWriteOnce

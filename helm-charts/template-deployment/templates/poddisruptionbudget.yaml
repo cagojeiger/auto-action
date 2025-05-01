@@ -1,0 +1,14 @@
+{{- range $idx, $values := .Values.templates }}
+---
+{{- if and $values.podDisruptionBudget $values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
+spec:
+  minAvailable: {{ $values.podDisruptionBudget.minAvailable | default 1 }}  
+  selector:
+    matchLabels:
+      {{- include "template-deployment.selectorLabels" (dict "root" $ "values" $values) | nindent 6 }}
+{{- end }}
+{{- end }}
