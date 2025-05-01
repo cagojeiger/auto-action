@@ -15,17 +15,8 @@ spec:
   selector:
     istio: {{ $values.istioIngress.gateway.istioLabel | default "ingressgateway" }}
   servers:
-    {{- /* HTTP server */}}
-    {{- if not (hasKey $values.istioIngress.gateway "http") }}
-    - port:
-        number: {{ $values.istioIngress.gateway.httpPort | default 80 }}
-        name: {{ $values.istioIngress.gateway.httpPortName | default "http" }}
-        protocol: HTTP
-      hosts:
-        {{- range $values.istioIngress.hosts }}
-        - {{ .host | quote }}
-        {{- end }}
-    {{- else }}
+    {{- /* HTTP 서버 설정 */}}
+    {{- if hasKey $values.istioIngress.gateway "http" }}
     {{- range $idx, $http := $values.istioIngress.gateway.http }}
     - port:
         number: {{ $http.port | default 80 }}
@@ -40,34 +31,19 @@ spec:
         {{- end }}
         {{- end }}
     {{- end }}
-    {{- end }}
-    
-    {{- /* HTTPS server with auto TLS */}}
-    {{- if not (hasKey $values.istioIngress.gateway "https") }}
-    {{- if $values.istioIngress.gateway.enableHttps }}
+    {{- else }}
     - port:
-        number: {{ $values.istioIngress.gateway.httpsPort | default 443 }}
-        name: {{ $values.istioIngress.gateway.httpsPortName | default "https" }}
-        protocol: HTTPS
+        number: {{ $values.istioIngress.gateway.httpPort | default 80 }}
+        name: {{ $values.istioIngress.gateway.httpPortName | default "http" }}
+        protocol: HTTP
       hosts:
         {{- range $values.istioIngress.hosts }}
         - {{ .host | quote }}
         {{- end }}
-      tls:
-        {{- if $values.istioIngress.gateway.tls }}
-        {{- toYaml $values.istioIngress.gateway.tls | nindent 8 }}
-        {{- else }}
-        mode: SIMPLE
-        {{- if $values.istioIngress.gateway.autoGenerateCert }}
-        credentialName: {{ $values.istioIngress.gateway.credentialName | default (printf "%s-cert" (include "template-deployment.fullname" (dict "root" $ "values" $values))) }}
-        {{- if $values.istioIngress.gateway.certManager }}
-        {{- end }}
-        {{- else }}
-        credentialName: {{ $values.istioIngress.gateway.credentialName | default (printf "%s-cert" (include "template-deployment.fullname" (dict "root" $ "values" $values))) }}
-        {{- end }}
-        {{- end }}
     {{- end }}
-    {{- else }}
+    
+    {{- /* HTTPS 서버 설정 */}}
+    {{- if hasKey $values.istioIngress.gateway "https" }}
     {{- range $idx, $https := $values.istioIngress.gateway.https }}
     - port:
         number: {{ $https.port | default 443 }}
@@ -86,15 +62,35 @@ spec:
         {{- toYaml $https.tls | nindent 8 }}
         {{- else }}
         mode: SIMPLE
-        {{- if $values.istioIngress.gateway.autoGenerateCert }}
-        credentialName: {{ $https.credentialName | default (printf "%s-cert-%d" (include "template-deployment.fullname" (dict "root" $ "values" $values)) $idx) }}
-        {{- if $values.istioIngress.gateway.certManager }}
-        {{- end }}
+        {{- if $https.credentialName }}
+        credentialName: {{ $https.credentialName }}
+        {{- else if $values.istioIngress.gateway.credentialName }}
+        credentialName: {{ $values.istioIngress.gateway.credentialName }}
         {{- else }}
-        credentialName: {{ $https.credentialName | default (printf "%s-cert-%d" (include "template-deployment.fullname" (dict "root" $ "values" $values)) $idx) }}
+        credentialName: {{ printf "%s-cert-%d" (include "template-deployment.fullname" (dict "root" $ "values" $values)) $idx }}
         {{- end }}
         {{- end }}
     {{- end }}
+    {{- else if $values.istioIngress.gateway.enableHttps }}
+    - port:
+        number: {{ $values.istioIngress.gateway.httpsPort | default 443 }}
+        name: {{ $values.istioIngress.gateway.httpsPortName | default "https" }}
+        protocol: HTTPS
+      hosts:
+        {{- range $values.istioIngress.hosts }}
+        - {{ .host | quote }}
+        {{- end }}
+      tls:
+        {{- if $values.istioIngress.gateway.tls }}
+        {{- toYaml $values.istioIngress.gateway.tls | nindent 8 }}
+        {{- else }}
+        mode: SIMPLE
+        {{- if $values.istioIngress.gateway.credentialName }}
+        credentialName: {{ $values.istioIngress.gateway.credentialName }}
+        {{- else }}
+        credentialName: {{ printf "%s-cert" (include "template-deployment.fullname" (dict "root" $ "values" $values)) }}
+        {{- end }}
+        {{- end }}
     {{- end }}
 {{- end }}
 {{- end }}
