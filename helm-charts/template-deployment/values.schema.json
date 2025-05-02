@@ -4,8 +4,8 @@
   "required": ["templates"],
   "properties": {
     "templates": {
-      "type": "object",
-      "additionalProperties": {
+      "type": "array",
+      "items": {
         "type": "object",
         "properties": {
           "name": {

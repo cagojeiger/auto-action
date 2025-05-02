@@ -1,4 +1,4 @@
-{{- range $key, $values := .Values.templates }}
+{{- range $index, $values := .Values.templates }}
 ---
 {{- if and $values.configMap $values.configMap.enabled }}
 apiVersion: v1

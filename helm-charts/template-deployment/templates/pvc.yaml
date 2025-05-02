@@ -1,4 +1,4 @@
-{{- range $key, $values := .Values.templates }}
+{{- range $index, $values := .Values.templates }}
 ---
 {{- if and $values.persistence $values.persistence.enabled }}
 apiVersion: v1
@@ -18,6 +18,6 @@ spec:
   resources:
     requests:
       storage: {{ $values.persistence.size }}
-  storageClassName: {{ $values.persistence.storageClassName }}
+  storageClassName: {{ $.Values.global.storageClass | default ($.Values.global.defaultStorageClass | default $values.persistence.storageClassName) }}
 {{- end }}
 {{- end }}

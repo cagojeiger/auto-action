@@ -1,4 +1,4 @@
-{{- range $key, $values := .Values.templates }}
+{{- range $index, $values := .Values.templates }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,7 +25,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- with $values.imagePullSecrets }}
+      {{- with $.Values.global.imagePullSecrets | default $values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -46,7 +46,7 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          image: "{{ $values.image.repository }}:{{ $values.image.tag }}"
+          image: "{{ $.Values.global.imageRegistry | default "" }}{{ with $.Values.global.imageRegistry }}{{ "/" }}{{ end }}{{ $values.image.repository }}:{{ $values.image.tag }}"
           imagePullPolicy: {{ $values.image.pullPolicy | default "IfNotPresent" }}
           {{- with $values.command }}
           command:
