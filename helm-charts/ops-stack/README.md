@@ -20,10 +20,10 @@
 helm dependency update
 
 # 템플릿에서 values.yaml 생성 (중요)
-gomplate -f values.yaml.tmpl -c vars=vars.yaml > ../values.yaml
+gomplate -f values.yaml.tmpl -c vars=vars.yaml > values.yaml
 
 # Helm 차트 설치
-helm install ops-stack . -f ../values.yaml
+helm install ops-stack . -f values.yaml
 ```
 
 > 💡 **중요**: `gomplate` 명령어로 템플릿에서 최종 values.yaml을 생성해야 합니다.
