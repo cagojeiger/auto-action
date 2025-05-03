@@ -1,0 +1,21 @@
+dependencies:
+- name: redis
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 20.13.4
+- name: postgresql
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 16.6.6
+- name: minio
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 16.0.0
+- name: harbor
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 24.5.0
+- name: gitea
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 3.2.3
+- name: argo-cd
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 7.3.2
+digest: sha256:3de002c3e0d5758573b924e57fa8cbb8b19ae4805b894d1fae310080c022db10
+generated: "2025-05-03T02:35:41.111074+09:00"

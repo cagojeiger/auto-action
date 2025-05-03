@@ -1,0 +1,204 @@
+########################################################
+# Global
+########################################################
+global:
+  imageRegistry: 
+  imagePullSecrets: []
+  defaultStorageClass: 
+  storageClass: 
+
+########################################################
+# Redis
+########################################################
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    resources:
+      requests:
+        memory: 128Mi
+      limits:
+        memory: 1024Mi
+    persistence:
+      enabled: false
+
+########################################################
+# PostgreSQL
+########################################################
+postgresql:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    username: admin
+    password: qwer1234
+  resources:
+    requests:
+      memory: 128Mi
+    limits:
+      memory: 1024Mi
+  primary:
+    initdb:
+      scripts:
+        create-databases.sql: |
+          CREATE DATABASE gitea;
+          CREATE DATABASE harbor_core;
+
+########################################################
+# Minio
+########################################################
+minio:
+  enabled: true
+  nameOverride: minio
+  mode: distributed
+  auth:
+    rootUser: admin
+    rootPassword: qwer1234
+  provisioning:
+    enabled: true
+    sleepTime: 30s
+    buckets:
+      - name: default
+      - name: harbor
+  resources:
+    requests:
+      memory: 128Mi
+    limits:
+      memory: 2048Mi
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: minio.ops-stack.svc.cluster.local
+  apiIngress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: minio-api.ops-stack.svc.cluster.local
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  persistence:
+    enabled: true
+    size: 10Gi
+  statefulset:
+    replicaCount: 4
+    drivesPerNode: 1
+
+########################################################
+# Harbor
+########################################################
+harbor:
+  enabled: true
+  exposureType: ingress
+  ingress:
+    core:
+      hostname: harbor.ops-stack.svc.cluster.local
+      ingressClassName: nginx
+  externalURL: https://harbor.ops-stack.svc.cluster.local:443
+  adminPassword: qwer1234
+  trivy:
+    enabled: false
+  service:
+    type: ClusterIP
+  jobservice:
+    updateStrategy:
+      type: Recreate
+  persistence:
+    imageChartStorage:
+      type: s3
+      s3:
+        bucket: harbor
+        rootdirectory: /
+        accesskey: admin
+        secretkey: qwer1234
+        secure: false
+        regionendpoint: http://minio-api.ops-stack.svc.cluster.local:80
+  postgresql:
+    enabled: false
+  externalDatabase:
+    host: ops-stack-postgresql.ops-stack.svc.cluster.local
+    port: 5432
+    user: admin
+    password: qwer1234
+    sslmode: disable
+    coreDatabase: harbor_core
+  redis:
+    enabled: false
+  externalRedis:
+    host: ops-stack-redis-master.ops-stack.svc.cluster.local
+    port: 6379
+
+########################################################
+# Gitea
+########################################################
+gitea:
+  enabled: true
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: gitea.ops-stack.svc.cluster.local
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  service:
+    type: ClusterIP
+  resources:
+    requests:
+      memory: 128Mi
+    limits:
+      memory: 1024Mi
+  appName: ops-gitea
+  rootURL: https://gitea.ops-stack.svc.cluster.local:443
+  extraEnvVars:
+    - name: GITEA__SERVICE__SHOW_REGISTRATION_BUTTON
+      value: "false"
+  persistence:
+    enabled: true
+    size: 10Gi
+  adminEmail: admin@ops-stack.io
+  adminPassword: qwer1234
+  adminUsername: admin
+  postgresql:
+    enabled: false
+  externalDatabase:
+    host: ops-stack-postgresql.ops-stack.svc.cluster.local
+    port: 5432
+    user: admin
+    password: qwer1234
+    database: gitea
+
+########################################################
+# Argo CD
+########################################################
+argo-cd:
+  enabled: true
+  config:
+    secret:
+      argocdServerAdminPassword: qwer1234
+  server:
+    insecure: true
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hostname: argocd.ops-stack.svc.cluster.local
+    resources:
+      requests:
+        memory: 128Mi
+      limits:
+        memory: 1024Mi
+  repoServer:
+    resources:
+      requests:
+        memory: 128Mi
+      limits:
+        memory: 1024Mi
+  controller:
+    resources:
+      requests:
+        memory: 128Mi
+      limits:
+        memory: 1024Mi
+  redis:
+    enabled: false
+  externalRedis:
+    host: ops-stack-redis-master.ops-stack.svc.cluster.local
+    port: 6379
