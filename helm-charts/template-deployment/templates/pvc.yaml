@@ -18,7 +18,7 @@ spec:
   resources:
     requests:
       storage: {{ $values.persistence.size }}
-  {{- if (lookup "v1" "PersistentVolumeClaim" .Release.Namespace $values.persistence.name) }}
+  {{- if and $.Release (lookup "v1" "PersistentVolumeClaim" ($.Release.Namespace | default "") $values.persistence.name) }}
   # 이미 존재하는 PVC의 경우 storageClassName을 수정하지 않음
   {{- else }}
   storageClassName: {{ $.Values.global.storageClass | default ($.Values.global.defaultStorageClass | default $values.persistence.storageClassName) }}
