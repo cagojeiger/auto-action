@@ -50,6 +50,13 @@ RUN MC_LATEST_VERSION=$(curl -s https://api.github.com/repos/minio/mc/releases/l
     install -o root -g root -m 0755 mc /usr/local/bin/mc && \
     rm -f mc
 
+# gomplate 설치
+RUN GOMPLATE_LATEST_VERSION=$(curl -s https://api.github.com/repos/hairyhenderson/gomplate/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    echo "➡️  Using gomplate version: ${GOMPLATE_LATEST_VERSION}" && \
+    curl -LO "https://github.com/hairyhenderson/gomplate/releases/download/${GOMPLATE_LATEST_VERSION}/gomplate_linux-${TARGETARCH}" && \
+    install -o root -g root -m 0755 gomplate_linux-${TARGETARCH} /usr/local/bin/gomplate && \
+    rm -f gomplate_linux-${TARGETARCH}
+
 # =============================================
 # 2) Final Stage
 # =============================================
@@ -63,6 +70,7 @@ COPY --from=builder /usr/local/bin/helm   /usr/local/bin/helm
 COPY --from=builder /usr/local/bin/k9s    /usr/local/bin/k9s
 COPY --from=builder /usr/local/bin/skopeo /usr/local/bin/skopeo
 COPY --from=builder /usr/local/bin/mc     /usr/local/bin/mc
+COPY --from=builder /usr/local/bin/gomplate /usr/local/bin/gomplate
 
 COPY gen_kube_config.sh /home/coder/gen_kube_config.sh
 RUN chmod +x /home/coder/gen_kube_config.sh
