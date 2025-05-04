@@ -56,6 +56,10 @@ spec:
           args:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with $values.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with $values.envFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}
