@@ -18,8 +18,16 @@ spec:
   resources:
     requests:
       storage: {{ $values.persistence.size }}
-  {{- if not (eq (include "template-deployment.skipStorageClass" (dict "root" $ "values" $values)) "true") }}
-  storageClassName: {{ $.Values.global.storageClass | default ($.Values.global.defaultStorageClass | default $values.persistence.storageClassName) }}
+  {{- $storageClass := "" }}
+  {{- if $.Values.global.storageClass }}
+    {{- $storageClass = $.Values.global.storageClass }}
+  {{- else if $.Values.global.defaultStorageClass }}
+    {{- $storageClass = $.Values.global.defaultStorageClass }}
+  {{- else if $values.persistence.storageClassName }}
+    {{- $storageClass = $values.persistence.storageClassName }}
+  {{- end }}
+  {{- if $storageClass }}
+  storageClassName: {{ $storageClass }}
   {{- end }}
 {{- end }}
 {{- end }}
