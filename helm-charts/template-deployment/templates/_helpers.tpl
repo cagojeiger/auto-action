@@ -66,7 +66,7 @@ PVC 생성 이후 storageClassName 필드가 변경되지 않도록 하는 헬�
 이 헬퍼는 Helm 릴리스가 이미 설치되어 있는지 확인합니다
 */}}
 {{- define "template-deployment.skipStorageClass" -}}
-{{- if $.Release.IsUpgrade -}}
+{{- if .root.Release.IsUpgrade -}}
 true
 {{- else -}}
 false
