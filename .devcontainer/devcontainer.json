@@ -1,0 +1,34 @@
+{
+  "name": "Auto-Action Development",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+    "ghcr.io/dhoeric/features/hadolint:1": {},
+    "ghcr.io/dhoeric/features/yamllint:1": {},
+    "ghcr.io/devcontainers-contrib/features/shellcheck:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "redhat.vscode-yaml",
+        "timonwong.shellcheck",
+        "exiasr.hadolint",
+        "redhat.vscode-xml"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "yaml.schemas": {
+          "kubernetes": "helm-charts/**/templates/**/*.yaml"
+        }
+      }
+    }
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.kube,target=/home/vscode/.kube,type=bind,consistency=cached"
+  ],
+  "remoteUser": "vscode",
+  "postCreateCommand": "bash -c 'echo \"alias k=kubectl\" >> ~/.bashrc && echo \"source <(kubectl completion bash)\" >> ~/.bashrc'"
+}
