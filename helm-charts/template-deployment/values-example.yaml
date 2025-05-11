@@ -117,7 +117,7 @@ templates:
           - -c
           - |
             chown -R 1000:1000 /home/coder/workspace
-        securityContext:
+        containerSecurityContext:
           runAsUser: 0
         volumeMounts:
           - name: data
@@ -125,7 +125,7 @@ templates:
     image:
       repository: cagojeiger/code-server
       tag: "latest"
-    securityContext:
+    containerSecurityContext:
       runAsUser: 1000
       runAsGroup: 1000
     service:
