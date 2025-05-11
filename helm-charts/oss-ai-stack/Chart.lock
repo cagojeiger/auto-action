@@ -1,0 +1,6 @@
+dependencies:
+- name: template-deployment
+  repository: oci://registry-1.docker.io/cagojeiger
+  version: 0.3.6
+digest: sha256:25cc968826217d94b53a707d9d14a2e18c134f85bb293f9c460a1563813e2681
+generated: "2025-05-04T15:34:08.952224+09:00"
