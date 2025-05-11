@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   update-code-server:
@@ -33,11 +34,11 @@ jobs:
           CHART_VERSION=$(grep -E '^version:' ./temp-code-server-source/ci/helm-chart/Chart.yaml \
             | awk '{print $2}' | tr -d "\"'" | xargs)
           echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
-          
+
           APP_VERSION=$(grep -E '^appVersion:' ./temp-code-server-source/ci/helm-chart/Chart.yaml \
             | awk '{print $2}' | tr -d "\"'" | xargs)
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
-          
+
           echo "추출된 차트 버전: $CHART_VERSION, 앱 버전: $APP_VERSION"
 
       - name: Update Helm chart files
@@ -45,7 +46,7 @@ jobs:
           mkdir -p helm-charts/code-server
           rm -rf helm-charts/code-server/*
           cp -r ./temp-code-server-source/ci/helm-chart/* helm-charts/code-server/
-          
+
           sed -i 's|repository: codercom/code-server|repository: ${{ secrets.DOCKERHUB_USERNAME }}/code-server|' helm-charts/code-server/values.yaml
           echo "Helm 차트의 repository 값을 ${{ secrets.DOCKERHUB_USERNAME }}/code-server로 수정했습니다."
 
@@ -96,3 +97,37 @@ jobs:
 
           sleep 10
           gh pr merge "$PR_NUMBER" --auto --merge
+
+      - name: Wait for PR to be merged
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          # PR이 병합될 때까지 기다립니다
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+          echo "PR #$PR_NUMBER 병합을 기다리는 중..."
+
+          for i in {1..10}; do
+            PR_STATE=$(gh pr view "$PR_NUMBER" --json state -q .state)
+            if [ "$PR_STATE" = "MERGED" ]; then
+              echo "PR이 성공적으로 병합되었습니다."
+              break
+            fi
+            echo "대기 중... ($i/10)"
+            sleep 15
+          done
+
+      - name: Trigger unified-artifact-push workflow
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          echo "unified-artifact-push 워크플로우를 수동으로 트리거합니다..."
+
+          # code-server 컨테이너 빌드 워크플로우 트리거
+          gh workflow run unified-artifact-push.yaml \
+            -f artifact_type=docker \
+            -f artifact_name=code-server
+
+          # code-server Helm 차트 푸시 워크플로우 트리거
+          gh workflow run unified-artifact-push.yaml \
+            -f artifact_type=helm \
+            -f artifact_name=code-server
+
+          echo "unified-artifact-push 워크플로우 트리거 완료"
