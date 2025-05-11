@@ -59,8 +59,10 @@ jobs:
         run: |
           git add -N helm-charts/code-server containers/code-server/Dockerfile
           if git diff --quiet --exit-code -- helm-charts/code-server containers/code-server/Dockerfile; then
+            echo "변경사항이 없습니다. 업데이트가 필요하지 않습니다."
             echo "changes=false" >> $GITHUB_OUTPUT
           else
+            echo "변경사항이 감지되었습니다. 업데이트를 진행합니다."
             echo "changes=true" >> $GITHUB_OUTPUT
           fi
 
