@@ -1,0 +1,26 @@
+=========================================
+외부 접속 가능한 서비스 정보
+=========================================
+
+{{- range .Values.templates }}
+{{- if and .ingress .ingress.enabled }}
+* {{ .name }} 서비스는 다음 주소로 접속 가능합니다:
+{{- range .ingress.hosts }}
+  - http://{{ .host }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+=========================================
+스토리지 정보 (PVC)
+=========================================
+
+{{- range .Values.templates }}
+{{- if and .persistence .persistence.enabled }}
+* {{ .name }} 서비스는 영구 스토리지를 사용합니다:
+  - 클레임 이름: {{ .persistence.name }}
+  - 스토리지 용량: {{ .persistence.size }}
+  - 스토리지 클래스: {{ .persistence.storageClassName }}
+  - 접근 모드: {{ .persistence.accessMode }}
+{{- end }}
+{{- end }}
