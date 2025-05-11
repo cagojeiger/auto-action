@@ -85,14 +85,7 @@ jobs:
 
           PR_URL=$(gh pr create \
             --title "chore: code-server 업데이트 (v${{ env.APP_VERSION }})" \
-            --body "GitHub Action이 최신 code-server 버전(v${{ env.APP_VERSION }})으로 업데이트하였습니다.
-
-* Helm 차트 버전: v${{ env.CHART_VERSION }}
-* 앱 버전: v${{ env.APP_VERSION }}
-
-이 PR이 머지되면 자동으로 다음 워크플로우가 실행됩니다:
-- Helm 차트 푸시 워크플로우
-- Docker 이미지 빌드 및 푸시 워크플로우" \
+            --body "GitHub Action이 최신 code-server 버전(v${{ env.APP_VERSION }})으로 업데이트하였습니다." \
             --base main \
             --head "${BRANCH_NAME}")
 
