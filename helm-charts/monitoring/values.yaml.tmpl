@@ -1,0 +1,34 @@
+########################################################
+# Global
+########################################################
+global:
+  imageRegistry: {{ .vars.globalImageRegistry }}
+  imagePullSecrets: {{ .vars.globalImagePullSecrets }}
+
+########################################################
+# kube-prometheus-stack
+########################################################
+kube-prometheus-stack:
+  grafana:
+    enabled: true
+    defaultDashboardsTimezone: {{ .vars.timezone }}
+    adminUser: {{ .vars.adminUser }}
+    adminPassword: {{ .vars.adminPassword }}
+    ingress:
+      enabled: true
+      ingressClassName: {{ .vars.nginxIngressClassName }}
+      hosts:
+        - grafana.{{ .vars.domain }}
+      path: /
+  prometheus:
+    prometheusSpec:
+      retention: 30d
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: {{ .vars.globalStorageClass }}
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi

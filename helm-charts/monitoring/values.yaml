@@ -1,0 +1,34 @@
+########################################################
+# Global
+########################################################
+global:
+  imageRegistry: 
+  imagePullSecrets: []
+
+########################################################
+# kube-prometheus-stack
+########################################################
+kube-prometheus-stack:
+  grafana:
+    enabled: true
+    defaultDashboardsTimezone: Asia/Seoul
+    adminUser: admin
+    adminPassword: qwer1234
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hosts:
+        - grafana.monitoring.io
+      path: /
+  prometheus:
+    prometheusSpec:
+      retention: 30d
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: 
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
