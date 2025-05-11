@@ -1,0 +1,108 @@
+name: Generalized Docker Image Push
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'containers/**'
+  workflow_dispatch:
+    inputs:
+      container_name:
+        description: '특정 컨테이너만 빌드하려면 이름 입력 (예: code-server)'
+        required: false
+        type: string
+
+jobs:
+  detect-containers:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed container dirs
+        id: set
+        run: |
+          if [ -n "${{ github.event.inputs.container_name }}" ]; then
+            if [ -d "containers/${{ github.event.inputs.container_name }}" ]; then
+              echo "matrix=[\"${{ github.event.inputs.container_name }}\"]" >> $GITHUB_OUTPUT
+              echo "::notice::수동으로 지정된 컨테이너: ${{ github.event.inputs.container_name }}"
+            else
+              echo "matrix=[]" >> $GITHUB_OUTPUT
+              echo "::error::지정된 컨테이너가 존재하지 않습니다: ${{ github.event.inputs.container_name }}"
+            fi
+          else
+            changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
+                     | grep '^containers/' \
+                     | awk -F/ '{print $2}' | sort -u)
+            
+            if [ -z "$changed" ]; then
+              echo "matrix=[]" >> $GITHUB_OUTPUT
+            else
+              json=$(printf '%s\n' $changed | jq -R -s -c 'split("\n")[:-1]')
+              echo "matrix=$json" >> $GITHUB_OUTPUT
+              echo "::notice::변경된 컨테이너: $json"
+            fi
+          fi
+
+  build-and-push:
+    needs: detect-containers
+    if: ${{ needs.detect-containers.outputs.matrix != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container: ${{ fromJson(needs.detect-containers.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version information
+        id: get_version
+        run: |
+          CONTAINER_DIR="containers/${{ matrix.container }}"
+          
+          if [ -d "helm-charts/${{ matrix.container }}" ]; then
+            if command -v yq &> /dev/null; then
+              APP_VERSION=$(yq e '.appVersion' "helm-charts/${{ matrix.container }}/Chart.yaml" 2>/dev/null)
+            else
+              APP_VERSION=$(grep -E '^appVersion:' "helm-charts/${{ matrix.container }}/Chart.yaml" 2>/dev/null | awk '{print $2}' | tr -d '"'"'" | xargs)
+            fi
+          fi
+          
+          if [ -z "$APP_VERSION" ] || [ "$APP_VERSION" = "null" ]; then
+            APP_VERSION=$(grep -E '^ARG.*_VERSION=' "$CONTAINER_DIR/Dockerfile" 2>/dev/null | head -1 | sed -E 's/ARG.*_VERSION=([0-9.]+).*/\1/' | xargs)
+          fi
+          
+          if [ -z "$APP_VERSION" ] || [ "$APP_VERSION" = "null" ]; then
+            APP_VERSION="$(date +%Y.%m.%d)"
+            echo "::warning::버전 정보를 찾을 수 없어 날짜 기반 버전을 사용합니다: $APP_VERSION"
+          else
+            echo "::notice::버전 정보를 찾았습니다: $APP_VERSION"
+          fi
+          
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./containers/${{ matrix.container }}
+          file: ./containers/${{ matrix.container }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            APP_VERSION=${{ env.APP_VERSION }}
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.container }}:${{ env.APP_VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.container }}:latest

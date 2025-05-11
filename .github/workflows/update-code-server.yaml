@@ -1,0 +1,103 @@
+name: Update Code-Server
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 매일 00:00 UTC(09:00 KST) 실행
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-code-server:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+
+      - name: Checkout code-server repository
+        uses: actions/checkout@v4
+        with:
+          repository: coder/code-server
+          path: ./temp-code-server-source
+          token: ${{ github.token }}
+
+      - name: Extract versions
+        id: extract_versions
+        run: |
+          CHART_VERSION=$(grep -E '^version:' ./temp-code-server-source/ci/helm-chart/Chart.yaml \
+            | awk '{print $2}' | tr -d "\"'" | xargs)
+          echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
+          
+          APP_VERSION=$(grep -E '^appVersion:' ./temp-code-server-source/ci/helm-chart/Chart.yaml \
+            | awk '{print $2}' | tr -d "\"'" | xargs)
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+          
+          echo "추출된 차트 버전: $CHART_VERSION, 앱 버전: $APP_VERSION"
+
+      - name: Update Helm chart files
+        run: |
+          mkdir -p helm-charts/code-server
+          rm -rf helm-charts/code-server/*
+          cp -r ./temp-code-server-source/ci/helm-chart/* helm-charts/code-server/
+          
+          sed -i 's|repository: codercom/code-server|repository: ${{ secrets.DOCKERHUB_USERNAME }}/code-server|' helm-charts/code-server/values.yaml
+          echo "Helm 차트의 repository 값을 ${{ secrets.DOCKERHUB_USERNAME }}/code-server로 수정했습니다."
+
+      - name: Update Dockerfile version
+        run: |
+          sed -i "s/^ARG CODE_SERVER_VERSION=.*/ARG CODE_SERVER_VERSION=${{ env.APP_VERSION }}/" containers/code-server/Dockerfile
+          echo "Dockerfile의 CODE_SERVER_VERSION을 ${{ env.APP_VERSION }}으로 업데이트했습니다."
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git add -N helm-charts/code-server containers/code-server/Dockerfile
+          if git diff --quiet --exit-code -- helm-charts/code-server containers/code-server/Dockerfile; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set branch name
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          echo "BRANCH_NAME=update-code-server-v${{ env.APP_VERSION }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+
+      - name: Commit changes
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git checkout -b "${BRANCH_NAME}"
+          git add helm-charts/code-server containers/code-server/Dockerfile
+          git commit -m "chore: code-server 업데이트 (v${{ env.APP_VERSION }})"
+
+      - name: Push changes and create PR
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git push -u origin "${BRANCH_NAME}"
+
+          PR_URL=$(gh pr create \
+            --title "chore: code-server 업데이트 (v${{ env.APP_VERSION }})" \
+            --body "GitHub Action이 최신 code-server 버전(v${{ env.APP_VERSION }})으로 업데이트하였습니다.
+
+* Helm 차트 버전: v${{ env.CHART_VERSION }}
+* 앱 버전: v${{ env.APP_VERSION }}
+
+이 PR이 머지되면 자동으로 다음 워크플로우가 실행됩니다:
+- Helm 차트 푸시 워크플로우
+- Docker 이미지 빌드 및 푸시 워크플로우" \
+            --base main \
+            --head "${BRANCH_NAME}")
+
+          echo "생성된 PR URL: $PR_URL"
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+
+          sleep 10
+          gh pr merge "$PR_NUMBER" --auto --merge
