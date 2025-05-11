@@ -8,4 +8,3 @@ alwaysApply: true
 
 - 모든 코드 스타일은 구글 스타일 가이드를 준수 할 것!
 - 커밋 메시지는 https://www.conventionalcommits.org 룰을 따를 것!
-- 답변 마지막에 권장하는 커밋 메시지 만들어줘
