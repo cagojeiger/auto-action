@@ -11,20 +11,14 @@ global:
 # Template Defaults
 ########################################################
 templateDefaults:
-  # Web application defaults
-  web:
+  # 기본 템플릿 (필수 아님)
+  default:
     replicaCount: 1
     image:
       pullPolicy: IfNotPresent
     service:
       enabled: true
       type: ClusterIP
-      port: 80
-      portName: http
-    ingress:
-      enabled: false
-      className: "nginx"
-      annotations: {}
     resources:
       requests:
         cpu: 100m
@@ -32,6 +26,15 @@ templateDefaults:
       limits:
         cpu: 200m
         memory: 256Mi
+  
+  # Web application defaults
+  web:
+    service:
+      port: 80
+      portName: http
+    ingress:
+      enabled: false
+      className: "nginx"
     livenessProbe:
       httpGet:
         path: /healthz
@@ -40,26 +43,9 @@ templateDefaults:
       httpGet:
         path: /healthz
         port: http
-    autoscaling:
-      enabled: false
-      minReplicas: 1
-      maxReplicas: 3
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: 80
   
   # Database application defaults
   database:
-    replicaCount: 1
-    image:
-      pullPolicy: IfNotPresent
-    service:
-      enabled: true
-      type: ClusterIP
     resources:
       requests:
         cpu: 200m
@@ -82,9 +68,6 @@ templateDefaults:
   
   # Utility application defaults
   utility:
-    replicaCount: 1
-    image:
-      pullPolicy: IfNotPresent
     service:
       enabled: false
     resources:
@@ -94,13 +77,27 @@ templateDefaults:
       limits:
         cpu: 100m
         memory: 128Mi
+        
+  # Load balanced application defaults
+  loadbalanced:
+    service:
+      type: LoadBalancer
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 5
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
 
 ########################################################
 # Templates
 ########################################################
 templates:
   - name: nginx-echo
-    type: web  # 웹 애플리케이션 타입 상속
+    type: [web, loadbalanced]  # 여러 타입 상속 (웹, 로드밸런싱)
     image:
       repository: nginx
       tag: "latest"

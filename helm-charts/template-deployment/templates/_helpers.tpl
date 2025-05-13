@@ -66,15 +66,32 @@ Get template defaults based on type
 */}}
 {{- define "template-deployment.getDefaults" -}}
 {{- $type := .type | default "" -}}
-{{- if $type -}}
-  {{- if hasKey .root.Values.templateDefaults $type -}}
-    {{- index .root.Values.templateDefaults $type | toYaml -}}
-  {{- else -}}
-    {{- dict | toYaml -}}
-  {{- end -}}
-{{- else -}}
-  {{- dict | toYaml -}}
+{{- $defaults := dict -}}
+
+{{/* 기본 템플릿 적용 (있는 경우) */}}
+{{- if hasKey .root.Values.templateDefaults "default" -}}
+  {{- $defaults = index .root.Values.templateDefaults "default" -}}
 {{- end -}}
+
+{{- if $type -}}
+  {{- if kindIs "string" $type -}}
+    {{/* 단일 타입인 경우 */}}
+    {{- if hasKey .root.Values.templateDefaults $type -}}
+      {{- $typeDefaults := index .root.Values.templateDefaults $type -}}
+      {{- $defaults = merge $defaults $typeDefaults -}}
+    {{- end -}}
+  {{- else if kindIs "slice" $type -}}
+    {{/* 여러 타입인 경우 - 리스트 순서대로 머지 */}}
+    {{- range $index, $t := $type -}}
+      {{- if hasKey $.root.Values.templateDefaults $t -}}
+        {{- $typeDefaults := index $.root.Values.templateDefaults $t -}}
+        {{- $defaults = merge $defaults $typeDefaults -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $defaults | toYaml -}}
 {{- end -}}
 
 {{/*
@@ -83,6 +100,6 @@ Merge template values with defaults
 {{- define "template-deployment.mergeValues" -}}
 {{- $defaults := include "template-deployment.getDefaults" . | fromYaml -}}
 {{- $values := .values | deepCopy -}}
-{{- $merged := merge $values $defaults -}}
+{{- $merged := merge $defaults $values -}}
 {{- $merged | toYaml -}}
 {{- end -}}

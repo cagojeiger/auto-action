@@ -68,6 +68,17 @@ templates:
 1. `values.yaml` 파일에 `templateDefaults` 섹션 정의:
 ```yaml
 templateDefaults:
+  # 기본 템플릿 (모든 타입에 적용)
+  default:
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  
+  # 타입별 기본값
   web:  # 웹 애플리케이션 타입 기본값
     service:
       enabled: true
@@ -76,9 +87,16 @@ templateDefaults:
     persistence:
       enabled: true
       size: 1Gi
+  loadbalanced:  # 로드밸런싱 타입 기본값
+    service:
+      type: LoadBalancer
+    autoscaling:
+      enabled: true
 ```
 
-2. 템플릿에 `type` 필드 추가:
+`default` 타입은 특별한 타입으로, 모든 템플릿에 자동으로 적용됩니다. 다른 타입들은 템플릿에서 명시적으로 지정해야 적용됩니다.
+
+2. 템플릿에 `type` 필드 추가 (단일 타입):
 ```yaml
 templates:
   - name: my-webapp
@@ -87,6 +105,18 @@ templates:
       repository: nginx
       tag: "latest"
 ```
+
+3. 여러 타입 상속 (배열 사용):
+```yaml
+templates:
+  - name: my-webapp
+    type: [web, loadbalanced]  # web과 loadbalanced 타입의 기본값을 모두 상속
+    image:
+      repository: nginx
+      tag: "latest"
+```
+
+여러 타입을 상속할 때는 배열의 순서가 중요합니다. 나중에 나열된 타입이 이전 타입의 설정을 덮어씁니다. 최종적으로 템플릿에 직접 정의된 값이 모든 상속된 값보다 우선합니다.
 
 ### 예제
 
