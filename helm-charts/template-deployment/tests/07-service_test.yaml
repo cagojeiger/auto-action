@@ -1,0 +1,111 @@
+suite: 서비스(Service) 기능 테스트
+tests:
+  - it: 기본 서비스 설정이 올바르게 적용되어야 함
+    template: service.yaml
+    set:
+      templateDefaults:
+        web:
+          service:
+            enabled: true
+            type: ClusterIP
+            port: 80
+      templates:
+        - name: basic-service
+          type: web
+          image:
+            repository: nginx
+            tag: "latest"
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.ports[0].port
+          value: 80
+
+  - it: 서비스 설정이 올바르게 오버라이드되어야 함
+    template: service.yaml
+    set:
+      templateDefaults:
+        web:
+          service:
+            enabled: true
+            type: ClusterIP
+            port: 80
+      templates:
+        - name: override-service
+          type: web
+          image:
+            repository: nginx
+            tag: "latest"
+          service:
+            type: NodePort
+            port: 8080
+            targetPort: 8080
+            nodePort: 30080
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.type
+          value: NodePort
+      - equal:
+          path: spec.ports[0].port
+          value: 8080
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 8080
+      - equal:
+          path: spec.ports[0].nodePort
+          value: 30080
+
+  - it: 다중 타입 상속에서 서비스 설정이 올바르게 적용되어야 함
+    template: service.yaml
+    set:
+      templateDefaults:
+        default:
+          service:
+            enabled: true
+        web:
+          service:
+            type: ClusterIP
+            port: 80
+        loadbalanced:
+          service:
+            type: LoadBalancer
+      templates:
+        - name: multi-type-service
+          type: [web, loadbalanced]
+          image:
+            repository: nginx
+            tag: "latest"
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.ports[0].port
+          value: 80
+
+  - it: 서비스가 비활성화되면 생성되지 않아야 함
+    template: service.yaml
+    set:
+      templateDefaults:
+        web:
+          service:
+            enabled: false
+            type: ClusterIP
+            port: 80
+      templates:
+        - name: disabled-service
+          type: web
+          image:
+            repository: nginx
+            tag: "latest"
+    asserts:
+      - hasDocuments:
+          count: 0 
