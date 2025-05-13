@@ -81,17 +81,17 @@ spec:
             {{- end }}
             {{- else }}
             - name: {{ $values.service.portName | default "http" }}
-              containerPort: {{ $values.service.port | default 80 }}
+              containerPort: {{ $values.service.targetPort | default $values.service.port | default 80 }}
               protocol: TCP
             {{- end }}
           {{- end }}
-          {{- with $values.livenessProbe }}
+          {{- if $values.livenessProbe }}
           livenessProbe:
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml $values.livenessProbe | nindent 12 }}
           {{- end }}
-          {{- with $values.readinessProbe }}
+          {{- if $values.readinessProbe }}
           readinessProbe:
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml $values.readinessProbe | nindent 12 }}
           {{- end }}
           {{- with $values.resources }}
           resources:

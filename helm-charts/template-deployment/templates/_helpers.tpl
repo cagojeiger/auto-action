@@ -62,6 +62,22 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Deep merge two maps
+*/}}
+{{- define "template-deployment.deepMerge" -}}
+{{- $top := first . -}}
+{{- $overrides := last . -}}
+{{- range $key, $value := $overrides -}}
+  {{- if or (not (hasKey $top $key)) (not (kindIs "map" $value)) -}}
+    {{- $_ := set $top $key $value -}}
+  {{- else -}}
+    {{- $_ := set $top $key (include "template-deployment.deepMerge" (list (get $top $key) $value) | fromYaml) -}}
+  {{- end -}}
+{{- end -}}
+{{- $top | toYaml -}}
+{{- end -}}
+
+{{/*
 Get template defaults based on type
 */}}
 {{- define "template-deployment.getDefaults" -}}
@@ -80,7 +96,7 @@ Get template defaults based on type
       {{/* 단일 타입인 경우 */}}
       {{- if hasKey .root.Values.templateDefaults $type -}}
         {{- $typeDefaults := index .root.Values.templateDefaults $type -}}
-        {{- $defaults = merge $defaults $typeDefaults -}}
+        {{- $defaults = include "template-deployment.deepMerge" (list $defaults $typeDefaults) | fromYaml -}}
       {{- end -}}
     {{- else if kindIs "slice" $type -}}
       {{/* 여러 타입인 경우 - 리스트 역순으로 머지 (앞에 있는 타입이 우선순위 높음) */}}
@@ -91,7 +107,7 @@ Get template defaults based on type
       {{- range $index, $t := $reversedTypes -}}
         {{- if hasKey $.root.Values.templateDefaults $t -}}
           {{- $typeDefaults := index $.root.Values.templateDefaults $t -}}
-          {{- $defaults = merge $defaults $typeDefaults -}}
+          {{- $defaults = include "template-deployment.deepMerge" (list $defaults $typeDefaults) | fromYaml -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
@@ -107,6 +123,6 @@ Merge template values with defaults
 {{- define "template-deployment.mergeValues" -}}
 {{- $defaults := include "template-deployment.getDefaults" . | fromYaml -}}
 {{- $values := .values | deepCopy -}}
-{{- $merged := merge $defaults $values -}}
+{{- $merged := include "template-deployment.deepMerge" (list $defaults $values) | fromYaml -}}
 {{- $merged | toYaml -}}
 {{- end -}}

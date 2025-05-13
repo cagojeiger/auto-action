@@ -15,7 +15,7 @@ spec:
   ports:
     - name: {{ $values.service.portName | default "http" }}
       port: {{ $values.service.port }}
-      targetPort: {{ $values.service.port }}
+      targetPort: {{ $values.service.targetPort | default $values.service.port }}
       protocol: TCP
       {{- if eq $values.service.type "NodePort" }}
       nodePort: {{ $values.service.nodePort | default "null" }}
