@@ -58,41 +58,7 @@ templates:
 
 템플릿 상속 기능을 사용하면 공통 설정을 한 번만 정의하고 여러 템플릿에서 재사용할 수 있습니다. `templateDefaults` 섹션에 타입별 기본값을 정의하고, 각 템플릿에서 `type` 필드를 통해 상속받을 수 있습니다.
 
-[템플릿 상속 기능 상세 문서](./docs/template-inheritance.md)
-
-#### 핵심 기능
-
-- 템플릿에 `type` 필드를 추가하여 타입별 기본값 상속 (옵셔널)
-- 여러 타입을 배열로 지정하여 다중 상속 가능 (`type: [web, loadbalanced]`)
-- 모든 템플릿에 적용되는 `default` 타입 지원
-- `templateDefaults` 섹션은 빈 객체도 가능
-
-#### 우선순위
-
-1. 템플릿 직접 설정값 (가장 높음)
-2. 타입 기본값 (배열의 경우 앞에 나열된 타입이 우선)
-3. 기본 템플릿 값 (가장 낮음)
-
-예: `type: [web, loadbalanced]`인 경우, web 타입이 loadbalanced 타입보다 우선 적용됩니다.
-
-#### 간단한 예제
-
-```yaml
-# values.yaml
-templateDefaults:
-  default:
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-
-templates:
-  - name: my-webapp
-    type: web  # web 타입의 기본값을 상속
-    image:
-      repository: nginx
-      tag: "latest"
-```
+자세한 내용은 [템플릿 상속 기능 상세 문서](./docs/template-inheritance.md)를 참조하세요.
 
 ### 예제
 
