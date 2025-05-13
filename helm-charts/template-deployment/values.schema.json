@@ -3,6 +3,24 @@
   "type": "object",
   "required": ["templates"],
   "properties": {
+    "templateDefaults": {
+      "type": "object",
+      "description": "Default configurations for different template types",
+      "properties": {
+        "web": {
+          "type": "object",
+          "description": "Default configuration for web applications"
+        },
+        "database": {
+          "type": "object",
+          "description": "Default configuration for database applications"
+        },
+        "utility": {
+          "type": "object",
+          "description": "Default configuration for utility applications"
+        }
+      }
+    },
     "templates": {
       "type": "array",
       "items": {
@@ -11,6 +29,10 @@
           "name": {
             "type": "string",
             "description": "Template name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Template type for inheritance (web, database, utility, etc.)"
           },
           "image": {
             "type": "object",

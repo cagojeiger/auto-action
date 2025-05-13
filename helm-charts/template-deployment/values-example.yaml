@@ -8,13 +8,101 @@ global:
   storageClass: ""
 
 ########################################################
+# Template Defaults
+########################################################
+templateDefaults:
+  # Web application defaults
+  web:
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+      portName: http
+    ingress:
+      enabled: false
+      className: "nginx"
+      annotations: {}
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: http
+    readinessProbe:
+      httpGet:
+        path: /healthz
+        port: http
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 80
+  
+  # Database application defaults
+  database:
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+    service:
+      enabled: true
+      type: ClusterIP
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    persistence:
+      enabled: true
+      accessMode: ReadWriteOnce
+      size: 1Gi
+    livenessProbe:
+      exec:
+        command:
+          - sh
+          - -c
+          - "healthcheck.sh"
+      initialDelaySeconds: 30
+      periodSeconds: 10
+  
+  # Utility application defaults
+  utility:
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+    service:
+      enabled: false
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+
+########################################################
 # Templates
 ########################################################
 templates:
   - name: nginx-echo
+    type: web  # 웹 애플리케이션 타입 상속
     image:
       repository: nginx
-      pullPolicy: IfNotPresent
       tag: "latest"
     service:
       enabled: true
@@ -98,6 +186,7 @@ templates:
         subPath: default.conf
 
   - name: netshoot
+    type: utility  # 유틸리티 애플리케이션 타입 상속
     image:
       repository: nicolaka/netshoot
       tag: "latest"
@@ -108,6 +197,7 @@ templates:
         value: test
 
   - name: code-server
+    type: web  # 웹 애플리케이션 타입 상속
     initContainers:
       - name: init-chmod-data
         image: busybox:latest
@@ -153,3 +243,32 @@ templates:
       size: 10Gi
       storageClassName: microk8s-hostpath
       accessMode: ReadWriteOnce
+
+  # 데이터베이스 예제
+  - name: postgres
+    type: database  # 데이터베이스 애플리케이션 타입 상속
+    image:
+      repository: postgres
+      tag: "14"
+    service:
+      port: 5432
+      portName: postgres
+    persistence:
+      size: 5Gi  # 기본값 오버라이드
+      mountPath: /var/lib/postgresql/data
+      subPath: postgres-data
+    env:
+      - name: POSTGRES_PASSWORD
+        value: "postgres"
+      - name: POSTGRES_USER
+        value: "postgres"
+      - name: POSTGRES_DB
+        value: "postgres"
+    livenessProbe:
+      exec:
+        command:
+          - pg_isready
+          - -U
+          - postgres
+      initialDelaySeconds: 30
+      periodSeconds: 10

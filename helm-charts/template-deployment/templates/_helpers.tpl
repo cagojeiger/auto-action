@@ -60,3 +60,29 @@ Create the name of the service account to use
 {{- default "default" .values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Get template defaults based on type
+*/}}
+{{- define "template-deployment.getDefaults" -}}
+{{- $type := .type | default "" -}}
+{{- if $type -}}
+  {{- if hasKey .root.Values.templateDefaults $type -}}
+    {{- index .root.Values.templateDefaults $type | toYaml -}}
+  {{- else -}}
+    {{- dict | toYaml -}}
+  {{- end -}}
+{{- else -}}
+  {{- dict | toYaml -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Merge template values with defaults
+*/}}
+{{- define "template-deployment.mergeValues" -}}
+{{- $defaults := include "template-deployment.getDefaults" . | fromYaml -}}
+{{- $values := .values | deepCopy -}}
+{{- $merged := merge $values $defaults -}}
+{{- $merged | toYaml -}}
+{{- end -}}
