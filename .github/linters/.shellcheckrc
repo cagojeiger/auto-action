@@ -1,0 +1,8 @@
+# Allow using source
+disable=SC1091
+
+# Double quote to prevent globbing and word splitting
+disable=SC2086
+
+# Allow eval with non-constant input
+disable=SC2048
