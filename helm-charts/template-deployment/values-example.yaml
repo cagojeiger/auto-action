@@ -11,14 +11,8 @@ global:
 # Template Defaults
 ########################################################
 templateDefaults:
-  # 기본 템플릿 (필수 아님)
+  # 기본 템플릿 (모든 템플릿에 적용)
   default:
-    replicaCount: 1
-    image:
-      pullPolicy: IfNotPresent
-    service:
-      enabled: true
-      type: ClusterIP
     resources:
       requests:
         cpu: 100m
@@ -26,71 +20,6 @@ templateDefaults:
       limits:
         cpu: 200m
         memory: 256Mi
-  
-  # Web application defaults
-  web:
-    service:
-      port: 80
-      portName: http
-    ingress:
-      enabled: false
-      className: "nginx"
-    livenessProbe:
-      httpGet:
-        path: /healthz
-        port: http
-    readinessProbe:
-      httpGet:
-        path: /healthz
-        port: http
-  
-  # Database application defaults
-  database:
-    resources:
-      requests:
-        cpu: 200m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-    persistence:
-      enabled: true
-      accessMode: ReadWriteOnce
-      size: 1Gi
-    livenessProbe:
-      exec:
-        command:
-          - sh
-          - -c
-          - "healthcheck.sh"
-      initialDelaySeconds: 30
-      periodSeconds: 10
-  
-  # Utility application defaults
-  utility:
-    service:
-      enabled: false
-    resources:
-      requests:
-        cpu: 50m
-        memory: 64Mi
-      limits:
-        cpu: 100m
-        memory: 128Mi
-        
-  # Load balanced application defaults
-  loadbalanced:
-    service:
-      type: LoadBalancer
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    autoscaling:
-      enabled: true
-      minReplicas: 2
-      maxReplicas: 5
-    podDisruptionBudget:
-      enabled: true
-      minAvailable: 1
 
 ########################################################
 # Templates

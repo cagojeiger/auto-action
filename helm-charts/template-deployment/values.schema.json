@@ -10,22 +10,6 @@
         "default": {
           "type": "object",
           "description": "Default configuration applied to all templates regardless of type"
-        },
-        "web": {
-          "type": "object",
-          "description": "Default configuration for web applications"
-        },
-        "database": {
-          "type": "object",
-          "description": "Default configuration for database applications"
-        },
-        "utility": {
-          "type": "object",
-          "description": "Default configuration for utility applications"
-        },
-        "loadbalanced": {
-          "type": "object",
-          "description": "Default configuration for load balanced applications"
         }
       }
     },
