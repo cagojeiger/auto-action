@@ -1,0 +1,50 @@
+########################################################
+# Global
+########################################################
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  defaultStorageClass: ""
+  storageClass: ""
+
+########################################################
+# Template Defaults
+########################################################
+templateDefaults:
+  # 기본 템플릿 (모든 템플릿에 적용)
+  default:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+  
+  # 웹 애플리케이션 타입
+  web:
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      className: "nginx"
+  
+  # 로드밸런싱 타입
+  loadbalanced:
+    service:
+      type: LoadBalancer
+      port: 80
+
+########################################################
+# Templates
+########################################################
+templates:
+  # 타입 우선순위 테스트: web이 loadbalanced보다 우선
+  - name: priority-test
+    type: [web, loadbalanced]
+    image:
+      repository: nginx
+      tag: "latest"
+    # service 설정이 없으면 타입에서 상속
+    # web 타입이 우선이므로 service.type은 ClusterIP, port는 8080이 됨

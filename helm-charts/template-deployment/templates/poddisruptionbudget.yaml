@@ -1,4 +1,7 @@
-{{- range $index, $values := .Values.templates }}
+{{- range $index, $template := .Values.templates }}
+{{- $type := $template.type | default "" }}
+{{- $mergedValues := include "template-deployment.mergeValues" (dict "root" $ "values" $template "type" $type) | fromYaml }}
+{{- $values := $mergedValues }}
 ---
 {{- if and $values.podDisruptionBudget $values.podDisruptionBudget.enabled }}
 apiVersion: policy/v1
