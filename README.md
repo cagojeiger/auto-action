@@ -1,89 +1,72 @@
 # Auto-Action
 
-자동화된 컨테이너 이미지 및 Helm 차트 배포를 위한 GitHub Actions 워크플로우 저장소입니다.
+GitHub Actions를 활용한 자동화 워크플로우 템플릿 저장소입니다.
 
 ## 개요
 
-이 저장소는 다음과 같은 기능을 제공합니다:
-
-1. **자동화된 아티팩트 배포**: 컨테이너 이미지와 Helm 차트를 자동으로 빌드하고 배포하는 GitHub Actions 워크플로우
-2. **Code-Server 자동 업데이트**: 최신 Code-Server 버전을 자동으로 감지하고 업데이트하는 워크플로우
-3. **Kubernetes 도구 모음**: Kubernetes 환경에서 사용할 수 있는 다양한 도구가 포함된 컨테이너 이미지
-
-## 저장소 구조
-
-```
-auto-action/
-├── containers/             # 컨테이너 이미지 정의
-│   └── code-server/        # Code-Server 컨테이너 (Kubernetes 도구 포함)
-├── helm-charts/            # Helm 차트 모음
-│   ├── code-server/        # Code-Server Helm 차트
-│   ├── monitoring/         # 모니터링 스택 Helm 차트
-│   ├── ops-stack/          # 운영 스택 Helm 차트
-│   ├── oss-ai-stack/       # OSS AI 스택 Helm 차트
-│   ├── oss-data-infra/     # OSS 데이터 인프라 Helm 차트
-│   └── template-deployment/ # 템플릿 배포 Helm 차트
-└── .github/workflows/      # GitHub Actions 워크플로우
-    ├── unified-artifact-push.yaml  # 통합 아티팩트 배포 워크플로우
-    └── update-code-server.yaml     # Code-Server 자동 업데이트 워크플로우
-```
+이 저장소는 DevOps 작업을 자동화하기 위한 재사용 가능한 GitHub Actions 워크플로우와 관련 리소스를 제공합니다. 클라우드 네이티브 애플리케이션 배포와 관리를 위한 기본 구성 요소를 포함하고 있습니다.
 
 ## 주요 기능
 
-### 통합 아티팩트 배포 (Unified Artifact Push)
+- **자동화된 CI/CD 파이프라인**: 코드 변경 시 자동으로 빌드, 테스트 및 배포
+- **멀티 아키텍처 지원**: 다양한 하드웨어 플랫폼(amd64, arm64)에 대한 빌드 지원
+- **컨테이너 및 Helm 차트 관리**: 클라우드 네이티브 애플리케이션 배포를 위한 리소스
+- **자동 업데이트 메커니즘**: 종속성 및 컴포넌트의 최신 버전 자동 추적
 
-`unified-artifact-push.yaml` 워크플로우는 다음과 같은 기능을 제공합니다:
+## 시작하기
 
-- 변경된 Helm 차트 및 컨테이너 이미지 자동 감지
-- 멀티 아키텍처(amd64, arm64) 컨테이너 이미지 빌드 및 배포
-- Helm 차트 패키징 및 OCI 레지스트리 배포
-- 수동 트리거를 통한 특정 아티팩트 배포 지원
+### 사전 요구 사항
 
-### Code-Server 자동 업데이트
+- GitHub 계정
+- Docker Hub 계정 (또는 다른 컨테이너 레지스트리)
+- 기본적인 Git, Docker 및 Kubernetes 지식
 
-`update-code-server.yaml` 워크플로우는 다음과 같은 기능을 제공합니다:
+### 설정 방법
 
-- 매일 최신 Code-Server 버전 확인
-- 새 버전 감지 시 자동 업데이트 및 PR 생성
-- 자동 PR 병합 및 아티팩트 배포 트리거
+1. 이 저장소를 포크하거나 템플릿으로 사용하여 새 저장소 생성
+2. 필요한 시크릿 설정:
+   - `DOCKERHUB_USERNAME`: 컨테이너 레지스트리 사용자 이름
+   - `DOCKERHUB_TOKEN`: 컨테이너 레지스트리 액세스 토큰
 
-## Code-Server 컨테이너
+### 워크플로우 사용자 정의
 
-Code-Server 컨테이너는 다음과 같은 Kubernetes 도구를 포함합니다:
+각 워크플로우 파일(`.github/workflows/` 디렉토리 내)을 검토하고 필요에 따라 수정하세요:
 
-- `kubectl`: Kubernetes 클러스터 관리
-- `helm`: Kubernetes 패키지 관리자
-- `k9s`: Kubernetes CLI 대시보드
-- `skopeo`: 컨테이너 이미지 관리 도구
-- `mc`: MinIO 클라이언트
-- `gomplate`: 템플릿 렌더링 도구
+- 빌드 대상 플랫폼 조정
+- 배포 대상 변경
+- 트리거 조건 수정
 
-## 사용 방법
+## 워크플로우 개요
 
-### 워크플로우 수동 트리거
+이 저장소는 다음과 같은 주요 워크플로우를 포함합니다:
 
-GitHub UI에서 Actions 탭을 통해 워크플로우를 수동으로 트리거할 수 있습니다:
+1. **통합 아티팩트 배포**: 컨테이너 이미지와 Helm 차트를 자동으로 빌드하고 배포
+2. **자동 업데이트**: 종속성 및 컴포넌트의 최신 버전을 자동으로 추적하고 업데이트
 
-1. **통합 아티팩트 배포**:
-   - 아티팩트 유형 선택: `helm` 또는 `docker`
-   - 특정 아티팩트 이름 지정 (선택 사항)
+## 컨테이너 및 Helm 차트
 
-2. **Code-Server 업데이트**:
-   - 워크플로우 수동 실행 (파라미터 없음)
+이 저장소는 다양한 용도의 컨테이너 이미지와 Helm 차트를 포함하고 있습니다:
 
-### 컨테이너 이미지 사용
+- 개발 환경 컨테이너
+- 모니터링 및 관측성 스택
+- 데이터 인프라 구성 요소
+- 애플리케이션 배포 템플릿
 
-```bash
-# Code-Server 컨테이너 실행 (로컬 디버깅용)
-docker run -it --rm --entrypoint bash cagojeiger/code-server:latest
-```
+## 커스터마이징
 
-### Helm 차트 사용
+자신의 프로젝트에 맞게 이 저장소를 수정하는 방법:
 
-```bash
-# OCI 레지스트리에서 Helm 차트 설치
-helm install my-code-server oci://docker.io/cagojeiger/code-server
-```
+1. 필요한 컨테이너 이미지 정의 추가/수정 (`containers/` 디렉토리)
+2. 사용자 정의 Helm 차트 추가/수정 (`helm-charts/` 디렉토리)
+3. 워크플로우 트리거 및 동작 조정 (`.github/workflows/` 디렉토리)
+
+## 기여하기
+
+이 프로젝트에 기여하고 싶으시다면:
+
+1. 이슈 생성 또는 기존 이슈 확인
+2. 포크 및 변경사항 구현
+3. Pull Request 제출
 
 ## 라이센스
 
