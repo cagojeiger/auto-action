@@ -68,24 +68,31 @@ Get template defaults based on type
 {{- $type := .type | default "" -}}
 {{- $defaults := dict -}}
 
-{{/* 기본 템플릿 적용 (있는 경우) */}}
-{{- if hasKey .root.Values.templateDefaults "default" -}}
-  {{- $defaults = index .root.Values.templateDefaults "default" -}}
-{{- end -}}
+{{/* templateDefaults가 있는지 확인 */}}
+{{- if .root.Values.templateDefaults -}}
+  {{/* 기본 템플릿 적용 (있는 경우) */}}
+  {{- if hasKey .root.Values.templateDefaults "default" -}}
+    {{- $defaults = index .root.Values.templateDefaults "default" -}}
+  {{- end -}}
 
-{{- if $type -}}
-  {{- if kindIs "string" $type -}}
-    {{/* 단일 타입인 경우 */}}
-    {{- if hasKey .root.Values.templateDefaults $type -}}
-      {{- $typeDefaults := index .root.Values.templateDefaults $type -}}
-      {{- $defaults = merge $defaults $typeDefaults -}}
-    {{- end -}}
-  {{- else if kindIs "slice" $type -}}
-    {{/* 여러 타입인 경우 - 리스트 순서대로 머지 */}}
-    {{- range $index, $t := $type -}}
-      {{- if hasKey $.root.Values.templateDefaults $t -}}
-        {{- $typeDefaults := index $.root.Values.templateDefaults $t -}}
+  {{- if $type -}}
+    {{- if kindIs "string" $type -}}
+      {{/* 단일 타입인 경우 */}}
+      {{- if hasKey .root.Values.templateDefaults $type -}}
+        {{- $typeDefaults := index .root.Values.templateDefaults $type -}}
         {{- $defaults = merge $defaults $typeDefaults -}}
+      {{- end -}}
+    {{- else if kindIs "slice" $type -}}
+      {{/* 여러 타입인 경우 - 리스트 역순으로 머지 (앞에 있는 타입이 우선순위 높음) */}}
+      {{- $reversedTypes := list -}}
+      {{- range $index, $t := $type -}}
+        {{- $reversedTypes = prepend $reversedTypes $t -}}
+      {{- end -}}
+      {{- range $index, $t := $reversedTypes -}}
+        {{- if hasKey $.root.Values.templateDefaults $t -}}
+          {{- $typeDefaults := index $.root.Values.templateDefaults $t -}}
+          {{- $defaults = merge $defaults $typeDefaults -}}
+        {{- end -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}
