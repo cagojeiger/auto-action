@@ -150,6 +150,142 @@ my-loadbalanced-web:
     tag: latest
 ```
 
+### 고급 예제: 마이크로서비스 아키텍처
+
+```yaml
+# values.yaml
+templateDefaults:
+  default:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+  
+  # 마이크로서비스 타입의 기본값
+  microservice:
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    livenessProbe:
+      httpGet:
+        path: /actuator/health
+        port: http
+      initialDelaySeconds: 30
+    readinessProbe:
+      httpGet:
+        path: /actuator/health
+        port: http
+      initialDelaySeconds: 5
+  
+  # API 타입의 기본값
+  api:
+    service:
+      port: 3000
+    livenessProbe:
+      httpGet:
+        path: /api/health
+    readinessProbe:
+      httpGet:
+        path: /api/health
+  
+  # 고가용성 타입의 기본값
+  highavailability:
+    replicaCount: 3
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - ${name}
+            topologyKey: kubernetes.io/hostname
+  
+  # 모니터링 타입의 기본값
+  monitoring:
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
+      prometheus.io/path: "/actuator/prometheus"
+
+templates:
+  # 고가용성 API 마이크로서비스
+  - name: user-service
+    type: [api, microservice, highavailability, monitoring]
+    image:
+      repository: mycompany/user-service
+      tag: v1.2.3
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: "prod"
+      - name: DB_HOST
+        valueFrom:
+          configMapKeyRef:
+            name: database-config
+            key: host
+```
+
+결과:
+```yaml
+# 최종 적용된 값
+user-service:
+  replicaCount: 3  # highavailability 타입에서 상속
+  service:
+    enabled: true  # microservice 타입에서 상속
+    type: ClusterIP  # microservice 타입에서 상속
+    port: 3000  # api 타입이 microservice 타입보다 우선 적용됨
+  livenessProbe:
+    httpGet:
+      path: /api/health  # api 타입이 microservice 타입보다 우선 적용됨
+      port: http  # microservice 타입에서 상속
+    initialDelaySeconds: 30  # microservice 타입에서 상속
+  readinessProbe:
+    httpGet:
+      path: /api/health  # api 타입이 microservice 타입보다 우선 적용됨
+      port: http  # microservice 타입에서 상속
+    initialDelaySeconds: 5  # microservice 타입에서 상속
+  podAnnotations:
+    prometheus.io/scrape: "true"  # monitoring 타입에서 상속
+    prometheus.io/port: "8080"  # monitoring 타입에서 상속
+    prometheus.io/path: "/actuator/prometheus"  # monitoring 타입에서 상속
+  podAntiAffinity:  # highavailability 타입에서 상속
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - user-service
+          topologyKey: kubernetes.io/hostname
+  resources:  # default 타입에서 상속
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  image:  # 템플릿에서 직접 설정
+    repository: mycompany/user-service
+    tag: v1.2.3
+  env:  # 템플릿에서 직접 설정
+    - name: SPRING_PROFILES_ACTIVE
+      value: "prod"
+    - name: DB_HOST
+      valueFrom:
+        configMapKeyRef:
+          name: database-config
+          key: host
+```
+
 ## 내부 구현
 
 템플릿 상속은 다음 두 개의 헬퍼 함수를 통해 구현됩니다:

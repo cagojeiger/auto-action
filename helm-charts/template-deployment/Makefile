@@ -22,7 +22,10 @@ lint:
 # 헬름 차트 테스트 실행
 test: install-plugin
 	@echo "헬름 차트 테스트 실행 중..."
-	helm unittest .
+	@echo "통합 테스트 실행 중..."
+	helm unittest -f 'tests/integration/*_test.yaml' .
+	@echo "기능 테스트 실행 중..."
+	helm unittest -f 'tests/features/**/*_test.yaml' .
 
 # 도움말
 help:
