@@ -3,6 +3,16 @@
   "type": "object",
   "required": ["templates"],
   "properties": {
+    "templateDefaults": {
+      "type": "object",
+      "description": "Default configurations for different template types",
+      "properties": {
+        "default": {
+          "type": "object",
+          "description": "Default configuration applied to all templates regardless of type"
+        }
+      }
+    },
     "templates": {
       "type": "array",
       "items": {
@@ -11,6 +21,22 @@
           "name": {
             "type": "string",
             "description": "Template name"
+          },
+          "type": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Single template type for inheritance (web, database, utility, etc.)"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Multiple template types for inheritance (ordered by priority)"
+              }
+            ],
+            "description": "Template type(s) for inheritance"
           },
           "image": {
             "type": "object",

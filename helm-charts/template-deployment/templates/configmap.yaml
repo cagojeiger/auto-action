@@ -1,4 +1,7 @@
-{{- range $index, $values := .Values.templates }}
+{{- range $index, $template := .Values.templates }}
+{{- $type := $template.type | default "" }}
+{{- $mergedValues := include "template-deployment.mergeValues" (dict "root" $ "values" $template "type" $type) | fromYaml }}
+{{- $values := $mergedValues }}
 ---
 {{- if and $values.configMap $values.configMap.enabled }}
 apiVersion: v1
@@ -8,9 +11,8 @@ metadata:
   labels:
     {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
 data:
-  {{- range $key, $value := $values.configMap.data }}
-  {{ $key }}: |-
-    {{- $value | nindent 4 }}
+  {{- with $values.configMap.data }}
+  {{- toYaml . | nindent 2 }}
   {{- end }}
 {{- end }}
 {{- end }}
