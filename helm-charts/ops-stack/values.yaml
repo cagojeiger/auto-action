@@ -88,7 +88,7 @@ minio:
 # Harbor
 ########################################################
 harbor:
-  enabled: true
+  enabled: false
   exposureType: ingress
   ingress:
     core:
@@ -132,7 +132,7 @@ harbor:
 # Gitea
 ########################################################
 gitea:
-  enabled: true
+  enabled: false
   ingress:
     enabled: true
     ingressClassName: nginx
@@ -202,3 +202,15 @@ argo-cd:
   externalRedis:
     host: ops-stack-redis-master.ops-stack.svc.cluster.local
     port: 6379
+
+########################################################
+# Vault
+########################################################
+vault:
+  enabled: true
+  server:
+    replicaCount: 1
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hostname: vault.ops-stack.io

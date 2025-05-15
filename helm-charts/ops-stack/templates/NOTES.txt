@@ -1,0 +1,81 @@
+# 배포 후 참고 안내
+
+## 인그레스(ingress) 정보 (활성화된 서비스만)
+
+아래는 values.yaml에서 enabled: true로 설정된 서비스의 인그레스 주소 및 클래스 정보입니다.
+
+{{- if .Values.minio.enabled }}
+  {{- if .Values.minio.ingress.enabled }}
+- **Minio Console**: `https://minio.{{ .Values.minio.ingress.hostname }}` (IngressClass: `{{ .Values.minio.ingress.ingressClassName }}`)
+  {{- end }}
+  {{- if .Values.minio.apiIngress.enabled }}
+- **Minio API**: `https://minio-api.{{ .Values.minio.apiIngress.hostname }}` (IngressClass: `{{ .Values.minio.apiIngress.ingressClassName }}`)
+  {{- end }}
+{{- end }}
+
+{{- if .Values.harbor.enabled }}
+  {{- if .Values.harbor.ingress.core.hostname }}
+- **Harbor**: `https://{{ .Values.harbor.ingress.core.hostname }}` (IngressClass: `{{ .Values.harbor.ingress.core.ingressClassName }}`)
+  {{- end }}
+{{- end }}
+
+{{- if .Values.gitea.enabled }}
+  {{- if .Values.gitea.ingress.enabled }}
+- **Gitea**: `https://{{ .Values.gitea.ingress.hostname }}` (IngressClass: `{{ .Values.gitea.ingress.ingressClassName }}`)
+  {{- end }}
+{{- end }}
+
+{{- $argocd := index .Values "argo-cd" }}
+{{- if $argocd.enabled }}
+  {{- if $argocd.server.ingress.enabled }}
+- **Argo CD**: `https://{{ $argocd.server.ingress.hostname }}` (IngressClass: `{{ $argocd.server.ingress.ingressClassName }}`)
+  {{- end }}
+{{- end }}
+
+{{- if .Values.vault.enabled }}
+  {{- if .Values.vault.server.ingress.enabled }}
+- **Vault**: `https://{{ .Values.vault.server.ingress.hostname }}` (IngressClass: `{{ .Values.vault.server.ingress.ingressClassName }}`)
+  {{- end }}
+{{- end }}
+
+> 실제 도메인 값은 values.yaml의 각 서비스별 `hostname` 항목을 참고하세요.
+
+---
+
+{{- if .Values.vault.enabled }}
+## Vault 초기 설정 및 접근 가이드
+
+Vault가 활성화되어 있으면 아래 절차에 따라 초기화 및 언실을 진행하세요.
+
+1. **Vault Pod가 Running 상태인지 확인**
+   - `kubectl get pods -n {{ .Release.Namespace }} | grep vault` 명령으로 상태를 확인하세요.
+
+2. **Vault 초기화**
+   - 아래 명령어로 Vault를 초기화합니다. (한 번만 실행)
+     ```bash
+     kubectl exec -n {{ .Release.Namespace }} -it <vault-pod-name> -- vault operator init
+     ```
+   - 출력되는 Unseal Key와 Initial Root Token을 안전하게 보관하세요.
+
+3. **Vault 언실 해제**
+   - 3개 이상의 Unseal Key를 입력해야 Vault가 활성화됩니다.
+     ```bash
+     kubectl exec -n {{ .Release.Namespace }} -it <vault-pod-name> -- vault operator unseal <key1>
+     kubectl exec -n {{ .Release.Namespace }} -it <vault-pod-name> -- vault operator unseal <key2>
+     kubectl exec -n {{ .Release.Namespace }} -it <vault-pod-name> -- vault operator unseal <key3>
+     ```
+
+4. **Vault UI/CLI 접근**
+   - 웹 UI: `https://{{ .Values.vault.server.ingress.hostname }}`
+   - CLI: Pod 내부에서 `vault` 명령어 사용
+
+5. **공식 문서 참고**
+   - [HashiCorp Vault 공식 문서](https://www.vaultproject.io/docs/)
+
+> Vault는 보안이 중요한 서비스이므로, 초기화/언실 키와 토큰은 반드시 안전하게 보관하세요.
+> 운영 환경에서는 RBAC, 인증, 네트워크 정책 등 추가 보안 설정을 권장합니다.
+
+---
+{{- end }}
+
+이 차트는 인그레스 및 Vault 연동에 대한 기본 안내만 제공합니다. 실제 운영 환경에서는 보안 정책 및 조직 가이드라인을 반드시 준수하세요.
