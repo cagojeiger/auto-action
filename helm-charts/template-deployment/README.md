@@ -118,8 +118,30 @@ helm template test . -f tests/values-test.yaml
 
 ## New in Version 0.5.1
 
-1. **Namespace-aware Resource Naming**: Prevents resource name collisions across namespaces
+1. **Optional Namespace-aware Resource Naming**: Prevents resource name collisions across namespaces
 2. **Improved Type Inheritance**: Added validation for type existence
 3. **Enhanced Configuration Validation**: Detailed schema with validation for all properties
 4. **Selective Resource Creation**: Fine-grained control over which resources to create
 5. **Test Values**: Added test values files for verification
+
+### Optional Namespace Example
+
+Namespace is now optional in resource naming:
+
+```yaml
+templates:
+  # With namespace (creates namespace-prefixed resource names)
+  - name: with-namespace
+    namespace: test-ns
+    type: web
+    image:
+      repository: nginx
+      tag: latest
+  
+  # Without namespace (creates resources without namespace prefix)
+  - name: without-namespace
+    type: web
+    image:
+      repository: nginx
+      tag: latest
+```
