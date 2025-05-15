@@ -62,16 +62,25 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Create a resource name with namespace awareness to prevent collisions
+Create a resource name with optional namespace awareness to prevent collisions
 */}}
 {{- define "template-deployment.resourceName" -}}
 {{- $name := include "template-deployment.fullname" . -}}
-{{- $namespace := .values.namespace | default .root.Release.Namespace -}}
 {{- $resourceType := .resourceType | default "" -}}
-{{- if $resourceType -}}
-{{- printf "%s-%s-%s" $namespace $name $resourceType | trunc 63 | trimSuffix "-" -}}
+{{- if .values.namespace -}}
+  {{- /* If namespace is provided, use it as prefix */}}
+  {{- if $resourceType -}}
+    {{- printf "%s-%s-%s" .values.namespace $name $resourceType | trunc 63 | trimSuffix "-" -}}
+  {{- else -}}
+    {{- printf "%s-%s" .values.namespace $name | trunc 63 | trimSuffix "-" -}}
+  {{- end -}}
 {{- else -}}
-{{- printf "%s-%s" $namespace $name | trunc 63 | trimSuffix "-" -}}
+  {{- /* If namespace is not provided, don't use namespace prefix */}}
+  {{- if $resourceType -}}
+    {{- printf "%s-%s" $name $resourceType | trunc 63 | trimSuffix "-" -}}
+  {{- else -}}
+    {{- $name | trunc 63 | trimSuffix "-" -}}
+  {{- end -}}
 {{- end -}}
 {{- end -}}
 
