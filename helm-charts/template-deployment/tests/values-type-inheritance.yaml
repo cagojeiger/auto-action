@@ -1,0 +1,77 @@
+templateDefaults:
+  default:
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+  
+  web:
+    service:
+      enabled: true
+      port: 8080
+    ingress:
+      enabled: true
+      className: nginx
+  
+  api:
+    service:
+      enabled: true
+      port: 3000
+    ingress:
+      enabled: false
+  
+  # 새로운 타입 추가
+  microservice:
+    replicaCount: 2
+    service:
+      enabled: true
+      port: 8000
+    ingress:
+      enabled: false
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+templates:
+  # 기본 타입 상속
+  - name: web-app
+    namespace: web
+    type: web
+    image:
+      repository: nginx
+      tag: "latest"
+  
+  # 다중 타입 상속 (순서 중요)
+  - name: api-gateway
+    namespace: api
+    type: [api, web]  # api가 우선, web이 나중
+    image:
+      repository: api-gateway
+      tag: "1.0.0"
+  
+  # 다중 타입 상속 (순서 반대)
+  - name: web-portal
+    namespace: portal
+    type: [web, api]  # web이 우선, api가 나중
+    image:
+      repository: web-portal
+      tag: "2.0.0"
+  
+  # 새로운 타입 상속
+  - name: user-service
+    namespace: services
+    type: microservice
+    image:
+      repository: user-service
+      tag: "1.0.0"
+  
+  # 다중 타입 + 새로운 타입 상속
+  - name: auth-service
+    namespace: services
+    type: [microservice, api]  # microservice가 우선, api가 나중
+    image:
+      repository: auth-service
+      tag: "1.0.0"
