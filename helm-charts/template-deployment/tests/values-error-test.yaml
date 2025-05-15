@@ -1,0 +1,16 @@
+templateDefaults:
+  default:
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+
+  web:
+    service:
+      port: 8080
+
+templates:
+  - name: error-app
+    type: nonexistent-type
+    image:
+      repository: nginx
+      tag: latest

@@ -62,50 +62,87 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Deep merge two maps
+Create a resource name with namespace awareness to prevent collisions
+*/}}
+{{- define "template-deployment.resourceName" -}}
+{{- $name := include "template-deployment.fullname" . -}}
+{{- $namespace := .values.namespace | default .root.Release.Namespace -}}
+{{- $resourceType := .resourceType | default "" -}}
+{{- if $resourceType -}}
+{{- printf "%s-%s-%s" $namespace $name $resourceType | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" $namespace $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Deep merge two maps with optimized performance and error handling
 */}}
 {{- define "template-deployment.deepMerge" -}}
 {{- $top := first . -}}
 {{- $overrides := last . -}}
+{{- if not (kindIs "map" $top) -}}
+  {{- fail (printf "Expected map for first argument, got %s" (kindOf $top)) -}}
+{{- end -}}
+{{- if not (kindIs "map" $overrides) -}}
+  {{- fail (printf "Expected map for second argument, got %s" (kindOf $overrides)) -}}
+{{- end -}}
 {{- range $key, $value := $overrides -}}
   {{- if or (not (hasKey $top $key)) (not (kindIs "map" $value)) -}}
     {{- $_ := set $top $key $value -}}
   {{- else -}}
-    {{- $_ := set $top $key (include "template-deployment.deepMerge" (list (get $top $key) $value) | fromYaml) -}}
+    {{- $topValue := get $top $key -}}
+    {{- if kindIs "map" $topValue -}}
+      {{- $merged := include "template-deployment.deepMerge" (list $topValue $value) -}}
+      {{- if not $merged -}}
+        {{- fail (printf "Failed to merge values for key %s" $key) -}}
+      {{- end -}}
+      {{- $_ := set $top $key ($merged | fromYaml) -}}
+    {{- else -}}
+      {{- $_ := set $top $key $value -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- $top | toYaml -}}
 {{- end -}}
 
 {{/*
-Get template defaults based on type
+Get template defaults based on type with improved validation and documentation
 */}}
 {{- define "template-deployment.getDefaults" -}}
 {{- $type := .type | default "" -}}
 {{- $defaults := dict -}}
 
-{{/* templateDefaults가 있는지 확인 */}}
+{{/* Get defaults from templateDefaults */}}
 {{- if .root.Values.templateDefaults -}}
-  {{/* 기본 템플릿 적용 (있는 경우) */}}
+  {{/* Apply global defaults first */}}
   {{- if hasKey .root.Values.templateDefaults "default" -}}
     {{- $defaults = index .root.Values.templateDefaults "default" -}}
   {{- end -}}
 
   {{- if $type -}}
     {{- if kindIs "string" $type -}}
-      {{/* 단일 타입인 경우 */}}
-      {{- if hasKey .root.Values.templateDefaults $type -}}
+      {{/* Single type inheritance */}}
+      {{- if not (hasKey .root.Values.templateDefaults $type) -}}
+        {{- if ne $type "default" -}}
+          {{- printf "Warning: Type '%s' is not defined in templateDefaults" $type | fail -}}
+        {{- end -}}
+      {{- else -}}
         {{- $typeDefaults := index .root.Values.templateDefaults $type -}}
         {{- $defaults = include "template-deployment.deepMerge" (list $defaults $typeDefaults) | fromYaml -}}
       {{- end -}}
     {{- else if kindIs "slice" $type -}}
-      {{/* 여러 타입인 경우 - 리스트 역순으로 머지 (앞에 있는 타입이 우선순위 높음) */}}
+      {{/* Multiple type inheritance - applied in reverse order (last has highest precedence) */}}
       {{- $reversedTypes := list -}}
       {{- range $index, $t := $type -}}
         {{- $reversedTypes = prepend $reversedTypes $t -}}
       {{- end -}}
       {{- range $index, $t := $reversedTypes -}}
-        {{- if hasKey $.root.Values.templateDefaults $t -}}
+        {{- if not (hasKey $.root.Values.templateDefaults $t) -}}
+          {{- if ne $t "default" -}}
+            {{- printf "Warning: Type '%s' is not defined in templateDefaults" $t | fail -}}
+          {{- end -}}
+        {{- else -}}
           {{- $typeDefaults := index $.root.Values.templateDefaults $t -}}
           {{- $defaults = include "template-deployment.deepMerge" (list $defaults $typeDefaults) | fromYaml -}}
         {{- end -}}

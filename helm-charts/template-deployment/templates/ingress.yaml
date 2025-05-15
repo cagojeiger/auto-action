@@ -2,14 +2,21 @@
 {{- $type := $template.type | default "" }}
 {{- $mergedValues := include "template-deployment.mergeValues" (dict "root" $ "values" $template "type" $type) | fromYaml }}
 {{- $values := $mergedValues }}
----
+{{- $ingressEnabled := false }}
 {{- if and $values.ingress $values.ingress.enabled }}
+  {{- $ingressEnabled = true }}
+{{- end }}
+{{- if $ingressEnabled }}
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
+  name: {{ include "template-deployment.resourceName" (dict "root" $ "values" $values "resourceType" "ingress") }}
   labels:
     {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
+  {{- with $values.namespace }}
+  namespace: {{ . }}
+  {{- end }}
   {{- with $values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -40,9 +47,13 @@ spec:
             {{- end }}
             backend:
               service:
-                name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
+                name: {{ include "template-deployment.resourceName" (dict "root" $ "values" $values "resourceType" "service") }}
                 port:
+                  {{- if .port }}
+                  number: {{ .port }}
+                  {{- else }}
                   number: {{ $values.service.port }}
+                  {{- end }}
           {{- end }}
     {{- end }}
 {{- end }}

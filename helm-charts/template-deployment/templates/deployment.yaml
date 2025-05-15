@@ -2,13 +2,23 @@
 {{- $type := $template.type | default "" }}
 {{- $mergedValues := include "template-deployment.mergeValues" (dict "root" $ "values" $template "type" $type) | fromYaml }}
 {{- $values := $mergedValues }}
+{{- $deploymentEnabled := true }}
+{{- if hasKey $values "deployment" }}
+  {{- if hasKey $values.deployment "enabled" }}
+    {{- $deploymentEnabled = $values.deployment.enabled }}
+  {{- end }}
+{{- end }}
+{{- if $deploymentEnabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
+  name: {{ include "template-deployment.resourceName" (dict "root" $ "values" $values "resourceType" "deployment") }}
   labels:
     {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
+  {{- with $values.namespace }}
+  namespace: {{ . }}
+  {{- end }}
 spec:
   {{- if not (and $values.autoscaling $values.autoscaling.enabled) }}
   replicas: {{ $values.replicaCount | default 1 }}
@@ -117,4 +127,5 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
 {{- end }}
