@@ -1,67 +1,109 @@
 # Template Deployment Helm Chart
 
-Kubernetes에서 다양한 워크로드를 쉽게 배포할 수 있는 템플릿 기반 Helm 차트입니다.
+A flexible Helm chart for deploying multiple applications with type-based inheritance.
 
-## 주요 기능
+## Features
 
-- 템플릿 상속 및 재사용 메커니즘
-- 중첩 객체의 깊은 병합 지원
-- ConfigMap, Service, Ingress 등 다양한 리소스 자동 생성
+- **Type-based Inheritance**: Define default configurations for different application types
+- **Multi-type Inheritance**: Combine multiple types for complex configurations
+- **Namespace Support**: Deploy resources to different namespaces
+- **Selective Resource Creation**: Enable/disable specific Kubernetes resources
+- **Validation**: Schema validation for configuration values
+- **Deep Merge**: Advanced merging of nested configuration objects
 
-## 설치 방법
+## Installation
 
 ```bash
 helm install my-deployment ./template-deployment -f values.yaml
 ```
 
-## values.yaml 구성
+## Configuration
+
+### Basic Example
 
 ```yaml
-# 템플릿 기본값 정의
+# values.yaml
+templates:
+  - name: web-app
+    namespace: web
+    type: web
+    image:
+      repository: nginx
+      tag: latest
+    service:
+      enabled: true
+      port: 80
+    ingress:
+      enabled: true
+      hosts:
+        - host: web.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+```
+
+### Type Inheritance
+
+Define default configurations for different types:
+
+```yaml
+# values.yaml
 templateDefaults:
-  default:  # 모든 템플릿에 적용되는 기본값
+  default:  # Applied to all templates
     resources:
       requests:
         cpu: 100m
         memory: 128Mi
   
-  web:  # 웹 애플리케이션 타입
+  web:  # Applied to templates with type: web
     service:
       enabled: true
       port: 80
   
-  database:  # 데이터베이스 타입
+  database:  # Applied to templates with type: database
     persistence:
       enabled: true
-
-# 템플릿 정의
-templates:
-  - name: app-name
-    type: web  # 또는 [web, api]와 같이 다중 타입 지정
-    image:
-      repository: image-repository
-      tag: "image-tag"
-    # 기타 설정...
 ```
 
-## 템플릿 상속
+### Multi-type Inheritance
 
-템플릿은 `type` 필드를 통해 `templateDefaults`에 정의된 설정을 상속받습니다.
-다중 타입 상속 시 배열 형태로 지정하며, 앞에 있는 타입이 우선순위가 높습니다.
+Combine multiple types (last has highest precedence):
 
-템플릿 상속에 대한 자세한 내용은 [템플릿 상속 문서](docs/template-inheritance.md)를 참조하세요.
+```yaml
+templates:
+  - name: api-service
+    type: [web, api]  # Inherits from both web and api types
+    image:
+      repository: my-api
+      tag: v1.0.0
+```
 
-## 테스트
+### Selective Resource Creation
+
+Enable or disable specific resources:
+
+```yaml
+templates:
+  - name: config-only
+    type: web
+    image:
+      repository: nginx
+      tag: latest
+    deployment:
+      enabled: false  # No Deployment will be created
+    service:
+      enabled: false  # No Service will be created
+```
+
+## Testing
+
+Test the chart with the provided test values:
 
 ```bash
-# Makefile을 사용한 테스트
-make test
-
-# 또는 직접 실행
-helm unittest ./helm-charts/template-deployment
+helm template test . -f tests/values-test.yaml
 ```
 
-## 지원되는 리소스 유형
+## Supported Resource Types
 
 - Deployment
 - Service
@@ -73,3 +115,11 @@ helm unittest ./helm-charts/template-deployment
 - ClusterRole
 - ClusterRoleBinding
 - PodDisruptionBudget
+
+## New in Version 0.5.1
+
+1. **Namespace-aware Resource Naming**: Prevents resource name collisions across namespaces
+2. **Improved Type Inheritance**: Added validation for type existence
+3. **Enhanced Configuration Validation**: Detailed schema with validation for all properties
+4. **Selective Resource Creation**: Fine-grained control over which resources to create
+5. **Test Values**: Added test values files for verification
