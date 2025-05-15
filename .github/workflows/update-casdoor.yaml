@@ -1,0 +1,128 @@
+name: Update Casdoor
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 매일 00:00 UTC(09:00 KST) 실행
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  update-casdoor:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+
+      - name: Checkout casdoor-helm repository
+        uses: actions/checkout@v4
+        with:
+          repository: casdoor/casdoor-helm
+          path: ./temp-casdoor-helm-source
+          token: ${{ github.token }}
+
+      - name: Extract versions
+        id: extract_versions
+        run: |
+          CHART_VERSION=$(grep -E '^version:' ./temp-casdoor-helm-source/charts/casdoor/Chart.yaml \
+            | awk '{print $2}' | tr -d "\"'" | xargs)
+          echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
+
+          APP_VERSION=$(grep -E '^appVersion:' ./temp-casdoor-helm-source/charts/casdoor/Chart.yaml \
+            | awk '{print $2}' | tr -d "\"'" | xargs)
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+
+          echo "추출된 차트 버전: $CHART_VERSION, 앱 버전: $APP_VERSION"
+
+      - name: Update Helm chart files
+        run: |
+          mkdir -p helm-charts/casdoor
+          rm -rf helm-charts/casdoor/*
+          cp -r ./temp-casdoor-helm-source/charts/casdoor/* helm-charts/casdoor/
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git add -N helm-charts/casdoor
+          if git diff --quiet --exit-code -- helm-charts/casdoor; then
+            echo "변경사항이 없습니다. 업데이트가 필요하지 않습니다."
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "변경사항이 감지되었습니다. 업데이트를 진행합니다."
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set branch name
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          echo "BRANCH_NAME=update-casdoor-v${{ env.APP_VERSION }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+
+      - name: Commit changes
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git checkout -b "${BRANCH_NAME}"
+          git add helm-charts/casdoor
+          git commit -m "chore: casdoor 업데이트 (v${{ env.APP_VERSION }})"
+
+      - name: Push changes and create PR
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git push -u origin "${BRANCH_NAME}"
+
+          PR_URL=$(gh pr create \
+            --title "chore: casdoor 업데이트 (v${{ env.APP_VERSION }})" \
+            --body "GitHub Action이 최신 casdoor 버전(v${{ env.APP_VERSION }})으로 업데이트하였습니다." \
+            --base main \
+            --head "${BRANCH_NAME}")
+
+          echo "생성된 PR URL: $PR_URL"
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+
+          sleep 10
+          gh pr merge "$PR_NUMBER" --auto --merge
+
+      - name: Wait for PR to be merged
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+          echo "PR #$PR_NUMBER 병합을 기다리는 중..."
+          
+          START_TIME=$(date +%s)
+          
+          for i in {1..30}; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            
+            PR_STATE=$(gh pr view "$PR_NUMBER" --json state -q .state)
+            if [ "$PR_STATE" = "MERGED" ]; then
+              echo "PR이 성공적으로 병합되었습니다. 총 소요 시간: ${ELAPSED_TIME}초"
+              break
+            fi
+            
+            echo "대기 중... ($i/30) - 경과 시간: ${ELAPSED_TIME}초"
+            sleep 15
+          done
+          
+          FINAL_TIME=$(date +%s)
+          TOTAL_TIME=$((FINAL_TIME - START_TIME))
+          echo "PR 병합 대기 총 시간: ${TOTAL_TIME}초"
+
+      - name: Trigger unified-artifact-push workflow
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          echo "unified-artifact-push 워크플로우를 수동으로 트리거합니다..."
+
+          gh workflow run unified-artifact-push.yaml \
+            -f artifact_type=helm \
+            -f artifact_name=casdoor
+
+          echo "unified-artifact-push 워크플로우 트리거 완료"
