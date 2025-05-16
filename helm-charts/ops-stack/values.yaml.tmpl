@@ -2,10 +2,10 @@
 # Global
 ########################################################
 global:
-  imageRegistry: {{ .vars.global_image_registry }}
-  imagePullSecrets: {{ .vars.global_image_pull_secrets }}
-  defaultStorageClass: {{ .vars.global_default_storage_class }}
-  storageClass: {{ .vars.global_storage_class }}
+  imageRegistry: {{ .vars.globalImageRegistry }}
+  imagePullSecrets: {{ .vars.globalImagePullSecrets }}
+  defaultStorageClass: {{ .vars.globalDefaultStorageClass }}
+  storageClass: {{ .vars.globalStorageClass }}
 
 ########################################################
 # Redis
@@ -32,8 +32,8 @@ postgresql:
   architecture: standalone
   auth:
     enabled: true
-    username: {{ .vars.admin_user }}
-    password: {{ .vars.admin_password }}
+    username: {{ .vars.adminUser }}
+    password: {{ .vars.adminPassword }}
   resources:
     requests:
       memory: 128Mi
@@ -54,8 +54,8 @@ minio:
   nameOverride: minio
   mode: distributed
   auth:
-    rootUser: {{ .vars.admin_user }}
-    rootPassword: {{ .vars.admin_password }}
+    rootUser: {{ .vars.adminUser }}
+    rootPassword: {{ .vars.adminPassword }}
   provisioning:
     enabled: true
     sleepTime: 30s
@@ -69,11 +69,11 @@ minio:
       memory: 2048Mi
   ingress:
     enabled: true
-    ingressClassName: {{ .vars.nginx_ingress_class_name }}
+    ingressClassName: {{ .vars.nginxIngressClassName }}
     hostname: minio.{{ .vars.domain }}
   apiIngress:
     enabled: true
-    ingressClassName: {{ .vars.nginx_ingress_class_name }}
+    ingressClassName: {{ .vars.nginxIngressClassName }}
     hostname: minio-api.{{ .vars.domain }}
     annotations:
       nginx.ingress.kubernetes.io/proxy-body-size: "0"
@@ -93,9 +93,9 @@ harbor:
   ingress:
     core:
       hostname: harbor.{{ .vars.domain }}
-      ingressClassName: {{ .vars.nginx_ingress_class_name }}
-  externalURL: https://harbor.{{ .vars.namespace }}.svc.cluster.local:{{ .vars.nginx_ingress_https_port }}
-  adminPassword: {{ .vars.admin_password }}
+      ingressClassName: {{ .vars.nginxIngressClassName }}
+  externalURL: https://harbor.{{ .vars.namespace }}.svc.cluster.local:{{ .vars.nginxIngressHttpsPort }}
+  adminPassword: {{ .vars.adminPassword }}
   trivy:
     enabled: false
   service:
@@ -109,23 +109,23 @@ harbor:
       s3:
         bucket: harbor
         rootdirectory: /
-        accesskey: {{ .vars.admin_user }}
-        secretkey: {{ .vars.admin_password }}
+        accesskey: {{ .vars.adminUser }}
+        secretkey: {{ .vars.adminPassword }}
         secure: false
-        regionendpoint: http://minio-api.{{ .vars.namespace }}.svc.cluster.local:{{ .vars.nginx_ingress_http_port }}
+        regionendpoint: http://minio-api.{{ .vars.namespace }}.svc.cluster.local:{{ .vars.nginxIngressHttpPort }}
   postgresql:
     enabled: false
   externalDatabase:
-    host: {{ .vars.release_name }}-postgresql.{{ .vars.namespace }}.svc.cluster.local
+    host: {{ .vars.releaseName }}-postgresql.{{ .vars.namespace }}.svc.cluster.local
     port: 5432
-    user: {{ .vars.admin_user }}
-    password: {{ .vars.admin_password }}
+    user: {{ .vars.adminUser }}
+    password: {{ .vars.adminPassword }}
     sslmode: disable
     coreDatabase: harbor_core
   redis:
     enabled: false
   externalRedis:
-    host: {{ .vars.release_name }}-redis-master.{{ .vars.namespace }}.svc.cluster.local
+    host: {{ .vars.releaseName }}-redis-master.{{ .vars.namespace }}.svc.cluster.local
     port: 6379
 
 ########################################################
@@ -135,7 +135,7 @@ gitea:
   enabled: false
   ingress:
     enabled: true
-    ingressClassName: {{ .vars.nginx_ingress_class_name }}
+    ingressClassName: {{ .vars.nginxIngressClassName }}
     hostname: gitea.{{ .vars.domain }}
     annotations:
       nginx.ingress.kubernetes.io/proxy-body-size: "50m"
@@ -147,23 +147,23 @@ gitea:
     limits:
       memory: 1024Mi
   appName: ops-gitea
-  rootURL: https://gitea.{{ .vars.domain }}:{{ .vars.nginx_ingress_https_port | default "443" }}
+  rootURL: https://gitea.{{ .vars.domain }}:{{ .vars.nginxIngressHttpsPort | default "443" }}
   extraEnvVars:
     - name: GITEA__SERVICE__SHOW_REGISTRATION_BUTTON
       value: "false"
   persistence:
     enabled: true
     size: 10Gi
-  adminEmail: {{ .vars.admin_email }}
-  adminPassword: {{ .vars.admin_password }}
-  adminUsername: {{ .vars.admin_user }}
+  adminEmail: {{ .vars.adminEmail }}
+  adminPassword: {{ .vars.adminPassword }}
+  adminUsername: {{ .vars.adminUser }}
   postgresql:
     enabled: false
   externalDatabase:
-    host: {{ .vars.release_name }}-postgresql.{{ .vars.namespace }}.svc.cluster.local
+    host: {{ .vars.releaseName }}-postgresql.{{ .vars.namespace }}.svc.cluster.local
     port: 5432
-    user: {{ .vars.admin_user }}
-    password: {{ .vars.admin_password }}
+    user: {{ .vars.adminUser }}
+    password: {{ .vars.adminPassword }}
     database: gitea
 
 ########################################################
@@ -173,12 +173,12 @@ argo-cd:
   enabled: true
   config:
     secret:
-      argocdServerAdminPassword: {{ .vars.admin_password }}
+      argocdServerAdminPassword: {{ .vars.adminPassword }}
   server:
     insecure: true
     ingress:
       enabled: true
-      ingressClassName: {{ .vars.nginx_ingress_class_name }}
+      ingressClassName: {{ .vars.nginxIngressClassName }}
       hostname: argocd.{{ .vars.domain }}
     resources:
       requests:
@@ -200,7 +200,7 @@ argo-cd:
   redis:
     enabled: false
   externalRedis:
-    host: {{ .vars.release_name }}-redis-master.{{ .vars.namespace }}.svc.cluster.local
+    host: {{ .vars.releaseName }}-redis-master.{{ .vars.namespace }}.svc.cluster.local
     port: 6379
 
 ########################################################
@@ -212,5 +212,5 @@ vault:
     replicaCount: 1
     ingress:
       enabled: true
-      ingressClassName: {{ .vars.nginx_ingress_class_name }}
+      ingressClassName: {{ .vars.nginxIngressClassName }}
       hostname: vault.{{ .vars.domain }}

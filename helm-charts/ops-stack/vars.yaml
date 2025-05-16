@@ -1,16 +1,16 @@
 ########################################################
 # Global
 ########################################################
-global_image_registry: ""
-global_image_pull_secrets: []
-global_default_storage_class: ""
-global_storage_class: ""
+globalImageRegistry: ""
+globalImagePullSecrets: []
+globalDefaultStorageClass: ""
+globalStorageClass: ""
 
 ########################################################
 # Namespace
 ########################################################
 namespace: ops-stack
-release_name: ops-stack
+releaseName: ops-stack
 
 ########################################################
 # Domain
@@ -20,13 +20,13 @@ domain: ops-stack.io
 ########################################################
 # ingress
 ########################################################
-nginx_ingress_class_name: nginx
-nginx_ingress_http_port: 80
-nginx_ingress_https_port: 443
+nginxIngressClassName: nginx
+nginxIngressHttpPort: 80
+nginxIngressHttpsPort: 443
 
 ########################################################
 # Admin
 ########################################################
-admin_user: admin
-admin_password: qwer1234
-admin_email: admin@ops-stack.io
+adminUser: admin
+adminPassword: qwer1234
+adminEmail: admin@ops-stack.io
