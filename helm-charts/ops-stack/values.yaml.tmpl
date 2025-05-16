@@ -8,6 +8,12 @@ global:
   storageClass: {{ .vars.globalStorageClass }}
 
 ########################################################
+# Overrideable values
+########################################################
+fullnameOverride: ""
+nameOverride: ""
+
+########################################################
 # Redis
 ########################################################
 redis:
@@ -45,6 +51,7 @@ postgresql:
         create-databases.sql: |
           CREATE DATABASE gitea;
           CREATE DATABASE harbor_core;
+          CREATE DATABASE litellm;
 
 ########################################################
 # Minio
@@ -214,3 +221,33 @@ vault:
       enabled: true
       ingressClassName: {{ .vars.nginxIngressClassName }}
       hostname: vault.{{ .vars.domain }}
+
+########################################################
+# Litellm
+########################################################
+litellm:
+  enabled: true
+  masterkey: {{ .vars.adminPassword }}
+  ingress:
+    enabled: true
+    className: {{ .vars.nginxIngressClassName }}
+    annotations: {}
+    hosts:
+      - host: litellm.{{ .vars.domain }}
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+  db:
+    useExisting: true
+    endpoint: {{ .vars.releaseName }}-postgresql.{{ .vars.namespace }}.svc.cluster.local
+    database: litellm
+    url: postgresql://{{ .vars.adminUser }}:{{ .vars.adminPassword }}@{{ .vars.releaseName }}-postgresql.{{ .vars.namespace }}.svc.cluster.local:5432/litellm
+    secret:
+      name: {{ .vars.releaseName }}-postgres-for-litellm
+      usernameKey: username
+      passwordKey: password
+    deployStandalone: false
+  envVars:
+    REDIS_HOST: {{ .vars.releaseName }}-redis-master.{{ .vars.namespace }}.svc.cluster.local
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: ""

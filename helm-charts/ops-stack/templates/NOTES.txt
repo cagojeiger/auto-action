@@ -38,6 +38,12 @@
   {{- end }}
 {{- end }}
 
+{{- if .Values.litellm.enabled }}
+  {{- if .Values.litellm.ingress.enabled }}
+- **Litellm**: `https://{{ (index .Values.litellm.ingress.hosts 0).host }}` (IngressClass: `{{ .Values.litellm.ingress.className }}`)
+  {{- end }}
+{{- end }}
+
 > 실제 도메인 값은 values.yaml의 각 서비스별 `hostname` 항목을 참고하세요.
 
 ---
