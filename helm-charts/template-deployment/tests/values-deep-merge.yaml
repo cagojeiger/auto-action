@@ -1,0 +1,82 @@
+templateDefaults:
+  default:
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+    env:
+      - name: ENV
+        value: "production"
+      - name: LOG_LEVEL
+        value: "info"
+  
+  web:
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    env:
+      - name: SERVER_PORT
+        value: "8080"
+      - name: LOG_LEVEL
+        value: "debug"  # 오버라이드
+  
+  api:
+    resources:
+      limits:
+        memory: 512Mi  # 부분 오버라이드
+    env:
+      - name: API_KEY
+        value: "default-key"
+      - name: LOG_FORMAT
+        value: "json"
+
+templates:
+  # 깊은 병합 테스트 - 기본 타입
+  - name: simple-app
+    namespace: default
+    type: default
+    image:
+      repository: simple-app
+      tag: "1.0.0"
+    env:
+      - name: APP_NAME
+        value: "simple-app"
+      - name: LOG_LEVEL
+        value: "warn"  # 오버라이드
+  
+  # 깊은 병합 테스트 - 단일 타입
+  - name: web-app
+    namespace: web
+    type: web
+    image:
+      repository: web-app
+      tag: "1.0.0"
+    resources:
+      limits:
+        cpu: 300m  # 부분 오버라이드
+    env:
+      - name: APP_NAME
+        value: "web-app"
+  
+  # 깊은 병합 테스트 - 다중 타입
+  - name: api-gateway
+    namespace: api
+    type: [web, api]  # web이 우선, api가 나중
+    image:
+      repository: api-gateway
+      tag: "1.0.0"
+    resources:
+      requests:
+        cpu: 100m  # 부분 오버라이드
+    env:
+      - name: APP_NAME
+        value: "api-gateway"
+      - name: API_KEY
+        value: "custom-key"  # 오버라이드

@@ -2,24 +2,47 @@
 {{- $type := $template.type | default "" }}
 {{- $mergedValues := include "template-deployment.mergeValues" (dict "root" $ "values" $template "type" $type) | fromYaml }}
 {{- $values := $mergedValues }}
----
+{{- $serviceEnabled := false }}
 {{- if and $values.service $values.service.enabled }}
+  {{- $serviceEnabled = true }}
+{{- end }}
+{{- if $serviceEnabled }}
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
+  name: {{ include "template-deployment.resourceName" (dict "root" $ "values" $values "resourceType" "service") }}
   labels:
     {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
+  {{- with $values.namespace }}
+  namespace: {{ . }}
+  {{- end }}
+  {{- with $values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ $values.service.type | default "ClusterIP" }}
   ports:
+    {{- if $values.service.ports }}
+    {{- range $values.service.ports }}
+    - name: {{ .name | default "http" }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort | default .port }}
+      protocol: {{ .protocol | default "TCP" }}
+      {{- if and (eq (default "ClusterIP" $values.service.type) "NodePort") .nodePort }}
+      nodePort: {{ .nodePort }}
+      {{- end }}
+    {{- end }}
+    {{- else }}
     - name: {{ $values.service.portName | default "http" }}
       port: {{ $values.service.port }}
       targetPort: {{ $values.service.targetPort | default $values.service.port }}
       protocol: TCP
-      {{- if eq $values.service.type "NodePort" }}
-      nodePort: {{ $values.service.nodePort | default "null" }}
+      {{- if and (eq (default "ClusterIP" $values.service.type) "NodePort") $values.service.nodePort }}
+      nodePort: {{ $values.service.nodePort }}
       {{- end }}
+    {{- end }}
   selector:
     {{- include "template-deployment.selectorLabels" (dict "root" $ "values" $values) | nindent 4 }}
 {{- end }}

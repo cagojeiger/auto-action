@@ -1,0 +1,87 @@
+global:
+  imageRegistry: "docker.io"
+  imagePullSecrets:
+    - name: regcred
+
+templateDefaults:
+  default:
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+  
+  web:
+    service:
+      port: 8080
+    ingress:
+      enabled: true
+      className: nginx
+      hosts:
+        - host: example.local
+          paths:
+            - path: /
+              pathType: Prefix
+  
+  database:
+    deployment:
+      enabled: true
+    service:
+      enabled: true
+      port: 5432
+
+templates:
+  - name: web-app
+    namespace: web
+    type: web
+    image:
+      repository: nginx
+      tag: latest
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+    ingress:
+      enabled: true
+      hosts:
+        - host: web.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+  
+  - name: api-service
+    namespace: api
+    type: web
+    image:
+      repository: node
+      tag: 14-alpine
+    deployment:
+      enabled: true
+    service:
+      enabled: true
+      port: 3000
+    ingress:
+      enabled: false
+  
+  - name: db
+    namespace: db
+    type: database
+    image:
+      repository: postgres
+      tag: "13"
+    deployment:
+      enabled: true
+    service:
+      enabled: true
+      port: 5432
+    ingress:
+      enabled: false
