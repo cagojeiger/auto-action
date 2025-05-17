@@ -2,6 +2,8 @@
 
 이 저장소는 Docker 이미지와 Helm 차트를 이용해 여러 인프라 서비스를 배포하기 위해 사용됩니다. GitHub Actions 워크플로가 이미지 빌드와 차트 배포를 자동화합니다.
 
+추가 문서는 [docs/](docs/) 디렉터리에서 확인할 수 있습니다.
+
 ## 디렉터리 구조
 
 - **containers/** - 컨테이너 이미지를 위한 Dockerfile과 스크립트가 있습니다. `code-server` 이미지는 Kubernetes 관련 도구를 포함합니다.
@@ -44,3 +46,9 @@ helm install ops-stack helm-charts/ops-stack -f helm-charts/ops-stack/values.yam
 
 이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 [LICENSE](LICENSE)를 참고하세요.
 
+
+## 코드 검사 및 포맷팅
+
+이 저장소는 [pre-commit](https://pre-commit.com/)을 사용하여 Helm 차트, Dockerfile, YAML 파일을 검사하고 포맷합니다. PR을 생성하면 GitHub Actions가 자동으로 훅을 실행합니다.
+
+로컬 설치 및 사용 방법은 [docs/pre-commit.md](docs/pre-commit.md) 문서를 참고하세요.
