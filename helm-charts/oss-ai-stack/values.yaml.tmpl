@@ -2,10 +2,10 @@
 # Global
 ########################################################
 global:
-  imageRegistry: {{ .vars.global_image_registry }}
-  imagePullSecrets: {{ .vars.global_image_pull_secrets }}
-  defaultStorageClass: {{ .vars.global_default_storage_class }}
-  storageClass: {{ .vars.global_storage_class }}
+  imageRegistry: {{ .vars.globalImageRegistry }}
+  imagePullSecrets: {{ .vars.globalImagePullSecrets }}
+  defaultStorageClass: {{ .vars.globalDefaultStorageClass }}
+  storageClass: {{ .vars.globalStorageClass }}
 
 ########################################################
 # Open Source Services
@@ -47,7 +47,7 @@ open-source-services:
           port: http
       ingress:
         enabled: true
-        className: {{ .vars.nginx_ingress_class_name }}
+        className: {{ .vars.nginxIngressClassName }}
         annotations: {}
         hosts:
           - host: n8n.{{ .vars.domain }}

@@ -6,8 +6,6 @@ on:
     paths:
       - 'helm-charts/**'
       - 'containers/**'
-      - 'helm-charts/'
-      - 'containers/'
   workflow_dispatch:
     inputs:
       artifact_type:

@@ -104,16 +104,26 @@ jobs:
           # PR이 병합될 때까지 기다립니다
           PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
           echo "PR #$PR_NUMBER 병합을 기다리는 중..."
-
-          for i in {1..10}; do
+          
+          START_TIME=$(date +%s)
+          
+          for i in {1..30}; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+            
             PR_STATE=$(gh pr view "$PR_NUMBER" --json state -q .state)
             if [ "$PR_STATE" = "MERGED" ]; then
-              echo "PR이 성공적으로 병합되었습니다."
+              echo "PR이 성공적으로 병합되었습니다. 총 소요 시간: ${ELAPSED_TIME}초"
               break
             fi
-            echo "대기 중... ($i/10)"
+            
+            echo "대기 중... ($i/30) - 경과 시간: ${ELAPSED_TIME}초"
             sleep 15
           done
+          
+          FINAL_TIME=$(date +%s)
+          TOTAL_TIME=$((FINAL_TIME - START_TIME))
+          echo "PR 병합 대기 총 시간: ${TOTAL_TIME}초"
 
       - name: Trigger unified-artifact-push workflow
         if: steps.check_changes.outputs.changes == 'true'

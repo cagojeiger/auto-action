@@ -1,10 +1,13 @@
-{{- range $index, $values := .Values.templates }}
+{{- range $index, $template := .Values.templates }}
+{{- $type := $template.type | default "" }}
+{{- $mergedValues := include "template-deployment.mergeValues" (dict "root" $ "values" $template "type" $type) | fromYaml }}
+{{- $values := $mergedValues }}
 ---
 {{- if and $values.persistence $values.persistence.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ $values.persistence.name }}
+  name: {{ $values.persistence.name | default (printf "%s-pvc" (include "template-deployment.fullname" (dict "root" $ "values" $values))) }}
   labels:
     {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
   annotations:
@@ -19,12 +22,12 @@ spec:
     requests:
       storage: {{ $values.persistence.size }}
   {{- $storageClass := "" }}
-  {{- if $.Values.global.storageClass }}
+  {{- if $values.persistence.storageClassName }}
+    {{- $storageClass = $values.persistence.storageClassName }}
+  {{- else if $.Values.global.storageClass }}
     {{- $storageClass = $.Values.global.storageClass }}
   {{- else if $.Values.global.defaultStorageClass }}
     {{- $storageClass = $.Values.global.defaultStorageClass }}
-  {{- else if $values.persistence.storageClassName }}
-    {{- $storageClass = $values.persistence.storageClassName }}
   {{- end }}
   {{- if $storageClass }}
   storageClassName: {{ $storageClass }}

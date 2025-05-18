@@ -13,7 +13,7 @@ UNAME_S := $(shell uname -s)
 ################################################################################
 # .PHONY 타겟 정의
 ################################################################################
-.PHONY: all help template install-gomplate
+.PHONY: all help template install-gomplate install uninstall
 
 ################################################################################
 # 기본 타겟
@@ -28,6 +28,8 @@ help:
 	@echo "  make                 - 이 도움말 메시지 표시"
 	@echo "  make template        - values.yaml 템플릿 생성"
 	@echo "  make install-gomplate - gomplate 도구 설치 (macOS 전용)"
+	@echo "  make install         - Helm 차트 배포/업그레이드"
+	@echo "  make uninstall       - Helm 차트 언인스톨"
 
 ################################################################################
 # Gomplate 설치 (macOS 전용)
@@ -72,3 +74,15 @@ template:
 		exit 1; \
 	}
 	@echo "values.yaml 파일 생성 완료"
+
+################################################################################
+# Helm 차트 배포/업그레이드
+################################################################################
+install:
+	helm upgrade --install ops-stack . -n ops-stack --create-namespace -f values.yaml
+
+################################################################################
+# Helm 차트 언인스톨
+################################################################################
+uninstall:
+	helm uninstall ops-stack -n ops-stack

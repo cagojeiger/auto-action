@@ -1,4 +1,7 @@
-{{- range $index, $values := .Values.templates }}
+{{- range $index, $template := .Values.templates }}
+{{- $type := $template.type | default "" }}
+{{- $mergedValues := include "template-deployment.mergeValues" (dict "root" $ "values" $template "type" $type) | fromYaml }}
+{{- $values := $mergedValues }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -32,7 +35,7 @@ spec:
       {{- if and $values.serviceAccount $values.serviceAccount.create }}
       serviceAccountName: {{ include "template-deployment.serviceAccountName" (dict "root" $ "values" $values) }}
       {{- end }}
-      {{- with $values.securityContext }}
+      {{- with $values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -42,7 +45,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ $values.name }}
-          {{- with $values.securityContext }}
+          {{- with $values.containerSecurityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -78,17 +81,17 @@ spec:
             {{- end }}
             {{- else }}
             - name: {{ $values.service.portName | default "http" }}
-              containerPort: {{ $values.service.port | default 80 }}
+              containerPort: {{ $values.service.targetPort | default $values.service.port | default 80 }}
               protocol: TCP
             {{- end }}
           {{- end }}
-          {{- with $values.livenessProbe }}
+          {{- if $values.livenessProbe }}
           livenessProbe:
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml $values.livenessProbe | nindent 12 }}
           {{- end }}
-          {{- with $values.readinessProbe }}
+          {{- if $values.readinessProbe }}
           readinessProbe:
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml $values.readinessProbe | nindent 12 }}
           {{- end }}
           {{- with $values.resources }}
           resources:
