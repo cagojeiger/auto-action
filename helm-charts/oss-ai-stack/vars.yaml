@@ -1,10 +1,10 @@
 ########################################################
 # Global
 ########################################################
-global_image_registry: ""
-global_image_pull_secrets: []
-global_default_storage_class: ""
-global_storage_class: ""
+globalImageRegistry: ""
+globalImagePullSecrets: []
+globalDefaultStorageClass: ""
+globalStorageClass: ""
 
 ########################################################
 # Domain
@@ -14,4 +14,4 @@ domain: sso-ai-stack.io
 ########################################################
 # ingress
 ########################################################
-nginx_ingress_class_name: nginx
+nginxIngressClassName: nginx

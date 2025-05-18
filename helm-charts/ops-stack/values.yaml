@@ -8,6 +8,12 @@ global:
   storageClass: 
 
 ########################################################
+# Overrideable values
+########################################################
+fullnameOverride: ""
+nameOverride: ""
+
+########################################################
 # Redis
 ########################################################
 redis:
@@ -45,6 +51,7 @@ postgresql:
         create-databases.sql: |
           CREATE DATABASE gitea;
           CREATE DATABASE harbor_core;
+          CREATE DATABASE litellm;
 
 ########################################################
 # Minio
@@ -88,7 +95,7 @@ minio:
 # Harbor
 ########################################################
 harbor:
-  enabled: true
+  enabled: false
   exposureType: ingress
   ingress:
     core:
@@ -132,7 +139,7 @@ harbor:
 # Gitea
 ########################################################
 gitea:
-  enabled: true
+  enabled: false
   ingress:
     enabled: true
     ingressClassName: nginx
@@ -202,3 +209,45 @@ argo-cd:
   externalRedis:
     host: ops-stack-redis-master.ops-stack.svc.cluster.local
     port: 6379
+
+########################################################
+# Vault
+########################################################
+vault:
+  enabled: true
+  server:
+    replicaCount: 1
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hostname: vault.ops-stack.io
+
+########################################################
+# Litellm
+########################################################
+litellm:
+  enabled: true
+  masterkey: qwer1234
+  ingress:
+    enabled: true
+    className: nginx
+    annotations: {}
+    hosts:
+      - host: litellm.ops-stack.io
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+  db:
+    useExisting: true
+    endpoint: ops-stack-postgresql.ops-stack.svc.cluster.local
+    database: litellm
+    url: postgresql://admin:qwer1234@ops-stack-postgresql.ops-stack.svc.cluster.local:5432/litellm
+    secret:
+      name: ops-stack-postgres-for-litellm
+      usernameKey: username
+      passwordKey: password
+    deployStandalone: false
+  envVars:
+    REDIS_HOST: ops-stack-redis-master.ops-stack.svc.cluster.local
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: ""

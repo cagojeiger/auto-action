@@ -4,18 +4,24 @@ dependencies:
   version: 20.13.4
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 16.6.6
+  version: 16.7.4
 - name: minio
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 16.0.0
+  version: 16.0.10
 - name: harbor
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 24.5.0
+  version: 24.6.1
 - name: gitea
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 3.2.3
+  version: 3.2.7
 - name: argo-cd
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 7.3.2
-digest: sha256:3de002c3e0d5758573b924e57fa8cbb8b19ae4805b894d1fae310080c022db10
-generated: "2025-05-03T02:35:41.111074+09:00"
+  version: 7.3.7
+- name: vault
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 1.7.9
+- name: litellm-helm
+  repository: oci://ghcr.io/berriai
+  version: 0.1.680
+digest: sha256:379dbc81e910415ece8b7f7400df3edae8a6a08fdf9d659a96f4cdc2bfdd9485
+generated: "2025-05-17T02:14:13.899271+09:00"

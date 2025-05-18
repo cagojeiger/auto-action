@@ -1,11 +1,7 @@
 ---
-description: 
-globs: 
-alwaysApply: true
+name: base-guide
+trigger_type: always
 ---
-
-# Your rule content
-
 - Use Always the sequential-thinking MCP server.
 - Follow the Google Style Guide for all code.
 - Write commit messages per the Conventional Commits spec.
