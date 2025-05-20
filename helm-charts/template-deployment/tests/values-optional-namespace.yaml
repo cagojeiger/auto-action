@@ -1,0 +1,37 @@
+templateDefaults:
+  default:
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
+  
+  web:
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      className: nginx
+
+templates:
+  # 네임스페이스가 있는 템플릿
+  - name: with-namespace
+    namespace: test-ns
+    type: web
+    image:
+      repository: nginx
+      tag: "latest"
+  
+  # 네임스페이스가 없는 템플릿
+  - name: without-namespace
+    type: web
+    image:
+      repository: nginx
+      tag: "latest"
