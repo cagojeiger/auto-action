@@ -82,6 +82,7 @@ jobs:
           git commit -m "chore: code-server 업데이트 (v${{ env.APP_VERSION }})"
 
       - name: Push changes and create PR
+        id: create_pr
         if: steps.check_changes.outputs.changes == 'true'
         run: |
           git push -u origin "${BRANCH_NAME}"
@@ -94,6 +95,9 @@ jobs:
 
           echo "생성된 PR URL: $PR_URL"
           PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+          
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
           sleep 10
           gh pr merge "$PR_NUMBER" --auto --merge
@@ -102,7 +106,8 @@ jobs:
         if: steps.check_changes.outputs.changes == 'true'
         run: |
           # PR이 병합될 때까지 기다립니다
-          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+          PR_NUMBER=${{ steps.create_pr.outputs.pr_number }}
+          PR_URL=${{ steps.create_pr.outputs.pr_url }}
           echo "PR #$PR_NUMBER 병합을 기다리는 중..."
           
           START_TIME=$(date +%s)
