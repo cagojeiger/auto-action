@@ -1,0 +1,116 @@
+suite: Ingress Integration
+templates:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+tests:
+  - it: should create Ingress with custom annotations
+    values:
+      - ./values/ingress-annotations.yaml
+    asserts:
+      - template: ingress.yaml
+        hasDocuments:
+          count: 1
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: kind
+          value: Ingress
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: "/$2"
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/proxy-body-size"]
+          value: "50m"
+
+  - it: should support custom backend service configuration
+    values:
+      - ./values/ingress-custom-backend.yaml
+    asserts:
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: api-service
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8080
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[0].http.paths[1].backend.service.name
+          value: RELEASE-NAME-web
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[0].http.paths[1].backend.service.port.number
+          value: 80
+
+  - it: should support multiple hosts with different paths
+    values:
+      - ./values/ingress-multi-host.yaml
+    asserts:
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[0].host
+          value: api.example.com
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /v1
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[1].host
+          value: admin.example.com
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[1].http.paths[0].path
+          value: /
+
+  - it: should support path rewrite patterns
+    values:
+      - ./values/ingress-path-rewrite.yaml
+    asserts:
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /api(/|$)(.*)
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: ImplementationSpecific
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: /$2
+
+  - it: should create multiple Ingresses for different templates
+    values:
+      - ./values/ingress-multiple.yaml
+    asserts:
+      - template: ingress.yaml
+        hasDocuments:
+          count: 2
+      - template: ingress.yaml
+        documentIndex: 0
+        equal:
+          path: metadata.name
+          value: RELEASE-NAME-frontend
+      - template: ingress.yaml
+        documentIndex: 1
+        equal:
+          path: metadata.name
+          value: RELEASE-NAME-backend

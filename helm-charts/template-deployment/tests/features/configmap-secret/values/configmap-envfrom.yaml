@@ -1,0 +1,11 @@
+templates:
+  - name: web
+    image:
+      repository: nginx
+      tag: latest
+    configMaps:
+      - name: app-config
+        data:
+          DATABASE_URL: "postgres://localhost:5432/db"
+          REDIS_URL: "redis://localhost:6379"
+        envFrom: true

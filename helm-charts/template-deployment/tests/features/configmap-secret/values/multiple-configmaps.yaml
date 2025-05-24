@@ -1,0 +1,16 @@
+templates:
+  - name: web
+    image:
+      repository: nginx
+      tag: latest
+    configMaps:
+      - name: app-config
+        data:
+          APP_ENV: "production"
+      - name: nginx-config
+        data:
+          nginx.conf: |
+            server {
+              listen 80;
+              server_name localhost;
+            }

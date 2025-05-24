@@ -1,0 +1,20 @@
+templates:
+  - name: web
+    image:
+      repository: nginx
+      tag: latest
+    service:
+      enabled: true
+      port: 80
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+        nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      hosts:
+        - host: example.com
+          paths:
+            - path: /
+              pathType: Prefix

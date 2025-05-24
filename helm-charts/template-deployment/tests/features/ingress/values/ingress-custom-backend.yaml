@@ -1,0 +1,23 @@
+templates:
+  - name: web
+    image:
+      repository: nginx
+      tag: latest
+    service:
+      enabled: true
+      port: 80
+    ingress:
+      enabled: true
+      className: nginx
+      rules:
+        - host: example.com
+          paths:
+            - path: /api
+              pathType: Prefix
+              backend:
+                service:
+                  name: api-service
+                  port: 8080
+            - path: /
+              pathType: Prefix
+              # This will use default backend (template service)
