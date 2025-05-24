@@ -29,6 +29,36 @@ spec:
     {{- end }}
   {{- end }}
   rules:
+    {{- if $values.ingress.rules }}
+    {{- range $values.ingress.rules }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- with .pathType }}
+            pathType: {{ . }}
+            {{- end }}
+            backend:
+              service:
+                {{- if .backend }}
+                {{- if .backend.service }}
+                name: {{ .backend.service.name | default (include "template-deployment.fullname" (dict "root" $ "values" $values)) }}
+                port:
+                  number: {{ .backend.service.port | default $values.service.port }}
+                {{- else }}
+                name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
+                port:
+                  number: {{ $values.service.port }}
+                {{- end }}
+                {{- else }}
+                name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}
+                port:
+                  number: {{ $values.service.port }}
+                {{- end }}
+          {{- end }}
+    {{- end }}
+    {{- else if $values.ingress.hosts }}
     {{- range $values.ingress.hosts }}
     - host: {{ .host | quote }}
       http:
@@ -44,6 +74,7 @@ spec:
                 port:
                   number: {{ $values.service.port }}
           {{- end }}
+    {{- end }}
     {{- end }}
 {{- end }}
 {{- end }}

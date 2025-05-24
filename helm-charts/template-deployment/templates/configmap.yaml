@@ -2,17 +2,47 @@
 {{- $type := $template.type | default "" }}
 {{- $mergedValues := include "template-deployment.mergeValues" (dict "root" $ "values" $template "type" $type) | fromYaml }}
 {{- $values := $mergedValues }}
----
 {{- if and $values.configMap $values.configMap.enabled }}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ $values.configMap.name }}
+  name: {{ $values.configMap.name | default (include "template-deployment.fullname" (dict "root" $ "values" $values)) }}
   labels:
     {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
 data:
-  {{- with $values.configMap.data }}
+  {{- toYaml $values.configMap.data | nindent 2 }}
+{{- end }}
+{{- if $values.configMaps }}
+{{- range $cmIndex, $cm := $values.configMaps }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}-{{ $cm.name | default (printf "config-%d" $cmIndex) }}
+  labels:
+    {{- include "template-deployment.labels" (dict "root" $ "values" $values) | nindent 4 }}
+{{- with $cm.data }}
+data:
   {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- if $cm.files }}
+{{- $files := dict }}
+{{- range $file := $cm.files }}
+{{- if $.Files.Get $file.path }}
+{{- $_ := set $files $file.name ($.Files.Get $file.path) }}
+{{- end }}
+{{- end }}
+{{- if $files }}
+{{- if not $cm.data }}
+data:
+{{- end }}
+  {{- range $name, $content := $files }}
+  {{ $name }}: |
+{{ $content | indent 4 }}
   {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

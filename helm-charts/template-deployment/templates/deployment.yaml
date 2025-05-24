@@ -63,9 +63,25 @@ spec:
           lifecycle:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with $values.envFrom }}
           envFrom:
+          {{- with $values.envFrom }}
             {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if $values.configMaps }}
+          {{- range $cm := $values.configMaps }}
+          {{- if $cm.envFrom }}
+            - configMapRef:
+                name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}-{{ $cm.name | default "config" }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- if $values.secrets }}
+          {{- range $secret := $values.secrets }}
+          {{- if $secret.envFrom }}
+            - secretRef:
+                name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}-{{ $secret.name | default "secret" }}
+          {{- end }}
+          {{- end }}
           {{- end }}
           {{- with $values.env }}
           env:
@@ -97,13 +113,73 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with $values.volumeMounts }}
           volumeMounts:
+          {{- with $values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with $values.volumes }}
+          {{- if $values.configMaps }}
+          {{- range $cmIndex, $cm := $values.configMaps }}
+          {{- if $cm.volumeMount }}
+            - name: configmap-{{ $cm.name | default (printf "config-%d" $cmIndex) }}
+              mountPath: {{ $cm.volumeMount.mountPath }}
+              {{- if $cm.volumeMount.subPath }}
+              subPath: {{ $cm.volumeMount.subPath }}
+              {{- end }}
+              {{- if $cm.volumeMount.readOnly }}
+              readOnly: {{ $cm.volumeMount.readOnly }}
+              {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- if $values.secrets }}
+          {{- range $secretIndex, $secret := $values.secrets }}
+          {{- if $secret.volumeMount }}
+            - name: secret-{{ $secret.name | default (printf "secret-%d" $secretIndex) }}
+              mountPath: {{ $secret.volumeMount.mountPath }}
+              {{- if $secret.volumeMount.subPath }}
+              subPath: {{ $secret.volumeMount.subPath }}
+              {{- end }}
+              {{- if $secret.volumeMount.readOnly }}
+              readOnly: {{ $secret.volumeMount.readOnly }}
+              {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
       volumes:
+      {{- with $values.volumes }}
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $values.configMaps }}
+      {{- range $cmIndex, $cm := $values.configMaps }}
+      {{- if $cm.volumeMount }}
+        - name: configmap-{{ $cm.name | default (printf "config-%d" $cmIndex) }}
+          configMap:
+            name: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}-{{ $cm.name | default (printf "config-%d" $cmIndex) }}
+            {{- if $cm.volumeMount.items }}
+            items:
+              {{- toYaml $cm.volumeMount.items | nindent 14 }}
+            {{- end }}
+            {{- if $cm.volumeMount.defaultMode }}
+            defaultMode: {{ $cm.volumeMount.defaultMode }}
+            {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if $values.secrets }}
+      {{- range $secretIndex, $secret := $values.secrets }}
+      {{- if $secret.volumeMount }}
+        - name: secret-{{ $secret.name | default (printf "secret-%d" $secretIndex) }}
+          secret:
+            secretName: {{ include "template-deployment.fullname" (dict "root" $ "values" $values) }}-{{ $secret.name | default (printf "secret-%d" $secretIndex) }}
+            {{- if $secret.volumeMount.items }}
+            items:
+              {{- toYaml $secret.volumeMount.items | nindent 14 }}
+            {{- end }}
+            {{- if $secret.volumeMount.defaultMode }}
+            defaultMode: {{ $secret.volumeMount.defaultMode }}
+            {{- end }}
+      {{- end }}
+      {{- end }}
       {{- end }}
       {{- with $values.nodeSelector }}
       nodeSelector:

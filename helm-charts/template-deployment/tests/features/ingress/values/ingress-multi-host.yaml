@@ -1,0 +1,22 @@
+templates:
+  - name: web
+    image:
+      repository: nginx
+      tag: latest
+    service:
+      enabled: true
+      port: 80
+    ingress:
+      enabled: true
+      className: nginx
+      rules:
+        - host: api.example.com
+          paths:
+            - path: /v1
+              pathType: Prefix
+            - path: /v2
+              pathType: Prefix
+        - host: admin.example.com
+          paths:
+            - path: /
+              pathType: Prefix
