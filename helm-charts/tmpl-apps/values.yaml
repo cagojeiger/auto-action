@@ -1,0 +1,170 @@
+# Default values for tmpl-apps.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global configuration
+global:
+  # Default domain for all applications
+  domain: example.com
+  
+  # Default image registry
+  imageRegistry: ""
+  
+  # Image pull secrets
+  imagePullSecrets: []
+  # - name: regcred
+  
+  # Global labels applied to all resources
+  labels: {}
+  # team: platform
+  # environment: production
+
+# Profiles - Reusable configuration sets
+profiles:
+  # Base profile - inherited by all unless overridden
+  base:
+    replicas: 1
+    image:
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    
+  # Web application profile
+  web:
+    extends: base
+    replicas: 2
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    probes:
+      liveness:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 30
+        periodSeconds: 30
+      readiness:
+        httpGet:
+          path: /ready
+          port: http
+        initialDelaySeconds: 10
+        periodSeconds: 10
+  
+  # API service profile
+  api:
+    extends: base
+    replicas: 3
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    metrics:
+      enabled: true
+      path: /metrics
+      port: 9090
+  
+  # Background worker profile
+  worker:
+    extends: base
+    service:
+      enabled: false
+    probes:
+      enabled: false
+  
+  # Database profile
+  database:
+    extends: base
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 5432
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: ""
+    probes:
+      liveness:
+        exec:
+          command:
+            - /bin/sh
+            - -c
+            - "pg_isready -U postgres"
+        initialDelaySeconds: 30
+        periodSeconds: 30
+
+# Applications to deploy
+apps: {}
+  # Example application configurations:
+  
+  # frontend:
+  #   profile: web
+  #   image: nginx:alpine
+  #   # Override profile settings
+  #   replicas: 3
+  #   # Simplified host configuration
+  #   host: www
+  #   # Environment variables
+  #   env:
+  #     API_URL: http://backend:8080
+  #   # ConfigMap data
+  #   config:
+  #     data:
+  #       config.json: |
+  #         {
+  #           "apiUrl": "https://api.example.com"
+  #         }
+  #     mount:
+  #       path: /usr/share/nginx/html/config
+  
+  # backend:
+  #   profile: api
+  #   image: myapp/api:v1.0.0
+  #   # Simplified port exposure
+  #   expose: 8080
+  #   # Scale shorthand
+  #   scale: 5
+  #   # Database connection
+  #   database: postgres
+  #   # Secrets
+  #   secrets:
+  #     env:
+  #       DATABASE_PASSWORD: "changeme"
+  #       JWT_SECRET: "secret-key"
+  
+  # worker:
+  #   profile: worker
+  #   image: myapp/worker:v1.0.0
+  #   command: ["python", "worker.py"]
+  #   # Connect to other apps
+  #   connections:
+  #     - redis
+  #     - rabbitmq
+  
+  # postgres:
+  #   profile: database
+  #   image: postgres:14-alpine
+  #   persistence:
+  #     size: 20Gi
+  #   env:
+  #     POSTGRES_DB: myapp
+  #     POSTGRES_USER: myapp
+  #   secrets:
+  #     env:
+  #       POSTGRES_PASSWORD: "changeme"

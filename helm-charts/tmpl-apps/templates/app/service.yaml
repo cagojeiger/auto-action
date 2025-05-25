@@ -1,0 +1,60 @@
+{{- range $appName, $appConfig := .Values.apps }}
+{{- $mergedConfig := include "tmpl-apps.mergeConfig" (dict "root" $ "app" $appConfig) | fromYaml }}
+{{- $app := mergeOverwrite $appConfig $mergedConfig }}
+{{- $app = set $app "name" $appName }}
+{{- if $app.service.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tmpl-apps.appFullname" (dict "root" $ "app" $app) }}
+  labels:
+    {{- include "tmpl-apps.labels" (dict "root" $ "app" $app) | nindent 4 }}
+  {{- with $app.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ $app.service.type | default "ClusterIP" }}
+  {{- if and (eq $app.service.type "LoadBalancer") $app.service.loadBalancerIP }}
+  loadBalancerIP: {{ $app.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and (eq $app.service.type "LoadBalancer") $app.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- range $app.service.loadBalancerSourceRanges }}
+    - {{ . }}
+    {{- end }}
+  {{- end }}
+  {{- if and (or (eq $app.service.type "NodePort") (eq $app.service.type "LoadBalancer")) $app.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ $app.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if $app.service.sessionAffinity }}
+  sessionAffinity: {{ $app.service.sessionAffinity }}
+  {{- end }}
+  ports:
+    - port: {{ $app.service.port | default 80 }}
+      targetPort: http
+      protocol: TCP
+      name: http
+      {{- if and (eq $app.service.type "NodePort") $app.service.nodePort }}
+      nodePort: {{ $app.service.nodePort }}
+      {{- end }}
+    {{- if and $app.metrics $app.metrics.enabled }}
+    - port: {{ $app.metrics.port | default 9090 }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+    {{- end }}
+    {{- range $app.service.additionalPorts }}
+    - port: {{ .port }}
+      targetPort: {{ .targetPort | default .port }}
+      protocol: {{ .protocol | default "TCP" }}
+      name: {{ .name }}
+      {{- if and (eq $app.service.type "NodePort") .nodePort }}
+      nodePort: {{ .nodePort }}
+      {{- end }}
+    {{- end }}
+  selector:
+    {{- include "tmpl-apps.selectorLabels" (dict "root" $ "app" $app) | nindent 4 }}
+{{- end }}
+{{- end }}

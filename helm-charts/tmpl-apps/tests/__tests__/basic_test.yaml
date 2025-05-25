@@ -1,0 +1,197 @@
+suite: Basic functionality tests
+templates:
+  - app/deployment.yaml
+  - app/service.yaml
+  - app/ingress.yaml
+  - config/configmap.yaml
+  - config/secret.yaml
+
+tests:
+  - it: should create deployment with minimal config
+    set:
+      apps:
+        webapp:
+          image: nginx:alpine
+    asserts:
+      - template: app/deployment.yaml
+        isKind:
+          of: Deployment
+      - template: app/deployment.yaml
+        equal:
+          path: metadata.name
+          value: RELEASE-NAME-webapp
+      - template: app/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].image
+          value: nginx:alpine
+
+  - it: should use profile settings
+    set:
+      profiles:
+        web:
+          replicas: 3
+          service:
+            enabled: true
+            port: 80
+      apps:
+        frontend:
+          profile: web
+          image: frontend:v1
+    asserts:
+      - template: app/deployment.yaml
+        equal:
+          path: spec.replicas
+          value: 3
+      - template: app/service.yaml
+        isKind:
+          of: Service
+      - template: app/service.yaml
+        equal:
+          path: spec.ports[0].port
+          value: 80
+
+  - it: should support scale shorthand
+    set:
+      apps:
+        api:
+          image: api:latest
+          scale: 5
+    asserts:
+      - template: app/deployment.yaml
+        equal:
+          path: spec.replicas
+          value: 5
+
+  - it: should support expose shorthand
+    set:
+      apps:
+        backend:
+          image: backend:latest
+          expose: 8080
+    asserts:
+      - template: app/service.yaml
+        isKind:
+          of: Service
+      - template: app/service.yaml
+        equal:
+          path: spec.ports[0].port
+          value: 8080
+
+  - it: should support host shorthand
+    set:
+      global:
+        domain: example.com
+      apps:
+        web:
+          profile: web
+          image: nginx
+          host: www
+    asserts:
+      - template: app/ingress.yaml
+        isKind:
+          of: Ingress
+      - template: app/ingress.yaml
+        equal:
+          path: spec.rules[0].host
+          value: www.example.com
+
+  - it: should create configmap with data
+    set:
+      apps:
+        api:
+          image: api:latest
+          config:
+            data:
+              config.yaml: |
+                port: 8080
+                debug: false
+    asserts:
+      - template: config/configmap.yaml
+        isKind:
+          of: ConfigMap
+      - template: config/configmap.yaml
+        equal:
+          path: data["config.yaml"]
+          value: |
+            port: 8080
+            debug: false
+
+  - it: should create secret with env
+    set:
+      apps:
+        api:
+          image: api:latest
+          secrets:
+            env:
+              API_KEY: secret123
+              DB_PASSWORD: pass456
+    asserts:
+      - template: config/secret.yaml
+        isKind:
+          of: Secret
+      - template: config/secret.yaml
+        equal:
+          path: stringData.API_KEY
+          value: "secret123"
+
+  - it: should generate connection environment variables
+    set:
+      apps:
+        frontend:
+          image: frontend:latest
+          connections:
+            - backend
+            - auth
+        backend:
+          image: backend:latest
+          service:
+            port: 8080
+        auth:
+          image: auth:latest
+          service:
+            port: 9000
+    asserts:
+      - template: app/deployment.yaml
+        documentIndex: 0  # frontend
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: BACKEND_URL
+            value: "http://RELEASE-NAME-backend:8080"
+      - template: app/deployment.yaml
+        documentIndex: 0  # frontend
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: AUTH_URL
+            value: "http://RELEASE-NAME-auth:80"
+
+  - it: should support profile inheritance
+    set:
+      profiles:
+        base:
+          replicas: 1
+          resources:
+            requests:
+              memory: 128Mi
+        web:
+          extends: base
+          replicas: 2
+          service:
+            port: 80
+        custom:
+          extends: web
+          replicas: 3
+      apps:
+        myapp:
+          profile: custom
+          image: myapp:latest
+    asserts:
+      - template: app/deployment.yaml
+        equal:
+          path: spec.replicas
+          value: 3
+      - template: app/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 128Mi
