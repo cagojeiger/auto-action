@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["templates"],
+  "required": ["apps"],
   "properties": {
-    "templateDefaults": {
+    "appProfiles": {
       "type": "object",
-      "description": "Default configurations for different template types",
+      "description": "Default configurations for different app profiles",
       "properties": {
         "default": {
           "type": "object",
@@ -13,7 +13,7 @@
         }
       }
     },
-    "templates": {
+    "apps": {
       "type": "array",
       "items": {
         "type": "object",

@@ -3,7 +3,7 @@ tests:
   - it: 단일 타입 상속이 올바르게 적용되어야 함
     template: deployment.yaml
     set:
-      templateDefaults:
+      appProfiles:
         default:
           resources:
             requests:
@@ -21,7 +21,7 @@ tests:
             httpGet:
               path: /liveness
               port: http
-      templates:
+      apps:
         - name: web-app
           type: web
           image:
@@ -40,7 +40,7 @@ tests:
   - it: 다중 타입 상속(Service)이 우선순위에 따라 올바르게 적용되어야 함
     template: deployment.yaml
     set:
-      templateDefaults:
+      appProfiles:
         default:
           env:
             - name: GLOBAL_VAR
@@ -57,7 +57,7 @@ tests:
           env:
             - name: API_VAR
               value: "api-value"
-      templates:
+      apps:
         - name: multi-type
           type: [web, api]
           image:
@@ -70,7 +70,7 @@ tests:
   - it: 다중 타입 상속(Deployment)이 우선순위에 따라 올바르게 적용되어야 함
     template: deployment.yaml
     set:
-      templateDefaults:
+      appProfiles:
         default:
           env:
             - name: GLOBAL_VAR
@@ -83,7 +83,7 @@ tests:
           env:
             - name: API_VAR
               value: "api-value"
-      templates:
+      apps:
         - name: multi-type
           type: [web, api]
           image:
@@ -100,7 +100,7 @@ tests:
   - it: 중첩 객체 깊은 오버라이드가 올바르게 적용되어야 함
     template: deployment.yaml
     set:
-      templateDefaults:
+      appProfiles:
         web:
           livenessProbe:
             httpGet:
@@ -108,7 +108,7 @@ tests:
               port: http
             initialDelaySeconds: 30
             periodSeconds: 10
-      templates:
+      apps:
         - name: deep-override
           type: web
           image:

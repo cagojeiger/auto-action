@@ -3,7 +3,7 @@ tests:
   - it: Deployment가 올바르게 생성되어야 함
     template: deployment.yaml
     set:
-      templates:
+      apps:
         - name: simple-web
           type: web
           image:
