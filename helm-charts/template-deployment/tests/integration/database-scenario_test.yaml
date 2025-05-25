@@ -4,7 +4,7 @@ tests:
     release:
       name: test-release
     set:
-      templateDefaults:
+      appProfiles:
         database:
           persistence:
             enabled: true
@@ -17,7 +17,7 @@ tests:
             - name: data
               persistentVolumeClaim:
                 claimName: test-release-postgres-data
-      templates:
+      apps:
         - name: postgres
           type: database
           image:
@@ -48,7 +48,7 @@ tests:
     release:
       name: test-release
     set:
-      templateDefaults:
+      appProfiles:
         database:
           persistence:
             enabled: true
@@ -61,7 +61,7 @@ tests:
             - name: data
               persistentVolumeClaim:
                 claimName: my-custom-pvc
-      templates:
+      apps:
         - name: mysql
           type: database
           image:

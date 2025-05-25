@@ -7,12 +7,12 @@
 - 템플릿에 `type` 필드를 추가하여 타입별 기본값 상속 (옵셔널)
 - 여러 타입을 배열로 지정하여 다중 상속 가능 (`type: [web, loadbalanced]`)
 - 모든 템플릿에 적용되는 `default` 타입 지원
-- `templateDefaults` 섹션은 빈 객체도 가능
+- `appProfiles` 섹션은 빈 객체도 가능
 
 ## 기본 개념
 
 1. **템플릿 타입**: 각 템플릿은 `type` 필드를 통해 하나 이상의 타입을 지정할 수 있습니다 (옵셔널).
-2. **타입별 기본값**: `templateDefaults` 섹션에서 각 타입별 기본값을 정의합니다 (빈 객체도 가능).
+2. **타입별 기본값**: `appProfiles` 섹션에서 각 타입별 기본값을 정의합니다 (빈 객체도 가능).
 3. **기본 템플릿**: `default` 타입은 특별한 타입으로, 모든 템플릿에 자동으로 적용됩니다.
 
 ## 우선순위
@@ -26,10 +26,10 @@
 
 ## 사용 방법
 
-### 1. `values.yaml` 파일에 `templateDefaults` 섹션 정의
+### 1. `values.yaml` 파일에 `appProfiles` 섹션 정의
 
 ```yaml
-templateDefaults:
+appProfiles:
   # 기본 템플릿 (모든 템플릿에 적용)
   default:
     resources:
@@ -44,7 +44,7 @@ templateDefaults:
 ### 2. 템플릿에 `type` 필드 추가 (단일 타입)
 
 ```yaml
-templates:
+apps:
   - name: my-web-app
     type: web
     image:
@@ -55,7 +55,7 @@ templates:
 ### 3. 템플릿에 여러 타입 지정 (다중 상속)
 
 ```yaml
-templates:
+apps:
   - name: my-loadbalanced-web
     type: [web, loadbalanced]
     image:
@@ -69,7 +69,7 @@ templates:
 
 ```yaml
 # values.yaml
-templateDefaults:
+appProfiles:
   default:
     resources:
       requests:
@@ -80,7 +80,7 @@ templateDefaults:
       port: 80
       type: ClusterIP
 
-templates:
+apps:
   - name: my-web-app
     type: web
     image:
@@ -108,7 +108,7 @@ my-web-app:
 
 ```yaml
 # values.yaml
-templateDefaults:
+appProfiles:
   default:
     resources:
       requests:
@@ -124,7 +124,7 @@ templateDefaults:
     autoscaling:
       enabled: true
 
-templates:
+apps:
   - name: my-loadbalanced-web
     type: [web, loadbalanced]
     image:
@@ -154,7 +154,7 @@ my-loadbalanced-web:
 
 ```yaml
 # values.yaml
-templateDefaults:
+appProfiles:
   default:
     replicaCount: 1
     resources:
@@ -215,7 +215,7 @@ templateDefaults:
       prometheus.io/port: "8080"
       prometheus.io/path: "/actuator/prometheus"
 
-templates:
+apps:
   # 고가용성 API 마이크로서비스
   - name: user-service
     type: [api, microservice, highavailability, monitoring]
