@@ -171,9 +171,16 @@ jobs:
 
       - name: Push (OCI)
         run: |
+          # 버전 태그로 푸시
           helm push "${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz" \
             oci://docker.io/${{ secrets.DOCKERHUB_USERNAME }}
-          echo "::notice title=Done::${{ env.CHART_NAME }} v${{ env.CHART_VERSION }} 푸시 완료"
+          echo "::notice title=Version Push::${{ env.CHART_NAME }} v${{ env.CHART_VERSION }} 푸시 완료"
+          
+          # latest 태그로 추가 푸시
+          cp "${{ env.CHART_NAME }}-${{ env.CHART_VERSION }}.tgz" "${{ env.CHART_NAME }}-latest.tgz"
+          helm push "${{ env.CHART_NAME }}-latest.tgz" \
+            oci://docker.io/${{ secrets.DOCKERHUB_USERNAME }}
+          echo "::notice title=Latest Push::${{ env.CHART_NAME }} latest 태그 푸시 완료"
 
   build-and-push-docker:
     needs: detect-artifacts
