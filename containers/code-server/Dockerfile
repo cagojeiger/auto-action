@@ -57,6 +57,7 @@ RUN GOMPLATE_LATEST_VERSION=$(curl -s https://api.github.com/repos/hairyhenderso
     install -o root -g root -m 0755 gomplate_linux-${TARGETARCH} /usr/local/bin/gomplate && \
     rm -f gomplate_linux-${TARGETARCH}
 
+
 # =============================================
 # 2) Final Stage
 # =============================================
@@ -72,8 +73,16 @@ COPY --from=builder /usr/local/bin/skopeo /usr/local/bin/skopeo
 COPY --from=builder /usr/local/bin/mc     /usr/local/bin/mc
 COPY --from=builder /usr/local/bin/gomplate /usr/local/bin/gomplate
 
-COPY gen_kube_config.sh /home/coder/gen_kube_config.sh
-RUN chmod +x /home/coder/gen_kube_config.sh
-RUN chown coder:coder /home/coder/gen_kube_config.sh
+# Node.js 최신 버전 설치 (NodeSource 사용)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y nodejs
+
+# Claude Code 설치
+RUN npm install -g @anthropic-ai/claude-code
+
+# kubeconfig 생성 스크립트 복사
+COPY gen_kube_config.sh /tmp/gen_kube_config.sh
+RUN chmod +x /tmp/gen_kube_config.sh
+RUN chown coder:coder /tmp/gen_kube_config.sh
 
 USER coder
