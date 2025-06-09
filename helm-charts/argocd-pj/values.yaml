@@ -1,0 +1,89 @@
+# Default values for argocd-pj
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Secret configuration
+serverSecretKey: ""  # If empty, will be auto-generated
+
+# Repository configuration (Git, Helm, OCI, Docker)
+repositories: []
+# Examples:
+# Git repository:
+# - name: private-repo
+#   url: https://github.com/org/repo
+#   username: ""  # Set via --set or environment variable
+#   password: ""  # Set via --set or environment variable
+#   type: ""      # Optional: auto-detected from URL if not specified
+#
+# Helm chart repository:
+# - name: bitnami
+#   url: https://charts.bitnami.com/bitnami
+#   type: helm    # Optional: auto-detected if URL contains 'charts'
+#
+# OCI Helm repository:
+# - name: bitnami-oci
+#   url: oci://registry-1.docker.io/bitnamicharts
+#   username: ""  # For private OCI registries
+#   password: ""  # For private OCI registries
+#   # type: helm-oci  # Auto-detected from oci:// prefix
+#
+# Docker registry:
+# - name: dockerhub
+#   url: https://index.docker.io/v1/
+#   username: ""  # Set via --set or environment variable
+#   password: ""  # Set via --set or environment variable
+#   type: docker  # Required for Docker registries
+#
+# GitHub Container Registry:
+# - name: ghcr
+#   url: ghcr.io
+#   username: ""  # Set via --set or environment variable
+#   password: ""  # Set via --set or environment variable
+#   type: docker  # Required for Docker registries
+
+# ArgoCD subchart values
+argo-cd:
+  server:
+    insecure: true
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hostname: argocd.localhost
+    resources:
+      requests:
+        memory: 128Mi
+      limits:
+        memory: 1024Mi
+    extraEnvVars:
+      - name: ARGOCD_SERVER_SECRETKEY
+        valueFrom:
+          secretKeyRef:
+            name: argocd-secret
+            key: server.secretkey
+  
+  repoServer:
+    resources:
+      requests:
+        memory: 128Mi
+      limits:
+        memory: 1024Mi
+  
+  controller:
+    resources:
+      requests:
+        memory: 128Mi
+      limits:
+        memory: 1024Mi
+  
+  redis:
+    enabled: true
+    auth:
+      enabled: false
+    master:
+      persistence:
+        enabled: false
+      resources:
+        requests:
+          memory: 128Mi
+        limits:
+          memory: 1024Mi
