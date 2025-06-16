@@ -1,4 +1,4 @@
-{{- range $index, $template := .Values.templates }}
+{{- range $index, $template := .Values.apps }}
 {{- $type := $template.type | default "" }}
 {{- $mergedValues := include "template-deployment.mergeValues" (dict "root" $ "values" $template "type" $type) | fromYaml }}
 {{- $values := $mergedValues }}

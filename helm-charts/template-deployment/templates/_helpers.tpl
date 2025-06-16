@@ -84,18 +84,18 @@ Get template defaults based on type
 {{- $type := .type | default "" -}}
 {{- $defaults := dict -}}
 
-{{/* templateDefaults가 있는지 확인 */}}
-{{- if .root.Values.templateDefaults -}}
+{{/* appProfiles가 있는지 확인 */}}
+{{- if .root.Values.appProfiles -}}
   {{/* 기본 템플릿 적용 (있는 경우) */}}
-  {{- if hasKey .root.Values.templateDefaults "default" -}}
-    {{- $defaults = index .root.Values.templateDefaults "default" -}}
+  {{- if hasKey .root.Values.appProfiles "default" -}}
+    {{- $defaults = index .root.Values.appProfiles "default" -}}
   {{- end -}}
 
   {{- if $type -}}
     {{- if kindIs "string" $type -}}
       {{/* 단일 타입인 경우 */}}
-      {{- if hasKey .root.Values.templateDefaults $type -}}
-        {{- $typeDefaults := index .root.Values.templateDefaults $type -}}
+      {{- if hasKey .root.Values.appProfiles $type -}}
+        {{- $typeDefaults := index .root.Values.appProfiles $type -}}
         {{- $defaults = include "template-deployment.deepMerge" (list $defaults $typeDefaults) | fromYaml -}}
       {{- end -}}
     {{- else if kindIs "slice" $type -}}
@@ -105,8 +105,8 @@ Get template defaults based on type
         {{- $reversedTypes = prepend $reversedTypes $t -}}
       {{- end -}}
       {{- range $index, $t := $reversedTypes -}}
-        {{- if hasKey $.root.Values.templateDefaults $t -}}
-          {{- $typeDefaults := index $.root.Values.templateDefaults $t -}}
+        {{- if hasKey $.root.Values.appProfiles $t -}}
+          {{- $typeDefaults := index $.root.Values.appProfiles $t -}}
           {{- $defaults = include "template-deployment.deepMerge" (list $defaults $typeDefaults) | fromYaml -}}
         {{- end -}}
       {{- end -}}

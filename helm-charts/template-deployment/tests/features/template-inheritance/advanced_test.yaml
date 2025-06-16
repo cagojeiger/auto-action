@@ -3,7 +3,7 @@ tests:
   - it: 역순 다중 타입 상속이 올바르게 적용되어야 함
     template: deployment.yaml
     set:
-      templateDefaults:
+      appProfiles:
         default:
           resources:
             requests:
@@ -24,7 +24,7 @@ tests:
             limits:
               cpu: 500m
               memory: 512Mi
-      templates:
+      apps:
         - name: reversed-priority
           type: [web, loadbalanced]
           image:
@@ -43,8 +43,8 @@ tests:
   - it: 빈 templateDefaults 객체가 올바르게 처리되어야 함
     template: deployment.yaml
     set:
-      templateDefaults: {}
-      templates:
+      appProfiles: {}
+      apps:
         - name: empty-defaults
           image:
             repository: nginx
@@ -63,7 +63,7 @@ tests:
   - it: 여러 타입에 걸친 깊은 중첩 객체 병합이 올바르게 적용되어야 함
     template: deployment.yaml
     set:
-      templateDefaults:
+      appProfiles:
         default:
           livenessProbe:
             httpGet:
@@ -85,7 +85,7 @@ tests:
             httpGet:
               path: /api-health
             timeoutSeconds: 5
-      templates:
+      apps:
         - name: nested-merge
           type: [web, api]
           image:
@@ -116,7 +116,7 @@ tests:
   - it: 사용자 지정 환경 변수가 올바르게 적용되어야 함
     template: deployment.yaml
     set:
-      templates:
+      apps:
         - name: custom-env
           image:
             repository: nginx

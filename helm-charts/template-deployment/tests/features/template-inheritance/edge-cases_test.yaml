@@ -3,13 +3,13 @@ tests:
   - it: 빈 타입(default만 상속)이 올바르게 적용되어야 함
     template: deployment.yaml
     set:
-      templateDefaults:
+      appProfiles:
         default:
           resources:
             requests:
               cpu: 100m
               memory: 128Mi
-      templates:
+      apps:
         - name: empty-type
           image:
             repository: nginx
@@ -24,13 +24,13 @@ tests:
   - it: 존재하지 않는 타입이 default만 상속받아야 함
     template: deployment.yaml
     set:
-      templateDefaults:
+      appProfiles:
         default:
           resources:
             requests:
               cpu: 100m
               memory: 128Mi
-      templates:
+      apps:
         - name: non-existent-type
           type: "non-existent"
           image:
@@ -46,7 +46,7 @@ tests:
   - it: 빈 배열이 올바르게 처리되어야 함
     template: deployment.yaml
     set:
-      templates:
+      apps:
         - name: empty-arrays
           type: web
           image:
@@ -64,7 +64,7 @@ tests:
         imageRegistry: "custom-registry.com"
         imagePullSecrets:
           - name: regcred
-      templates:
+      apps:
         - name: global-override
           image:
             repository: nginx
@@ -83,7 +83,7 @@ tests:
   - it: 복잡한 중첩 구조가 올바르게 처리되어야 함
     template: configmap.yaml
     set:
-      templates:
+      apps:
         - name: complex-nested
           image:
             repository: complex-app
