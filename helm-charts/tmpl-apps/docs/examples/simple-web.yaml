@@ -1,0 +1,36 @@
+# Example: Simple Web Application
+# This example shows the minimal configuration needed
+
+apps:
+  # Static website
+  website:
+    profile: web
+    image: nginx:alpine
+    host: www
+    config:
+      data:
+        index.html: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Welcome to Tmpl Apps</title>
+          </head>
+          <body>
+              <h1>Hello from Tmpl Apps!</h1>
+              <p>This is a simple example.</p>
+          </body>
+          </html>
+      mount:
+        path: /usr/share/nginx/html
+
+  # Simple API
+  api:
+    profile: api
+    image: kennethreitz/httpbin
+    host: api
+    scale: 2
+
+  # Redis cache
+  redis:
+    image: redis:alpine
+    expose: 6379

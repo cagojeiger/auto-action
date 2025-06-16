@@ -1,0 +1,227 @@
+# Example: Microservices Application Stack
+# This example shows how to deploy a complete microservices application
+
+global:
+  domain: myapp.com
+  imageRegistry: myregistry.io
+
+# Custom profiles for this application
+profiles:
+  # Frontend applications
+  frontend-app:
+    extends: web
+    replicas: 3
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    ingress:
+      annotations:
+        nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      tls: true
+
+  # Backend API services
+  backend-api:
+    extends: api
+    replicas: 3
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+
+# Application definitions
+apps:
+  # Frontend application
+  frontend:
+    profile: frontend-app
+    image: frontend:v2.1.0
+    host: www
+    env:
+      NODE_ENV: production
+      API_GATEWAY_URL: https://api.myapp.com
+    config:
+      data:
+        config.json: |
+          {
+            "apiUrl": "https://api.myapp.com",
+            "features": {
+              "analytics": true,
+              "chat": true,
+              "notifications": true
+            }
+          }
+      mount:
+        path: /usr/share/nginx/html/config
+
+  # API Gateway
+  gateway:
+    profile: backend-api
+    image: api-gateway:v1.5.0
+    host: api
+    expose: 8080
+    connections:
+      - auth-service
+      - user-service
+      - order-service
+      - notification-service
+    env:
+      LOG_LEVEL: info
+      RATE_LIMIT: "1000"
+    secrets:
+      env:
+        JWT_SECRET: "your-secret-key"
+        API_KEY: "internal-api-key"
+
+  # Authentication Service
+  auth-service:
+    profile: backend-api
+    image: auth-service:v1.2.0
+    expose: 9000
+    database: postgres
+    connections:
+      - redis
+    env:
+      TOKEN_EXPIRY: "3600"
+      REFRESH_TOKEN_EXPIRY: "86400"
+    secrets:
+      env:
+        OAUTH_CLIENT_ID: "oauth-client-id"
+        OAUTH_CLIENT_SECRET: "oauth-client-secret"
+
+  # User Service
+  user-service:
+    profile: backend-api
+    image: user-service:v1.3.0
+    expose: 9001
+    database: postgres
+    connections:
+      - redis
+      - notification-service
+    config:
+      data:
+        roles.yaml: |
+          roles:
+            - admin
+            - user
+            - guest
+          permissions:
+            admin: ["read", "write", "delete"]
+            user: ["read", "write"]
+            guest: ["read"]
+
+  # Order Service
+  order-service:
+    profile: backend-api
+    image: order-service:v2.0.0
+    expose: 9002
+    database: postgres
+    connections:
+      - payment-service
+      - inventory-service
+      - notification-service
+    env:
+      ORDER_TIMEOUT: "300"
+      MAX_RETRY_ATTEMPTS: "3"
+
+  # Payment Service
+  payment-service:
+    profile: backend-api
+    image: payment-service:v1.1.0
+    expose: 9003
+    secrets:
+      env:
+        STRIPE_API_KEY: "stripe-api-key"
+        PAYPAL_CLIENT_ID: "paypal-client-id"
+        PAYPAL_CLIENT_SECRET: "paypal-client-secret"
+
+  # Inventory Service
+  inventory-service:
+    profile: backend-api
+    image: inventory-service:v1.4.0
+    expose: 9004
+    database: postgres
+    connections:
+      - redis
+
+  # Notification Service
+  notification-service:
+    profile: backend-api
+    image: notification-service:v1.2.0
+    expose: 9005
+    connections:
+      - redis
+    env:
+      EMAIL_PROVIDER: "sendgrid"
+      SMS_PROVIDER: "twilio"
+    secrets:
+      env:
+        SENDGRID_API_KEY: "sendgrid-api-key"
+        TWILIO_ACCOUNT_SID: "twilio-sid"
+        TWILIO_AUTH_TOKEN: "twilio-token"
+
+  # Background Workers
+  email-worker:
+    profile: worker
+    image: email-worker:v1.0.0
+    connections:
+      - redis
+      - notification-service
+    env:
+      WORKER_CONCURRENCY: "10"
+      BATCH_SIZE: "100"
+
+  order-processor:
+    profile: worker
+    image: order-processor:v1.1.0
+    connections:
+      - redis
+      - order-service
+      - inventory-service
+    env:
+      PROCESSING_INTERVAL: "30"
+
+  # Databases and Cache
+  postgres:
+    profile: database
+    image: postgres:14-alpine
+    persistence:
+      size: 100Gi
+      storageClass: fast-ssd
+    env:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: myapp
+      PGDATA: /var/lib/postgresql/data/pgdata
+    secrets:
+      env:
+        POSTGRES_PASSWORD: "secure-postgres-password"
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+
+  redis:
+    image: redis:7-alpine
+    expose: 6379
+    command: ["redis-server", "--maxmemory", "2gb", "--maxmemory-policy", "allkeys-lru"]
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 2Gi
