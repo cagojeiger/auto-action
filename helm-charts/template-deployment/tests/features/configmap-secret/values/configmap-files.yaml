@@ -1,0 +1,10 @@
+templates:
+  - name: web
+    image:
+      repository: nginx
+      tag: latest
+    configMaps:
+      - name: app-config
+        files:
+          - name: config.yaml
+            path: files/config.yaml

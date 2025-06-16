@@ -1,0 +1,32 @@
+templates:
+  - name: frontend
+    image:
+      repository: nginx
+      tag: latest
+    service:
+      enabled: true
+      port: 80
+    ingress:
+      enabled: true
+      className: nginx
+      hosts:
+        - host: www.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+  
+  - name: backend
+    image:
+      repository: api
+      tag: latest
+    service:
+      enabled: true
+      port: 8080
+    ingress:
+      enabled: true
+      className: nginx
+      hosts:
+        - host: api.example.com
+          paths:
+            - path: /
+              pathType: Prefix
