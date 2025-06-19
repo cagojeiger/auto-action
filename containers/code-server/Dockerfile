@@ -104,19 +104,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get install -y nodejs
 
 # kubeconfig 생성 스크립트 복사
-COPY gen_kube_config.sh /home/coder/gen_kube_config.sh
-RUN chmod +x /home/coder/gen_kube_config.sh
-RUN chown coder:coder /home/coder/gen_kube_config.sh
+COPY gen_kube_config.sh /tmp/gen_kube_config.sh
+RUN chmod +x /tmp/gen_kube_config.sh
+RUN chown coder:coder /tmp/gen_kube_config.sh
 
 # coder 유저로 전환
 USER coder
-
-# npm global 디렉토리 설정
-RUN mkdir -p ~/.npm-global && \
-    npm config set prefix '~/.npm-global' && \
-    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc && \
-    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.profile
-
-# Claude Code 설치 (coder 유저의 홈 디렉토리에 설치)
-RUN export PATH=~/.npm-global/bin:$PATH && \
-    npm install -g @anthropic-ai/claude-code

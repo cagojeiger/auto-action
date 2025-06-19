@@ -57,9 +57,6 @@ jobs:
           sed -i 's|repository: codercom/code-server|repository: ${{ secrets.DOCKERHUB_USERNAME }}/code-server|' helm-charts/code-server/values.yaml
           echo "Helm 차트의 repository 값을 ${{ secrets.DOCKERHUB_USERNAME }}/code-server로 수정했습니다."
 
-          sed -i 's|/home/coder|/home/coder/code|g' helm-charts/code-server/templates/deployment.yaml
-          echo "/home/coder 경로를 /home/coder/code로 업데이트했습니다."
-
       - name: Update Dockerfile version
         run: |
           sed -i "s/^ARG CODE_SERVER_VERSION=.*/ARG CODE_SERVER_VERSION=${{ env.APP_VERSION }}/" containers/code-server/Dockerfile

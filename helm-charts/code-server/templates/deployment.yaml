@@ -97,7 +97,7 @@ spec:
         {{- end }}
           volumeMounts:
           - name: data
-            mountPath: /home/coder/code
+            mountPath: /home/coder
           {{- range .Values.extraConfigmapMounts }}
           - name: {{ .name }}
             mountPath: {{ .mountPath }}
