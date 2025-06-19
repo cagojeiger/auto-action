@@ -206,8 +206,3 @@ extraPorts: []
   # - name: minecraft
   #   port: 25565
   #   protocol: tcp
-
-# Cluster admin permissions
-# WARNING: Enables cluster-wide access limited by your kubeconfig permissions
-clusterAdmin:
-  enable: false

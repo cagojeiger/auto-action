@@ -103,10 +103,13 @@ COPY --from=builder /usr/local/bin/gh     /usr/local/bin/gh
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get install -y nodejs
 
-# kubeconfig 생성 스크립트 복사
+# 스크립트들 복사
 COPY gen_kube_config.sh /tmp/gen_kube_config.sh
-RUN chmod +x /tmp/gen_kube_config.sh
-RUN chown coder:coder /tmp/gen_kube_config.sh
+COPY setup-npm-global.sh /tmp/setup-npm-global.sh
+COPY install-claude-code.sh /tmp/install-claude-code.sh
+
+# 실행 권한 부여 및 소유권 설정
+RUN chmod +x /tmp/*.sh && chown coder:coder /tmp/*.sh
 
 # coder 유저로 전환
 USER coder
