@@ -57,6 +57,29 @@ RUN GOMPLATE_LATEST_VERSION=$(curl -s https://api.github.com/repos/hairyhenderso
     install -o root -g root -m 0755 gomplate_linux-${TARGETARCH} /usr/local/bin/gomplate && \
     rm -f gomplate_linux-${TARGETARCH}
 
+# jq 설치
+RUN JQ_LATEST_VERSION=$(curl -s https://api.github.com/repos/jqlang/jq/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    echo "➡️  Using jq version: ${JQ_LATEST_VERSION}" && \
+    curl -LO "https://github.com/jqlang/jq/releases/download/${JQ_LATEST_VERSION}/jq-linux-${TARGETARCH}" && \
+    install -o root -g root -m 0755 jq-linux-${TARGETARCH} /usr/local/bin/jq && \
+    rm -f jq-linux-${TARGETARCH}
+
+# yq 설치
+RUN YQ_LATEST_VERSION=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    echo "➡️  Using yq version: ${YQ_LATEST_VERSION}" && \
+    curl -LO "https://github.com/mikefarah/yq/releases/download/${YQ_LATEST_VERSION}/yq_linux_${TARGETARCH}" && \
+    install -o root -g root -m 0755 yq_linux_${TARGETARCH} /usr/local/bin/yq && \
+    rm -f yq_linux_${TARGETARCH}
+
+# GitHub CLI (gh) 설치
+RUN GH_LATEST_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+    echo "➡️  Using gh version: ${GH_LATEST_VERSION}" && \
+    GH_FILENAME="gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}.tar.gz" && \
+    curl -LO "https://github.com/cli/cli/releases/download/v${GH_LATEST_VERSION}/${GH_FILENAME}" && \
+    tar -xzf "${GH_FILENAME}" && \
+    install -o root -g root -m 0755 "gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}/bin/gh" /usr/local/bin/gh && \
+    rm -rf "${GH_FILENAME}" "gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}"
+
 
 # =============================================
 # 2) Final Stage
@@ -72,17 +95,28 @@ COPY --from=builder /usr/local/bin/k9s    /usr/local/bin/k9s
 COPY --from=builder /usr/local/bin/skopeo /usr/local/bin/skopeo
 COPY --from=builder /usr/local/bin/mc     /usr/local/bin/mc
 COPY --from=builder /usr/local/bin/gomplate /usr/local/bin/gomplate
+COPY --from=builder /usr/local/bin/jq     /usr/local/bin/jq
+COPY --from=builder /usr/local/bin/yq     /usr/local/bin/yq
+COPY --from=builder /usr/local/bin/gh     /usr/local/bin/gh
 
 # Node.js 최신 버전 설치 (NodeSource 사용)
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get install -y nodejs
 
-# Claude Code 설치
-RUN npm install -g @anthropic-ai/claude-code
-
 # kubeconfig 생성 스크립트 복사
-COPY gen_kube_config.sh /tmp/gen_kube_config.sh
-RUN chmod +x /tmp/gen_kube_config.sh
-RUN chown coder:coder /tmp/gen_kube_config.sh
+COPY gen_kube_config.sh /home/coder/gen_kube_config.sh
+RUN chmod +x /home/coder/gen_kube_config.sh
+RUN chown coder:coder /home/coder/gen_kube_config.sh
 
+# coder 유저로 전환
 USER coder
+
+# npm global 디렉토리 설정
+RUN mkdir -p ~/.npm-global && \
+    npm config set prefix '~/.npm-global' && \
+    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc && \
+    echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.profile
+
+# Claude Code 설치 (coder 유저의 홈 디렉토리에 설치)
+RUN export PATH=~/.npm-global/bin:$PATH && \
+    npm install -g @anthropic-ai/claude-code

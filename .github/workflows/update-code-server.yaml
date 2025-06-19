@@ -44,11 +44,21 @@ jobs:
       - name: Update Helm chart files
         run: |
           mkdir -p helm-charts/code-server
-          rm -rf helm-charts/code-server/*
-          cp -r ./temp-code-server-source/ci/helm-chart/* helm-charts/code-server/
+          
+          # rsync를 사용하여 원본 차트 동기화 (커스텀 파일 제외)
+          rsync -av --delete \
+            --exclude='clusterrole.yaml' \
+            --exclude='clusterrolebinding.yaml' \
+            ./temp-code-server-source/ci/helm-chart/ \
+            helm-charts/code-server/
+          
+          echo "Helm 차트를 rsync로 동기화했습니다."
 
           sed -i 's|repository: codercom/code-server|repository: ${{ secrets.DOCKERHUB_USERNAME }}/code-server|' helm-charts/code-server/values.yaml
           echo "Helm 차트의 repository 값을 ${{ secrets.DOCKERHUB_USERNAME }}/code-server로 수정했습니다."
+
+          sed -i 's|/home/coder|/home/coder/code|g' helm-charts/code-server/templates/deployment.yaml
+          echo "/home/coder 경로를 /home/coder/code로 업데이트했습니다."
 
       - name: Update Dockerfile version
         run: |
