@@ -1,0 +1,57 @@
+name: Slack Notifications
+
+on:
+  workflow_run:
+    workflows: 
+      - "Unified Artifact Push"
+      - "Update Casdoor"
+      - "Update Code-Server"
+    types:
+      - completed
+
+jobs:
+  notify-failure:
+    name: Send Slack Notification
+    if: |
+      github.event.workflow_run.conclusion == 'failure' &&
+      secrets.SLACK_WEBHOOK_URL != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack Message
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          # 실패한 워크플로우 정보
+          WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+          WORKFLOW_URL="${{ github.event.workflow_run.html_url }}"
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          ACTOR="${{ github.event.workflow_run.actor.login }}"
+          
+          # Slack 메시지 전송
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\": \"❌ GitHub Actions 실패 알림\",
+            \"blocks\": [
+              {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*워크플로우:* ${WORKFLOW_NAME}\n*브랜치:* ${BRANCH}\n*실행자:* ${ACTOR}\"
+                }
+              },
+              {
+                \"type\": \"actions\",
+                \"elements\": [
+                  {
+                    \"type\": \"button\",
+                    \"text\": {
+                      \"type\": \"plain_text\",
+                      \"text\": \"🔍 실패 내용 확인\"
+                    },
+                    \"url\": \"${WORKFLOW_URL}\"
+                  }
+                ]
+              }
+            ]
+          }" \
+          ${SLACK_WEBHOOK_URL}
