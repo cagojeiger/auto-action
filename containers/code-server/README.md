@@ -30,22 +30,30 @@ helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
   --set password="mypassword"
 ```
 
+## 환경 설정
+
+이미지에는 다음 환경 변수가 사전 설정되어 있습니다:
+- `PATH`: pipx와 npm global 경로 포함
+- `NPM_CONFIG_PREFIX`: `/home/coder/.npm-global`
+- `PIPX_HOME`: `/home/coder/.local/pipx`
+- `PIPX_BIN_DIR`: `/home/coder/.local/bin`
+
 ## 유용한 스크립트
 
 이미지에는 다음 스크립트들이 `/tmp/`에 포함되어 있습니다:
 - `gen_kube_config.sh` - Service Account를 사용한 kubeconfig 생성
-- `setup-npm-global.sh` - npm 전역 패키지 설정
-- `setup-python-pipx.sh` - pipx 사용자별 Python 패키지 관리 설정
+- `setup-npm-global.sh` - npm 전역 패키지 prefix 설정 (최초 1회 필요)
 - `install-claude-code.sh` - Claude Code CLI 설치
 
 사용 예시:
 ```bash
-# 컨테이너 내에서 실행
+# npm global 설정 (최초 1회)
 /tmp/setup-npm-global.sh
-/tmp/setup-python-pipx.sh
+
+# Claude Code CLI 설치
 /tmp/install-claude-code.sh
 
-# pipx로 Python 도구 설치
+# pipx는 별도 설정 없이 바로 사용 가능!
 pipx install poetry
 pipx install black
 pipx install ruff
