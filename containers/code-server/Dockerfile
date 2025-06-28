@@ -110,11 +110,16 @@ RUN apt-get update && apt-get install -y pipx && \
 # 스크립트들 복사
 COPY gen_kube_config.sh /tmp/gen_kube_config.sh
 COPY setup-npm-global.sh /tmp/setup-npm-global.sh
-COPY setup-python-pipx.sh /tmp/setup-python-pipx.sh
 COPY install-claude-code.sh /tmp/install-claude-code.sh
 
 # 실행 권한 부여 및 소유권 설정
 RUN chmod +x /tmp/*.sh && chown coder:coder /tmp/*.sh
+
+# 환경 변수 설정 (빌드 시점에 고정)
+ENV NPM_CONFIG_PREFIX="/home/coder/.npm-global"
+ENV PIPX_HOME="/home/coder/.local/pipx"
+ENV PIPX_BIN_DIR="/home/coder/.local/bin"
+ENV PATH="/home/coder/.local/bin:/home/coder/.npm-global/bin:${PATH}"
 
 # coder 유저로 전환
 USER coder

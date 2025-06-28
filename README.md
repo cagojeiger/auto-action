@@ -6,19 +6,21 @@
 
 - **containers/** - 컨테이너 이미지를 위한 Dockerfile과 스크립트가 있습니다. `code-server` 이미지는 Kubernetes 관련 도구를 포함합니다.
 - **docker-composes/** - 로컬 테스트용 Docker Compose 설정을 제공합니다. 예를 들어 OpenHands 애플리케이션 구성 파일이 있습니다.
-- **helm-charts/** - 서비스를 배포하기 위한 Helm 차트 모음입니다. 주요 차트는 다음과 같습니다.
+- **helm-charts/** - 활성 서비스 배포용 Helm 차트입니다.
   - `casdoor`: 인증 서버 배포
   - `code-server`: Kubernetes 도구가 포함된 코드 서버
+- **helm-charts-archive/** - 고급 기능을 포함한 아카이브 차트들입니다.
+  - `template-deployment`: 사용자 정의 배포를 위한 템플릿 (고급 테스트 포함)
   - `monitoring`: Prometheus, Loki, Promtail 패키지
   - `ops-stack`: Redis, PostgreSQL, MinIO, Harbor, Gitea, Argo CD 등이 포함된 번들
   - `oss-ai-stack`, `oss-data-infra`: 오픈소스 AI 및 데이터 작업을 위한 인프라
-  - `template-deployment`: 사용자 정의 배포를 위한 템플릿
 - **.github/workflows/** - 아티팩트 업데이트와 배포를 담당하는 CI 설정이 위치합니다.
 
 ## 워크플로 개요
 
 - **unified-artifact-push.yaml**: Dockerfile이나 Helm 차트 변경 시 자동으로 이미지를 빌드하고 차트를 배포합니다.
 - **update-casdoor.yaml**, **update-code-server.yaml**: 외부 저장소의 최신 버전을 가져와 차트와 Dockerfile을 갱신하는 작업을 수행합니다.
+- **slack-notifications.yaml**: 다른 워크플로우가 실패할 경우 Slack으로 알림을 전송합니다.
 
 ## 사용 방법
 
