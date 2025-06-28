@@ -12,9 +12,7 @@ on:
 jobs:
   notify-failure:
     name: Send Slack Notification
-    if: |
-      github.event.workflow_run.conclusion == 'failure' &&
-      secrets.SLACK_WEBHOOK_URL != ''
+    if: github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-latest
     steps:
       - name: Send Slack Message
