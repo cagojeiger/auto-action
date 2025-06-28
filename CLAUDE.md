@@ -162,25 +162,54 @@ templates:
 ## Container Development Tools
 
 ### Code-Server Container Utilities
-The code-server container includes several helper scripts located in the source directory `containers/code-server/`:
+The code-server container includes minimal helper scripts located in the source directory `containers/code-server/`:
 
 ```bash
-# Available utility scripts (to be copied into container)
-containers/code-server/setup-npm-global.sh      # Configure npm global packages
-containers/code-server/setup-python-pipx.sh     # Setup pipx for Python tools (improved for container environments)
+# Available utility scripts (copied to /tmp/ in container)
+containers/code-server/setup-npm-global.sh      # Set npm prefix (required - user-specific config)
 containers/code-server/install-claude-code.sh   # Install Claude Code CLI
 containers/code-server/gen_kube_config.sh       # Generate kubeconfig from Service Account
-
-# Enhanced setup-python-pipx.sh features:
-# - Uses $HOME environment variable (no hardcoded paths)
-# - Creates shell config files if they don't exist
-# - Robust duplicate checking with improved grep patterns
-# - Verification of pipx installation
-# - Better error handling and progress logging
-
-# Install development tools via pipx (after running setup-python-pipx.sh)
-pipx install poetry black ruff
 ```
+
+### Pre-configured Environment Variables
+The container image comes with these environment variables pre-configured:
+```bash
+NPM_CONFIG_PREFIX="/home/coder/.npm-global"
+PIPX_HOME="/home/coder/.local/pipx"
+PIPX_BIN_DIR="/home/coder/.local/bin"
+PATH="/home/coder/.local/bin:/home/coder/.npm-global/bin:${PATH}"
+```
+
+### Lifecycle Configuration Example
+```yaml
+lifecycle:
+  enabled: true
+  postStart:
+    exec:
+      command:
+        - /bin/bash
+        - -c
+        - |
+          # Generate kubeconfig if running in Kubernetes
+          if [ -f "/var/run/secrets/kubernetes.io/serviceaccount/token" ]; then
+            /tmp/gen_kube_config.sh
+          fi
+
+          # Setup npm global prefix (user-specific, always required)
+          if [ ! -d "/home/coder/.npm-global" ]; then
+            /tmp/setup-npm-global.sh
+          fi
+
+          # Install Claude CLI if not already installed
+          if [ ! -f "/home/coder/.npm-global/bin/claude" ]; then
+            /tmp/install-claude-code.sh
+          fi
+          
+          # pipx works out-of-the-box - no setup needed!
+          # Example: pipx install poetry
+```
+
+**Note**: The environment variables in `extraVars` are now optional - they're already built into the image. Override them only if you need custom paths.
 
 ## Local Development
 
