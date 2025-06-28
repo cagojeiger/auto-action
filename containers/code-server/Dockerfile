@@ -50,12 +50,12 @@ RUN MC_LATEST_VERSION=$(curl -s https://api.github.com/repos/minio/mc/releases/l
     install -o root -g root -m 0755 mc /usr/local/bin/mc && \
     rm -f mc
 
-# gomplate 설치
-RUN GOMPLATE_LATEST_VERSION=$(curl -s https://api.github.com/repos/hairyhenderson/gomplate/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
-    echo "➡️  Using gomplate version: ${GOMPLATE_LATEST_VERSION}" && \
-    curl -LO "https://github.com/hairyhenderson/gomplate/releases/download/${GOMPLATE_LATEST_VERSION}/gomplate_linux-${TARGETARCH}" && \
-    install -o root -g root -m 0755 gomplate_linux-${TARGETARCH} /usr/local/bin/gomplate && \
-    rm -f gomplate_linux-${TARGETARCH}
+# ArgoCD CLI 설치
+RUN ARGOCD_LATEST_VERSION=$(curl -s https://api.github.com/repos/argoproj/argo-cd/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    echo "➡️  Using ArgoCD version: ${ARGOCD_LATEST_VERSION}" && \
+    curl -LO "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_LATEST_VERSION}/argocd-linux-${TARGETARCH}" && \
+    install -o root -g root -m 0755 argocd-linux-${TARGETARCH} /usr/local/bin/argocd && \
+    rm -f argocd-linux-${TARGETARCH}
 
 # jq 설치
 RUN JQ_LATEST_VERSION=$(curl -s https://api.github.com/repos/jqlang/jq/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
@@ -93,7 +93,7 @@ COPY --from=builder /usr/local/bin/helm   /usr/local/bin/helm
 COPY --from=builder /usr/local/bin/k9s    /usr/local/bin/k9s
 COPY --from=builder /usr/local/bin/skopeo /usr/local/bin/skopeo
 COPY --from=builder /usr/local/bin/mc     /usr/local/bin/mc
-COPY --from=builder /usr/local/bin/gomplate /usr/local/bin/gomplate
+COPY --from=builder /usr/local/bin/argocd /usr/local/bin/argocd
 COPY --from=builder /usr/local/bin/jq     /usr/local/bin/jq
 COPY --from=builder /usr/local/bin/yq     /usr/local/bin/yq
 COPY --from=builder /usr/local/bin/gh     /usr/local/bin/gh
