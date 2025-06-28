@@ -5,8 +5,9 @@
 ## 포함된 도구
 - code-server (브라우저 기반 VS Code)
 - Kubernetes: kubectl, helm, k9s
-- 개발 도구: Node.js LTS, jq, yq, gomplate, gh (GitHub CLI)
-- 기타: skopeo, mc (MinIO Client)
+- GitOps: ArgoCD CLI
+- 개발 도구: Node.js LTS, Python 3.11, pipx, jq, yq, gh (GitHub CLI)
+- 컨테이너 도구: skopeo, mc (MinIO Client)
 
 ## 빠른 시작
 
@@ -34,13 +35,20 @@ helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
 이미지에는 다음 스크립트들이 `/tmp/`에 포함되어 있습니다:
 - `gen_kube_config.sh` - Service Account를 사용한 kubeconfig 생성
 - `setup-npm-global.sh` - npm 전역 패키지 설정
+- `setup-python-pipx.sh` - pipx 사용자별 Python 패키지 관리 설정
 - `install-claude-code.sh` - Claude Code CLI 설치
 
 사용 예시:
 ```bash
 # 컨테이너 내에서 실행
 /tmp/setup-npm-global.sh
+/tmp/setup-python-pipx.sh
 /tmp/install-claude-code.sh
+
+# pipx로 Python 도구 설치
+pipx install poetry
+pipx install black
+pipx install ruff
 ```
 
 ## 지원 아키텍처
