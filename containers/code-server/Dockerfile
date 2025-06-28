@@ -80,7 +80,6 @@ RUN GH_LATEST_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/la
     install -o root -g root -m 0755 "gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}/bin/gh" /usr/local/bin/gh && \
     rm -rf "${GH_FILENAME}" "gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}"
 
-
 # =============================================
 # 2) Final Stage
 # =============================================
@@ -99,13 +98,19 @@ COPY --from=builder /usr/local/bin/jq     /usr/local/bin/jq
 COPY --from=builder /usr/local/bin/yq     /usr/local/bin/yq
 COPY --from=builder /usr/local/bin/gh     /usr/local/bin/gh
 
-# Node.js 최신 버전 설치 (NodeSource 사용)
+
+# Node.js 최신 버전 설치 (NodeSource 사용) - Python3도 함께 설치됨
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get install -y nodejs
+
+# pipx 설치 (시스템 패키지로 설치 - Debian 12의 권장 방법)
+RUN apt-get update && apt-get install -y pipx && \
+    rm -rf /var/lib/apt/lists/*
 
 # 스크립트들 복사
 COPY gen_kube_config.sh /tmp/gen_kube_config.sh
 COPY setup-npm-global.sh /tmp/setup-npm-global.sh
+COPY setup-python-pipx.sh /tmp/setup-python-pipx.sh
 COPY install-claude-code.sh /tmp/install-claude-code.sh
 
 # 실행 권한 부여 및 소유권 설정
