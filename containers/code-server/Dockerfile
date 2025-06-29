@@ -111,6 +111,7 @@ RUN apt-get update && apt-get install -y pipx && \
 COPY gen_kube_config.sh /tmp/gen_kube_config.sh
 COPY setup-npm-global.sh /tmp/setup-npm-global.sh
 COPY install-claude-code.sh /tmp/install-claude-code.sh
+COPY setup-python-pipx.sh /tmp/setup-python-pipx.sh
 
 # 실행 권한 부여 및 소유권 설정
 RUN chmod +x /tmp/*.sh && chown coder:coder /tmp/*.sh
