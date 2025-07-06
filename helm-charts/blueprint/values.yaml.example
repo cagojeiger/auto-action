@@ -1,0 +1,465 @@
+########################################################
+# Global Configuration
+########################################################
+global:
+  imageRegistry: ""                    # Global image registry (e.g., "docker.io", "gcr.io", "harbor.example.com")
+  imagePullSecrets: []                 # Global image pull secrets
+    # - name: dockerhub-secret
+    # - name: private-registry-secret
+  defaultStorageClass: ""              # Default storage class for all PVCs
+  storageClass: ""                     # Override storage class (takes precedence over defaultStorageClass)
+
+########################################################
+# Application Specifications
+########################################################
+# Each key under 'apps' becomes a separate deployment
+# The key name (e.g., "example-app") is used as the base name for all resources
+apps:
+  # This example shows ALL available options for the blueprint chart
+  example-app:
+    # Container image configuration
+    image:
+      repository: busybox              # Required: Image repository
+      tag: "1.36"                      # Required: Image tag
+      pullPolicy: IfNotPresent         # Image pull policy: Always, Never, IfNotPresent
+
+    # Basic deployment settings
+    replicaCount: 1                    # Number of pod replicas (ignored if autoscaling.enabled=true)
+    nameOverride: ""                   # Override the name used for resources
+    fullnameOverride: ""               # Override the full name used for resources
+
+    # Container command and arguments
+    command: ["/bin/sh"]               # Container entrypoint command
+    args: ["-c", "echo 'Hello from blueprint!' && sleep infinity"]  # Container arguments
+
+    # Environment variables
+    env:                               # List of environment variables
+      - name: LOG_LEVEL
+        value: "info"
+      - name: APP_VERSION
+        value: "1.0.0"
+      - name: DATABASE_HOST
+        value: "postgres.default.svc.cluster.local"
+      - name: DATABASE_PASSWORD        # Example: from secret
+        valueFrom:
+          secretKeyRef:
+            name: db-secret
+            key: password
+      - name: POD_NAME                 # Example: from field
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      - name: CPU_REQUEST              # Example: from resource
+        valueFrom:
+          resourceFieldRef:
+            containerName: example-app
+            resource: requests.cpu
+
+    # Environment from ConfigMap/Secret
+    envFrom:                           # Import all keys from ConfigMap/Secret as env vars
+      - configMapRef:
+          name: app-config
+      - secretRef:
+          name: app-secrets
+      - configMapRef:
+          name: feature-flags
+          optional: true               # Don't fail if doesn't exist
+
+    # Kubernetes Service
+    service:
+      enabled: true                    # Create a Service for this deployment
+      type: ClusterIP                  # Service type: ClusterIP, NodePort, LoadBalancer, ExternalName
+      port: 8080                       # Service port
+      targetPort: 8080                 # Container port (defaults to 'port' if not specified)
+      portName: http                   # Port name
+      # nodePort: 30080                # Only for type: NodePort
+      # loadBalancerIP: "10.0.0.1"     # Only for type: LoadBalancer
+      # externalTrafficPolicy: Local   # Cluster or Local
+      # sessionAffinity: None          # None, ClientIP
+      # annotations:                   # Service-specific annotations
+      #   service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      
+      # Alternative: Multiple ports configuration
+      # ports:
+      #   - name: http
+      #     port: 8080
+      #     targetPort: http-port
+      #     protocol: TCP
+      #   - name: grpc
+      #     port: 9090
+      #     targetPort: 9090
+      #     protocol: TCP
+
+    # Ingress configuration
+    ingress:
+      enabled: true                    # Create an Ingress for this deployment
+      className: "nginx"               # Ingress class name
+      annotations:                     # Ingress annotations
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+      hosts:
+        - host: example.local
+          paths:
+            - path: /
+              pathType: Prefix         # Prefix, Exact, ImplementationSpecific
+            - path: /api
+              pathType: Prefix
+              # backend:               # Optional: Override backend service
+              #   service:
+              #     name: api-service
+              #     port:
+              #       number: 8080
+      tls:                             # TLS/SSL configuration
+        - secretName: example-tls
+          hosts:
+            - example.local
+            - www.example.local
+
+    # ConfigMap for application configuration
+    configMap:
+      enabled: true                    # Create a ConfigMap
+      name: ""                         # ConfigMap name (defaults to {release}-{app}-config)
+      data:                            # ConfigMap data
+        application.yaml: |
+          server:
+            port: 8080
+            host: 0.0.0.0
+          database:
+            host: postgres
+            port: 5432
+        config.json: |
+          {
+            "debug": true,
+            "features": {
+              "newUI": true,
+              "analytics": false
+            }
+          }
+        script.sh: |
+          #!/bin/bash
+          echo "Initialization script"
+
+    # Persistent Volume Claim
+    persistence:
+      enabled: true                    # Create a PVC for this deployment
+      name: ""                         # PVC name (defaults to {release}-{app}-pvc)
+      size: 10Gi                       # Storage size
+      storageClassName: ""             # Storage class (uses global.storageClass if empty)
+      accessMode: ReadWriteOnce        # Access mode: ReadWriteOnce, ReadOnlyMany, ReadWriteMany
+      # existingClaim: "existing-pvc"  # Use existing PVC instead of creating new one
+      # selector:                      # Select specific PV
+      #   matchLabels:
+      #     release: "stable"
+      # dataSource:                    # Clone from existing PVC/Snapshot
+      #   name: existing-snapshot
+      #   kind: VolumeSnapshot
+
+    # Volume configuration
+    volumes:                           # Pod volumes
+      - name: config
+        configMap:
+          name: example-app-config
+          items:                       # Mount specific keys only
+            - key: application.yaml
+              path: app.yaml
+          defaultMode: 0644
+      - name: secrets
+        secret:
+          secretName: app-secrets
+          defaultMode: 0400
+      - name: data
+        persistentVolumeClaim:
+          claimName: example-app-pvc
+      - name: cache
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: host-path
+        hostPath:
+          path: /var/log
+          type: Directory              # Directory, DirectoryOrCreate, File, FileOrCreate
+      - name: projected
+        projected:                     # Combine multiple sources
+          sources:
+            - secret:
+                name: mysecret
+            - configMap:
+                name: myconfigmap
+
+    # Volume mounts for the container
+    volumeMounts:
+      - name: config
+        mountPath: /etc/config
+        readOnly: true
+      - name: secrets
+        mountPath: /etc/secrets
+        readOnly: true
+      - name: data
+        mountPath: /data
+      - name: cache
+        mountPath: /cache
+      - name: config                   # Mount single file
+        mountPath: /app/config.yaml
+        subPath: application.yaml
+        readOnly: true
+
+    # Resource limits and requests
+    resources:
+      limits:
+        cpu: 500m                      # CPU limit
+        memory: 512Mi                  # Memory limit
+        ephemeral-storage: 2Gi         # Ephemeral storage limit
+        # nvidia.com/gpu: 1            # GPU limit (requires GPU operator)
+      requests:
+        cpu: 100m                      # CPU request
+        memory: 128Mi                  # Memory request
+        ephemeral-storage: 100Mi       # Ephemeral storage request
+
+    # Container lifecycle hooks
+    lifecycle:
+      preStop:                         # Execute before container stops
+        exec:
+          command: ["/bin/sh", "-c", "sleep 15"]
+        # httpGet:                     # Alternative: HTTP request
+        #   path: /shutdown
+        #   port: 8080
+        # tcpSocket:                   # Alternative: TCP check
+        #   port: 8080
+      postStart:                       # Execute after container starts
+        exec:
+          command: ["/bin/sh", "-c", "echo 'Container started' > /proc/1/fd/1"]
+
+    # Health checks
+    livenessProbe:                     # Restart container if fails
+      httpGet:
+        path: /healthz
+        port: http
+        httpHeaders:
+          - name: Custom-Header
+            value: Awesome
+      initialDelaySeconds: 30          # Wait before first check
+      periodSeconds: 10                # Check interval
+      timeoutSeconds: 5                # Timeout for each check
+      successThreshold: 1              # Success after N checks
+      failureThreshold: 3              # Fail after N checks
+      # exec:                          # Alternative: Command check
+      #   command:
+      #     - cat
+      #     - /tmp/healthy
+      # tcpSocket:                     # Alternative: TCP check
+      #   port: 8080
+      # grpc:                          # Alternative: gRPC check (k8s 1.24+)
+      #   port: 8080
+
+    readinessProbe:                    # Remove from service if fails
+      httpGet:
+        path: /ready
+        port: http
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
+    startupProbe:                      # For slow-starting containers
+      httpGet:
+        path: /healthz
+        port: http
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 30             # Allow 5 minutes to start
+
+    # Container security context
+    securityContext:
+      runAsUser: 1000                  # User ID
+      runAsGroup: 3000                 # Group ID
+      fsGroup: 2000                    # Filesystem group
+      runAsNonRoot: true               # Must run as non-root
+      readOnlyRootFilesystem: true     # Read-only root filesystem
+      allowPrivilegeEscalation: false  # Prevent privilege escalation
+      privileged: false                # Run privileged
+      capabilities:                    # Linux capabilities
+        add:
+          - NET_BIND_SERVICE
+          - SYS_TIME
+        drop:
+          - ALL
+      seccompProfile:                  # Seccomp profile
+        type: RuntimeDefault           # RuntimeDefault, Localhost, Unconfined
+      seLinuxOptions:                  # SELinux options
+        level: "s0:c123,c456"
+
+    # Init containers (run before main container)
+    initContainers:
+      - name: init-db
+        image: busybox:1.36
+        command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for db; sleep 2; done;']
+      - name: init-permissions
+        image: busybox:1.36
+        command: ['sh', '-c', 'chmod -R 777 /data']
+        volumeMounts:
+          - name: data
+            mountPath: /data
+        securityContext:
+          runAsUser: 0
+
+    # Pod-level configuration
+    podAnnotations:                    # Pod annotations
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9090"
+      prometheus.io/path: "/metrics"
+      fluentbit.io/parser: "json"
+
+    podLabels:                         # Pod labels
+      environment: production
+      team: platform
+      version: "1.0.0"
+
+    imagePullSecrets:                  # Pod-specific image pull secrets (overrides global)
+      - name: myregistrykey
+      - name: dockerhub
+
+    # Service Account
+    serviceAccount:
+      create: true                     # Create service account
+      automount: true                  # Automount service account token
+      name: ""                         # Name (defaults to {release}-{app})
+      annotations:                     # Service account annotations
+        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-role
+
+    # RBAC - Cluster Role
+    clusterRole:
+      enabled: true                    # Create cluster role and binding
+      rules:                           # Cluster role rules
+        - apiGroups: [""]
+          resources: ["pods", "pods/log", "pods/status"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: ["apps"]
+          resources: ["deployments", "replicasets"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: ["batch"]
+          resources: ["jobs", "cronjobs"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+    # Horizontal Pod Autoscaler
+    autoscaling:
+      enabled: true                    # Enable HPA
+      minReplicas: 2                   # Minimum replicas
+      maxReplicas: 10                  # Maximum replicas
+      targetCPUUtilizationPercentage: 80  # Target CPU (deprecated, use metrics)
+      targetMemoryUtilizationPercentage: 80  # Target Memory (deprecated, use metrics)
+      metrics:                         # HPA metrics (k8s 1.23+)
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization        # Utilization, Value, AverageValue
+              averageUtilization: 80
+        - type: Resource
+          resource:
+            name: memory
+            target:
+              type: Utilization
+              averageUtilization: 80
+        - type: Pods
+          pods:
+            metric:
+              name: packets-per-second
+            target:
+              type: AverageValue
+              averageValue: "1k"
+        - type: Object
+          object:
+            metric:
+              name: requests-per-second
+            describedObject:
+              apiVersion: networking.k8s.io/v1
+              kind: Ingress
+              name: main-app
+            target:
+              type: Value
+              value: "10k"
+      behavior:                        # Scaling behavior (k8s 1.23+)
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 15
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 15
+            - type: Pods
+              value: 4
+              periodSeconds: 15
+          selectPolicy: Max
+
+    # Pod Disruption Budget
+    podDisruptionBudget:
+      enabled: true                    # Create PDB
+      minAvailable: 1                  # Minimum available pods
+      # maxUnavailable: 1              # Maximum unavailable (use either minAvailable or maxUnavailable)
+      # unhealthyPodEvictionPolicy: AlwaysAllow  # IfHealthyBudget, AlwaysAllow (k8s 1.26+)
+
+    # Node selection
+    nodeSelector:                      # Select nodes by labels
+      kubernetes.io/os: linux
+      node-role.kubernetes.io/worker: "true"
+      disktype: ssd
+
+    # Pod affinity/anti-affinity
+    affinity:
+      nodeAffinity:                    # Node affinity rules
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/e2e-az-name
+                  operator: In
+                  values:
+                    - e2e-az1
+                    - e2e-az2
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+                - key: node-type
+                  operator: In
+                  values:
+                    - fast
+      podAffinity:                     # Pod affinity rules
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - cache
+            topologyKey: kubernetes.io/hostname
+      podAntiAffinity:                 # Pod anti-affinity rules
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - example-app
+              topologyKey: kubernetes.io/hostname
+
+    # Tolerations
+    tolerations:                       # Allow pod to schedule on tainted nodes
+      - key: "dedicated"
+        operator: "Equal"
+        value: "gpu"
+        effect: "NoSchedule"
+      - key: "example.com/special"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 3600        # Tolerate for 1 hour

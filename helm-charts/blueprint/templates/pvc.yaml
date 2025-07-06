@@ -1,0 +1,33 @@
+{{- range $name, $app := .Values.apps }}
+---
+{{- if and $app.persistence $app.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $app.persistence.name }}
+  labels:
+    {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+    {{- with $app.persistence.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  accessModes:
+    - {{ $app.persistence.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ $app.persistence.size }}
+  {{- $storageClass := "" }}
+  {{- if $.Values.global.storageClass }}
+    {{- $storageClass = $.Values.global.storageClass }}
+  {{- else if $.Values.global.defaultStorageClass }}
+    {{- $storageClass = $.Values.global.defaultStorageClass }}
+  {{- else if $app.persistence.storageClassName }}
+    {{- $storageClass = $app.persistence.storageClassName }}
+  {{- end }}
+  {{- if $storageClass }}
+  storageClassName: {{ $storageClass }}
+  {{- end }}
+{{- end }}
+{{- end }}

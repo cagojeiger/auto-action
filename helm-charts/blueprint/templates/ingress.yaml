@@ -1,0 +1,46 @@
+{{- range $name, $app := .Values.apps }}
+---
+{{- if and $app.ingress $app.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}
+  labels:
+    {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
+  {{- with $app.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $app.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $app.ingress.tls }}
+  tls:
+    {{- range $app.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range $app.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- with .pathType }}
+            pathType: {{ . }}
+            {{- end }}
+            backend:
+              service:
+                name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}
+                port:
+                  number: {{ $app.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
