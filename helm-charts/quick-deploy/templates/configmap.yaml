@@ -1,0 +1,16 @@
+{{- range $name, $app := .Values.apps }}
+---
+{{- if and $app.configMap $app.configMap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $app.configMap.name }}
+  labels:
+    {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
+data:
+  {{- range $key, $value := $app.configMap.data }}
+  {{ $key }}: |-
+    {{- $value | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}

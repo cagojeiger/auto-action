@@ -1,0 +1,318 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["apps"],
+  "properties": {
+    "global": {
+      "type": "object",
+      "properties": {
+        "imageRegistry": {
+          "type": "string",
+          "description": "Global Docker image registry"
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "description": "Global image pull secrets",
+          "items": {
+            "type": "object"
+          }
+        },
+        "defaultStorageClass": {
+          "type": "string",
+          "description": "Default storage class"
+        },
+        "storageClass": {
+          "type": "string",
+          "description": "Storage class to use"
+        }
+      }
+    },
+    "apps": {
+      "type": "object",
+      "description": "Application specifications",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "image": {
+            "type": "object",
+            "properties": {
+              "repository": {
+                "type": "string",
+                "description": "Image repository"
+              },
+              "tag": {
+                "type": "string",
+                "description": "Image tag"
+              },
+              "pullPolicy": {
+                "type": "string",
+                "description": "Image pull policy",
+                "enum": ["Always", "Never", "IfNotPresent"]
+              }
+            },
+            "required": ["repository", "tag"]
+          },
+          "replicaCount": {
+            "type": "integer",
+            "description": "Number of replicas"
+          },
+          "nameOverride": {
+            "type": "string",
+            "description": "Override the name"
+          },
+          "fullnameOverride": {
+            "type": "string",
+            "description": "Override the fullname"
+          },
+          "service": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Enable service creation"
+              },
+              "port": {
+                "type": "integer",
+                "description": "Service port"
+              },
+              "portName": {
+                "type": "string",
+                "description": "Port name"
+              },
+              "ports": {
+                "type": "array",
+                "description": "Multiple ports configuration",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "ingress": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Enable ingress"
+              },
+              "className": {
+                "type": "string",
+                "description": "Ingress class name"
+              },
+              "annotations": {
+                "type": "object",
+                "description": "Ingress annotations"
+              },
+              "hosts": {
+                "type": "array",
+                "description": "Ingress hosts",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "resources": {
+            "type": "object",
+            "description": "Resource requests and limits"
+          },
+          "autoscaling": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Enable autoscaling"
+              },
+              "minReplicas": {
+                "type": "integer",
+                "description": "Minimum replicas"
+              },
+              "maxReplicas": {
+                "type": "integer",
+                "description": "Maximum replicas"
+              },
+              "metrics": {
+                "type": "array",
+                "description": "HPA metrics",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "serviceAccount": {
+            "type": "object",
+            "properties": {
+              "create": {
+                "type": "boolean",
+                "description": "Create service account"
+              },
+              "automount": {
+                "type": "boolean",
+                "description": "Automount service account token"
+              },
+              "name": {
+                "type": "string",
+                "description": "Service account name"
+              }
+            }
+          },
+          "clusterRole": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Enable cluster role"
+              },
+              "rules": {
+                "type": "array",
+                "description": "Cluster role rules",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "persistence": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Enable persistence"
+              },
+              "name": {
+                "type": "string",
+                "description": "PVC name"
+              },
+              "size": {
+                "type": "string",
+                "description": "PVC size"
+              },
+              "storageClassName": {
+                "type": "string",
+                "description": "Storage class name"
+              },
+              "accessMode": {
+                "type": "string",
+                "description": "Access mode"
+              }
+            }
+          },
+          "configMap": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Enable ConfigMap"
+              },
+              "name": {
+                "type": "string",
+                "description": "ConfigMap name"
+              },
+              "data": {
+                "type": "object",
+                "description": "ConfigMap data"
+              }
+            }
+          },
+          "env": {
+            "type": "array",
+            "description": "Environment variables",
+            "items": {
+              "type": "object"
+            }
+          },
+          "envFrom": {
+            "type": "array",
+            "description": "Environment from sources",
+            "items": {
+              "type": "object"
+            }
+          },
+          "command": {
+            "type": "array",
+            "description": "Container command",
+            "items": {
+              "type": "string"
+            }
+          },
+          "args": {
+            "type": "array",
+            "description": "Container arguments",
+            "items": {
+              "type": "string"
+            }
+          },
+          "volumes": {
+            "type": "array",
+            "description": "Pod volumes",
+            "items": {
+              "type": "object"
+            }
+          },
+          "volumeMounts": {
+            "type": "array",
+            "description": "Container volume mounts",
+            "items": {
+              "type": "object"
+            }
+          },
+          "securityContext": {
+            "type": "object",
+            "description": "Security context"
+          },
+          "initContainers": {
+            "type": "array",
+            "description": "Init containers",
+            "items": {
+              "type": "object"
+            }
+          },
+          "lifecycle": {
+            "type": "object",
+            "description": "Container lifecycle hooks"
+          },
+          "livenessProbe": {
+            "type": "object",
+            "description": "Liveness probe"
+          },
+          "readinessProbe": {
+            "type": "object",
+            "description": "Readiness probe"
+          },
+          "podAnnotations": {
+            "type": "object",
+            "description": "Pod annotations"
+          },
+          "podLabels": {
+            "type": "object",
+            "description": "Pod labels"
+          },
+          "nodeSelector": {
+            "type": "object",
+            "description": "Node selector"
+          },
+          "affinity": {
+            "type": "object",
+            "description": "Pod affinity"
+          },
+          "tolerations": {
+            "type": "array",
+            "description": "Pod tolerations",
+            "items": {
+              "type": "object"
+            }
+          },
+          "imagePullSecrets": {
+            "type": "array",
+            "description": "Image pull secrets",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": ["image"]
+      }
+    }
+  }
+}
