@@ -80,6 +80,14 @@ RUN GH_LATEST_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/la
     install -o root -g root -m 0755 "gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}/bin/gh" /usr/local/bin/gh && \
     rm -rf "${GH_FILENAME}" "gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}"
 
+# Go 설치
+RUN GO_LATEST_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -n1) && \
+    echo "➡️  Using Go version: ${GO_LATEST_VERSION}" && \
+    GO_FILENAME="${GO_LATEST_VERSION}.linux-${TARGETARCH}.tar.gz" && \
+    curl -LO "https://go.dev/dl/${GO_FILENAME}" && \
+    tar -C /usr/local -xzf "${GO_FILENAME}" && \
+    rm -f "${GO_FILENAME}"
+
 # =============================================
 # 2) Final Stage
 # =============================================
@@ -97,6 +105,7 @@ COPY --from=builder /usr/local/bin/argocd /usr/local/bin/argocd
 COPY --from=builder /usr/local/bin/jq     /usr/local/bin/jq
 COPY --from=builder /usr/local/bin/yq     /usr/local/bin/yq
 COPY --from=builder /usr/local/bin/gh     /usr/local/bin/gh
+COPY --from=builder /usr/local/go         /usr/local/go
 
 
 # Node.js 최신 버전 설치 (NodeSource 사용) - Python3도 함께 설치됨
@@ -120,7 +129,7 @@ RUN chmod +x /tmp/*.sh && chown coder:coder /tmp/*.sh
 ENV NPM_CONFIG_PREFIX="/home/coder/.npm-global"
 ENV PIPX_HOME="/home/coder/.local/pipx"
 ENV PIPX_BIN_DIR="/home/coder/.local/bin"
-ENV PATH="/home/coder/.local/bin:/home/coder/.npm-global/bin:${PATH}"
+ENV PATH="/usr/local/go/bin:/home/coder/.local/bin:/home/coder/.npm-global/bin:${PATH}"
 
 # coder 유저로 전환
 USER coder
