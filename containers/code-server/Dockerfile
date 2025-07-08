@@ -80,6 +80,15 @@ RUN GH_LATEST_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/la
     install -o root -g root -m 0755 "gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}/bin/gh" /usr/local/bin/gh && \
     rm -rf "${GH_FILENAME}" "gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}"
 
+# ripgrep (rg) 설치
+RUN RG_LATEST_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    echo "➡️  Using ripgrep version: ${RG_LATEST_VERSION}" && \
+    RG_FILENAME="ripgrep-${RG_LATEST_VERSION}-${TARGETARCH}-unknown-linux-musl.tar.gz" && \
+    curl -LO "https://github.com/BurntSushi/ripgrep/releases/download/${RG_LATEST_VERSION}/${RG_FILENAME}" && \
+    tar -xzf "${RG_FILENAME}" && \
+    install -o root -g root -m 0755 "ripgrep-${RG_LATEST_VERSION}-${TARGETARCH}-unknown-linux-musl/rg" /usr/local/bin/rg && \
+    rm -rf "${RG_FILENAME}" "ripgrep-${RG_LATEST_VERSION}-${TARGETARCH}-unknown-linux-musl"
+
 # Go 설치
 RUN GO_LATEST_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -n1) && \
     echo "➡️  Using Go version: ${GO_LATEST_VERSION}" && \
@@ -105,6 +114,7 @@ COPY --from=builder /usr/local/bin/argocd /usr/local/bin/argocd
 COPY --from=builder /usr/local/bin/jq     /usr/local/bin/jq
 COPY --from=builder /usr/local/bin/yq     /usr/local/bin/yq
 COPY --from=builder /usr/local/bin/gh     /usr/local/bin/gh
+COPY --from=builder /usr/local/bin/rg     /usr/local/bin/rg
 COPY --from=builder /usr/local/go         /usr/local/go
 
 
@@ -121,6 +131,7 @@ COPY gen_kube_config.sh /tmp/gen_kube_config.sh
 COPY setup-npm-global.sh /tmp/setup-npm-global.sh
 COPY install-claude-code.sh /tmp/install-claude-code.sh
 COPY setup-python-pipx.sh /tmp/setup-python-pipx.sh
+COPY setup-go.sh /tmp/setup-go.sh
 
 # 실행 권한 부여 및 소유권 설정
 RUN chmod +x /tmp/*.sh && chown coder:coder /tmp/*.sh
