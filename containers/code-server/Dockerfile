@@ -83,11 +83,16 @@ RUN GH_LATEST_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/la
 # ripgrep (rg) 설치
 RUN RG_LATEST_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
     echo "➡️  Using ripgrep version: ${RG_LATEST_VERSION}" && \
-    RG_FILENAME="ripgrep-${RG_LATEST_VERSION}-${TARGETARCH}-unknown-linux-musl.tar.gz" && \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+        RG_ARCH="x86_64-unknown-linux-musl"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        RG_ARCH="aarch64-unknown-linux-gnu"; \
+    fi && \
+    RG_FILENAME="ripgrep-${RG_LATEST_VERSION}-${RG_ARCH}.tar.gz" && \
     curl -LO "https://github.com/BurntSushi/ripgrep/releases/download/${RG_LATEST_VERSION}/${RG_FILENAME}" && \
     tar -xzf "${RG_FILENAME}" && \
-    install -o root -g root -m 0755 "ripgrep-${RG_LATEST_VERSION}-${TARGETARCH}-unknown-linux-musl/rg" /usr/local/bin/rg && \
-    rm -rf "${RG_FILENAME}" "ripgrep-${RG_LATEST_VERSION}-${TARGETARCH}-unknown-linux-musl"
+    install -o root -g root -m 0755 "ripgrep-${RG_LATEST_VERSION}-${RG_ARCH}/rg" /usr/local/bin/rg && \
+    rm -rf "${RG_FILENAME}" "ripgrep-${RG_LATEST_VERSION}-${RG_ARCH}"
 
 # Go 설치
 RUN GO_LATEST_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -n1) && \
