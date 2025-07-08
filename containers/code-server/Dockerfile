@@ -112,8 +112,8 @@ COPY --from=builder /usr/local/go         /usr/local/go
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get install -y nodejs
 
-# pipx, bash-completion, tig, fzf 설치 (시스템 패키지로 설치 - Debian 12의 권장 방법)
-RUN apt-get update && apt-get install -y pipx bash-completion tig fzf && \
+# pipx, bash-completion, tig, fzf, make 설치 (시스템 패키지로 설치 - Debian 12의 권장 방법)
+RUN apt-get update && apt-get install -y pipx bash-completion tig fzf make && \
     rm -rf /var/lib/apt/lists/*
 
 # 스크립트들 복사
