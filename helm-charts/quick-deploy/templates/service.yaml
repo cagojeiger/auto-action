@@ -13,7 +13,7 @@ spec:
   ports:
     - name: {{ $app.service.portName | default "http" }}
       port: {{ $app.service.port }}
-      targetPort: {{ $app.service.port }}
+      targetPort: {{ $app.service.targetPort | default $app.service.port }}
       protocol: TCP
       {{- if eq $app.service.type "NodePort" }}
       nodePort: {{ $app.service.nodePort | default "null" }}

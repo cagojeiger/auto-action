@@ -80,6 +80,10 @@
                 "type": "integer",
                 "description": "Service port"
               },
+              "targetPort": {
+                "type": ["string", "integer"],
+                "description": "Container port (defaults to 'port' if not specified)"
+              },
               "portName": {
                 "type": "string",
                 "description": "Port name"
