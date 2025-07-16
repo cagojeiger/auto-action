@@ -1,5 +1,5 @@
 {{- range $name, $app := .Values.apps }}
-{{- if $app.enabled }}
+{{- if or (not (hasKey $app "enabled")) $app.enabled }}
 ---
 {{- if and $app.service $app.service.enabled }}
 apiVersion: v1
