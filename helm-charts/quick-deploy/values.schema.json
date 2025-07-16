@@ -259,7 +259,15 @@
           },
           "securityContext": {
             "type": "object",
-            "description": "Security context"
+            "description": "Security context (DEPRECATED - use podSecurityContext and containerSecurityContext instead)"
+          },
+          "podSecurityContext": {
+            "type": "object",
+            "description": "Pod-level security context"
+          },
+          "containerSecurityContext": {
+            "type": "object",
+            "description": "Container-level security context"
           },
           "initContainers": {
             "type": "array",
