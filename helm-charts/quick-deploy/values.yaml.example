@@ -17,6 +17,9 @@ global:
 apps:
   # This example shows ALL available options for the blueprint chart
   example-app:
+    # Enable/disable this application deployment
+    enabled: true                      # Set to false to skip deploying this app
+    
     # Container image configuration
     image:
       repository: busybox              # Required: Image repository

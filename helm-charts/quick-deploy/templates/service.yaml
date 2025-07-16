@@ -1,4 +1,5 @@
 {{- range $name, $app := .Values.apps }}
+{{- if $app.enabled }}
 ---
 {{- if and $app.service $app.service.enabled }}
 apiVersion: v1
@@ -19,5 +20,6 @@ spec:
       {{- end }}
   selector:
     {{- include "quick-deploy.selectorLabels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
+{{- end }}
 {{- end }}
 {{- end }}

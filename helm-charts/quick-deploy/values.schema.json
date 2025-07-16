@@ -33,6 +33,11 @@
       "additionalProperties": {
         "type": "object",
         "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Enable/disable this application deployment",
+            "default": true
+          },
           "image": {
             "type": "object",
             "properties": {

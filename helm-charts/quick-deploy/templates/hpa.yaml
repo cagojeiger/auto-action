@@ -1,4 +1,5 @@
 {{- range $name, $app := .Values.apps }}
+{{- if $app.enabled }}
 ---
 {{- if and $app.autoscaling $app.autoscaling.enabled }}
 apiVersion: autoscaling/v2
@@ -22,5 +23,6 @@ spec:
   behavior:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
