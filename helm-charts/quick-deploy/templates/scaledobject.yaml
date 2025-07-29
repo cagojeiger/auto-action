@@ -1,0 +1,32 @@
+{{- range $name, $app := .Values.apps }}
+{{- if or (not (hasKey $app "enabled")) $app.enabled }}
+{{- if and $app.keda $app.keda.enabled }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}
+  labels:
+    {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}
+  minReplicaCount: {{ $app.keda.minReplicaCount | default 1 }}
+  maxReplicaCount: {{ $app.keda.maxReplicaCount | default 10 }}
+  {{- with $app.keda.pollingInterval }}
+  pollingInterval: {{ . }}
+  {{- end }}
+  {{- with $app.keda.cooldownPeriod }}
+  cooldownPeriod: {{ . }}
+  {{- end }}
+  {{- with $app.keda.advanced }}
+  advanced:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if $app.keda.triggers }}
+  triggers:
+    {{- toYaml $app.keda.triggers | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
