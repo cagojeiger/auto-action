@@ -8,7 +8,7 @@ metadata:
   labels:
     {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
 spec:
-  {{- if not (and $app.autoscaling $app.autoscaling.enabled) }}
+  {{- if not (or (and $app.autoscaling $app.autoscaling.enabled) (and $app.keda $app.keda.enabled)) }}
   replicas: {{ $app.replicaCount | default 1 }}
   {{- end }}
   selector:

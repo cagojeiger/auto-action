@@ -466,3 +466,76 @@ apps:
         operator: "Exists"
         effect: "NoExecute"
         tolerationSeconds: 3600        # Tolerate for 1 hour
+
+    # KEDA (Kubernetes Event-driven Autoscaling)
+    # Note: KEDA must be installed in your cluster
+    # When enabled, HPA autoscaling is automatically disabled
+    keda:
+      enabled: false                   # Enable KEDA autoscaling
+      minReplicaCount: 1              # Minimum replicas
+      maxReplicaCount: 10             # Maximum replicas
+      pollingInterval: 30             # How often to check triggers (seconds)
+      cooldownPeriod: 300             # Wait time before scaling down (seconds)
+      
+      # Advanced KEDA settings (optional)
+      # advanced:
+      #   restoreToOriginalReplicaCount: true
+      #   horizontalPodAutoscalerConfig:
+      #     behavior:
+      #       scaleDown:
+      #         stabilizationWindowSeconds: 300
+      #         policies:
+      #         - type: Percent
+      #           value: 100
+      #           periodSeconds: 15
+      
+      # Triggers define when to scale
+      # Supports all KEDA trigger types: https://keda.sh/docs/scalers/
+      triggers:
+        # Example: Redis List trigger (for n8n queue mode)
+        - type: redis
+          metadata:
+            address: "redis-master.redis.svc.cluster.local:6379"
+            listName: "bull:jobs:wait"
+            listLength: "10"
+            # Password from environment
+            passwordFromEnv: "REDIS_PASSWORD"
+        
+        # Example: Cron trigger (scale up during business hours)
+        - type: cron
+          metadata:
+            timezone: "Asia/Seoul"
+            start: "0 9 * * 1-5"
+            end: "0 18 * * 1-5"
+            desiredReplicas: "5"
+        
+        # Example: Prometheus trigger
+        - type: prometheus
+          metadata:
+            serverAddress: "http://prometheus:9090"
+            metricName: "http_requests_per_second"
+            threshold: "100"
+            query: "sum(rate(http_requests_total[1m]))"
+        
+        # Example: CPU trigger (similar to HPA)
+        - type: cpu
+          metricType: Utilization
+          metadata:
+            type: Utilization
+            value: "80"
+        
+        # Example: Memory trigger
+        - type: memory
+          metricType: Utilization
+          metadata:
+            type: Utilization
+            value: "80"
+        
+        # Example: Kafka lag trigger
+        - type: kafka
+          metadata:
+            bootstrapServers: "kafka:9092"
+            consumerGroup: "my-consumer-group"
+            topic: "my-topic"
+            lagThreshold: "100"
+            offsetResetPolicy: "earliest"

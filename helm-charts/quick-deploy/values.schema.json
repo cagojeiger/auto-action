@@ -149,6 +149,83 @@
               }
             }
           },
+          "keda": {
+            "type": "object",
+            "description": "KEDA (Kubernetes Event-driven Autoscaling) configuration",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Enable KEDA autoscaling",
+                "default": false
+              },
+              "minReplicaCount": {
+                "type": "integer",
+                "description": "Minimum number of replicas",
+                "minimum": 0,
+                "default": 1
+              },
+              "maxReplicaCount": {
+                "type": "integer",
+                "description": "Maximum number of replicas",
+                "minimum": 1,
+                "default": 10
+              },
+              "pollingInterval": {
+                "type": "integer",
+                "description": "Polling interval in seconds",
+                "minimum": 1,
+                "default": 30
+              },
+              "cooldownPeriod": {
+                "type": "integer",
+                "description": "Cooldown period in seconds",
+                "minimum": 0,
+                "default": 300
+              },
+              "advanced": {
+                "type": "object",
+                "description": "Advanced KEDA configuration",
+                "additionalProperties": true
+              },
+              "triggers": {
+                "type": "array",
+                "description": "KEDA triggers configuration",
+                "items": {
+                  "type": "object",
+                  "required": ["type"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "Trigger type (e.g., redis, kafka, prometheus, cpu, memory, cron)"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Optional trigger name"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "description": "Trigger-specific metadata",
+                      "additionalProperties": true
+                    },
+                    "authenticationRef": {
+                      "type": "object",
+                      "description": "Reference to TriggerAuthentication",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "metricType": {
+                      "type": "string",
+                      "description": "Metric type for the trigger",
+                      "enum": ["Value", "AverageValue", "Utilization"]
+                    }
+                  }
+                }
+              }
+            }
+          },
           "serviceAccount": {
             "type": "object",
             "properties": {
