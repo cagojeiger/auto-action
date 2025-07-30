@@ -11,7 +11,7 @@ metadata:
 spec:
   scaleTargetRef:
     name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}
-  minReplicaCount: {{ $app.keda.minReplicaCount | default 1 }}
+  minReplicaCount: {{ if hasKey $app.keda "minReplicaCount" }}{{ $app.keda.minReplicaCount }}{{ else }}1{{ end }}
   maxReplicaCount: {{ $app.keda.maxReplicaCount | default 10 }}
   {{- with $app.keda.pollingInterval }}
   pollingInterval: {{ . }}
