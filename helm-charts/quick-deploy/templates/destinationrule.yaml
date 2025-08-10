@@ -1,0 +1,27 @@
+{{- range $name, $app := .Values.apps }}
+{{- if and $app.istio $app.istio.destinationRule $app.istio.destinationRule.enabled }}
+{{- $dr := $app.istio.destinationRule }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}-dr
+  labels:
+    {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
+spec:
+  {{- if $dr.rawSpec }}
+  {{- toYaml $dr.rawSpec | nindent 2 }}
+  {{- else }}
+  host: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}
+  {{- if $dr.trafficPolicy }}
+  trafficPolicy:
+    {{- toYaml $dr.trafficPolicy | nindent 4 }}
+  {{- end }}
+  {{- if $dr.subsets }}
+  subsets:
+    {{- toYaml $dr.subsets | nindent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

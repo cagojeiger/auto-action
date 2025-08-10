@@ -60,3 +60,14 @@ Create the name of the service account to use
 {{- default "default" .app.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Validate that Ingress and Istio are not both enabled for the same app
+*/}}
+{{- define "quick-deploy.validateIstio" -}}
+{{- range $name, $app := .Values.apps }}
+  {{- if and $app.ingress $app.ingress.enabled $app.istio $app.istio.enabled }}
+    {{- fail (printf "App '%s': ingress and istio cannot both be enabled. Please choose one traffic management solution." $name) }}
+  {{- end }}
+{{- end }}
+{{- end }}

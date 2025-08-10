@@ -1,3 +1,4 @@
+{{- include "quick-deploy.validateIstio" . }}
 {{- range $name, $app := .Values.apps }}
 {{- if or (not (hasKey $app "enabled")) $app.enabled }}
 ---

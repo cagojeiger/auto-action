@@ -539,3 +539,159 @@ apps:
             topic: "my-topic"
             lagThreshold: "100"
             offsetResetPolicy: "earliest"
+
+  # =====================================
+  # Istio Configuration (Alternative to Ingress)
+  # =====================================
+  # Use Istio for advanced traffic management instead of traditional Ingress
+  example-istio-app:
+    enabled: true
+    
+    # Basic deployment configuration
+    image:
+      repository: nginx
+      tag: "1.21"
+      pullPolicy: IfNotPresent
+    
+    replicaCount: 2
+    
+    # Service configuration
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+      targetPort: 80
+    
+    # Istio configuration - Alternative to Ingress
+    istio:
+      enabled: true                    # Enable Istio for this app
+      
+      # VirtualService configuration - HTTP routing rules
+      virtualService:
+        gateways:
+          - istio-system/main-gateway  # Reference to existing Gateway
+        hosts:
+          - istio-app.example.com       # Hostname for routing
+        
+        # HTTP routing rules (similar to Ingress paths)
+        http:
+          # Basic routing
+          - match:
+              - uri:
+                  prefix: "/"
+            timeout: 30s                # Request timeout
+            
+          # Path rewrite example
+          - match:
+              - uri:
+                  prefix: "/api/v1"
+            rewrite:
+              uri: "/api"               # Rewrite path
+            timeout: 5s
+            
+          # === Advanced Examples (commented for future use) ===
+          
+          # Header-based routing
+          # - match:
+          #     - uri:
+          #         prefix: "/"
+          #     - headers:
+          #         x-user-type:
+          #           exact: "premium"
+          #   route:
+          #     - destination:
+          #         host: premium-service
+          
+          # Retry configuration
+          # - match:
+          #     - uri:
+          #         prefix: "/critical"
+          #   retries:
+          #     attempts: 3
+          #     perTryTimeout: 10s
+          #     retryOn: "5xx,reset,connect-failure"
+          
+          # Fault injection for testing
+          # - match:
+          #     - uri:
+          #         prefix: "/test"
+          #   fault:
+          #     delay:
+          #       percentage:
+          #         value: 10.0
+          #       fixedDelay: 5s
+          #     abort:
+          #       percentage:
+          #         value: 5.0
+          #       httpStatus: 503
+          
+          # Traffic mirroring
+          # - match:
+          #     - uri:
+          #         prefix: "/mirror"
+          #   mirror:
+          #     host: test-service
+          #     subset: v2
+          #   mirrorPercentage:
+          #     value: 100.0
+          
+          # Canary deployment (requires DestinationRule)
+          # - match:
+          #     - uri:
+          #         prefix: "/"
+          #   route:
+          #     - destination:
+          #         subset: stable       # Reference to DestinationRule subset
+          #       weight: 90
+          #     - destination:
+          #         subset: canary
+          #       weight: 10
+        
+        # Raw VirtualService spec override (escape hatch)
+        # Use this for advanced configurations not covered above
+        # rawSpec:
+        #   hosts:
+        #     - custom.example.com
+        #   http:
+        #     - match:
+        #         - uri:
+        #             regex: "^/v[0-9]+/"
+        #       route:
+        #         - destination:
+        #             host: versioned-service
+      
+      # DestinationRule configuration - For advanced traffic policies
+      # Enable this for canary deployments, load balancing policies, etc.
+      destinationRule:
+        enabled: false                  # Set to true when using subsets
+        
+        # Define service subsets based on labels
+        # subsets:
+        #   - name: stable
+        #     labels:
+        #       version: v1
+        #   - name: canary
+        #     labels:
+        #       version: v2
+        
+        # Traffic policies
+        # trafficPolicy:
+        #   loadBalancer:
+        #     simple: ROUND_ROBIN        # ROUND_ROBIN, LEAST_CONN, RANDOM, PASSTHROUGH
+        #   connectionPool:
+        #     tcp:
+        #       maxConnections: 100
+        #     http:
+        #       http1MaxPendingRequests: 100
+        #       h2MaxRequests: 100
+        #   outlierDetection:
+        #     consecutiveErrors: 5
+        #     interval: 30s
+        #     baseEjectionTime: 30s
+        
+        # Raw DestinationRule spec override
+        # rawSpec:
+        #   host: my-service
+        #   trafficPolicy:
+        #     tls:
+        #       mode: ISTIO_MUTUAL

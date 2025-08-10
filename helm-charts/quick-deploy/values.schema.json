@@ -403,6 +403,74 @@
             "items": {
               "type": "object"
             }
+          },
+          "istio": {
+            "type": "object",
+            "description": "Istio configuration for traffic management",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Enable Istio for this application",
+                "default": false
+              },
+              "virtualService": {
+                "type": "object",
+                "description": "VirtualService configuration for HTTP routing",
+                "properties": {
+                  "gateways": {
+                    "type": "array",
+                    "description": "List of gateways to bind to",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hosts": {
+                    "type": "array",
+                    "description": "List of hosts for routing",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "http": {
+                    "type": "array",
+                    "description": "HTTP routing rules",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "rawSpec": {
+                    "type": "object",
+                    "description": "Raw VirtualService spec override"
+                  }
+                }
+              },
+              "destinationRule": {
+                "type": "object",
+                "description": "DestinationRule configuration for traffic policies",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Enable DestinationRule for this application",
+                    "default": false
+                  },
+                  "subsets": {
+                    "type": "array",
+                    "description": "Service subsets based on labels",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "trafficPolicy": {
+                    "type": "object",
+                    "description": "Traffic policy configuration"
+                  },
+                  "rawSpec": {
+                    "type": "object",
+                    "description": "Raw DestinationRule spec override"
+                  }
+                }
+              }
+            }
           }
         },
         "required": ["image"]
