@@ -147,5 +147,11 @@ ENV PIPX_HOME="/home/coder/.local/pipx"
 ENV PIPX_BIN_DIR="/home/coder/.local/bin"
 ENV PATH="/usr/local/go/bin:/home/coder/.local/bin:/home/coder/.npm-global/bin:${PATH}"
 
+# VS Code Extensions (Offline Support)
+ARG CACHEBUST=1
+RUN mkdir -p /tmp/extensions && \
+    curl -sL "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/Continue/vsextensions/continue/latest/vspackage" | \
+    gunzip > /tmp/extensions/continue.vsix
+
 # coder 유저로 전환
 USER coder

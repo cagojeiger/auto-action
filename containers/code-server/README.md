@@ -4,6 +4,8 @@
 
 ## 포함된 도구
 - code-server (브라우저 기반 VS Code)
+- **VS Code Extensions (Offline Support)**:
+  - Continue AI code assistant (pre-downloaded VSIX)
 - Kubernetes: kubectl, helm, k9s
 - GitOps: ArgoCD CLI
 - 개발 도구: Node.js LTS, Python 3.11, pipx, jq, yq, gh (GitHub CLI)
@@ -46,6 +48,9 @@ helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
 - `setup-python-pipx.sh` - pipx PATH 설정 (최초 1회 필요)
 - `install-claude-code.sh` - Claude Code CLI 설치
 
+**VS Code Extensions (오프라인 지원):**
+- Continue AI extension VSIX: `/tmp/extensions/continue.vsix`
+
 사용 예시:
 ```bash
 # npm global 설정 (최초 1회)
@@ -56,6 +61,9 @@ helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
 
 # Claude Code CLI 설치
 /tmp/install-claude-code.sh
+
+# Continue AI extension 설치 (오프라인)
+code-server --install-extension /tmp/extensions/continue.vsix
 
 # 이후 pipx로 Python 도구 설치
 pipx install poetry
