@@ -147,5 +147,81 @@ ENV PIPX_HOME="/home/coder/.local/pipx"
 ENV PIPX_BIN_DIR="/home/coder/.local/bin"
 ENV PATH="/usr/local/go/bin:/home/coder/.local/bin:/home/coder/.npm-global/bin:${PATH}"
 
+# =============================================
+# 3) VS Code Extensions (Offline Support)
+# =============================================
+
+# Cache busting for latest extension versions
+ARG CACHEBUST=1
+RUN echo "➡️  Extension cache bust: ${CACHEBUST}"
+
+# Download VS Code extensions for offline installation
+RUN mkdir -p /home/coder/offline-extensions && \
+    cd /home/coder/offline-extensions && \
+    echo "➡️  Downloading VS Code extensions for offline use..." && \
+    # Continue AI extension
+    curl -L -o continue.vsix.gz \
+    "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/Continue/vsextensions/continue/latest/vspackage" && \
+    gunzip continue.vsix.gz && \
+    echo "✅ Continue extension downloaded ($(du -h continue.vsix | cut -f1))" && \
+    # Create installation script
+    cat > install-continue.sh << 'EOF'
+#!/bin/bash
+echo "Installing Continue extension from offline VSIX..."
+code-server --install-extension /home/coder/offline-extensions/continue.vsix
+if [ $? -eq 0 ]; then
+    echo "✅ Continue extension installed successfully!"
+    echo "📋 Installed extensions:"
+    code-server --list-extensions
+else
+    echo "❌ Installation failed"
+    exit 1
+fi
+EOF
+
+# Make script executable and create README
+RUN chmod +x /home/coder/offline-extensions/install-continue.sh && \
+    cd /home/coder/offline-extensions && \
+    cat > README.md << 'EOF'
+# Offline VS Code Extensions
+
+This directory contains pre-downloaded VS Code extensions for offline installation.
+
+## Available Extensions
+- `continue.vsix` - Continue AI code assistant (Latest version)
+
+## Installation Methods
+
+### Method 1: Using the install script
+```bash
+./install-continue.sh
+```
+
+### Method 2: Manual installation
+```bash
+code-server --install-extension /home/coder/offline-extensions/continue.vsix
+```
+
+### Method 3: Through VS Code UI
+1. Open Extensions panel (Ctrl+Shift+X)
+2. Click "..." menu
+3. Select "Install from VSIX..."
+4. Navigate to `/home/coder/offline-extensions/`
+5. Select `continue.vsix`
+
+## Verify Installation
+```bash
+code-server --list-extensions
+```
+
+## Notes
+- Extensions installed from VSIX files have auto-update disabled
+- This allows for consistent versions in offline environments
+- Re-run the installation script to update to newer versions
+EOF
+
+# Set proper ownership for coder user
+RUN chown -R coder:coder /home/coder/offline-extensions
+
 # coder 유저로 전환
 USER coder
