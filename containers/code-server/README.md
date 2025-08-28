@@ -49,7 +49,7 @@ helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
 - `install-claude-code.sh` - Claude Code CLI 설치
 
 **VS Code Extensions (오프라인 지원):**
-- `/home/coder/offline-extensions/install-continue.sh` - Continue AI extension 설치
+- Continue AI extension VSIX: `/tmp/extensions/continue.vsix`
 
 사용 예시:
 ```bash
@@ -63,7 +63,7 @@ helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
 /tmp/install-claude-code.sh
 
 # Continue AI extension 설치 (오프라인)
-/home/coder/offline-extensions/install-continue.sh
+code-server --install-extension /tmp/extensions/continue.vsix
 
 # 이후 pipx로 Python 도구 설치
 pipx install poetry
