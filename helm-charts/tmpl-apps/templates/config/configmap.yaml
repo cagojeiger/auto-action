@@ -1,0 +1,27 @@
+{{- range $appName, $appConfig := .Values.apps }}
+{{- $mergedConfig := include "tmpl-apps.mergeConfig" (dict "root" $ "app" $appConfig) | fromYaml }}
+{{- $app := mergeOverwrite $appConfig $mergedConfig }}
+{{- $app = set $app "name" $appName }}
+{{- if $app.config }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tmpl-apps.appFullname" (dict "root" $ "app" $app) }}
+  labels:
+    {{- include "tmpl-apps.labels" (dict "root" $ "app" $app) | nindent 4 }}
+data:
+  {{- with $app.config.data }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  {{- /* Auto-generate configuration files based on connections */}}
+  {{- if $app.connections }}
+  connections.yaml: |
+    connections:
+    {{- range $conn := $app.connections }}
+      {{ $conn }}:
+        url: "http://{{ include "tmpl-apps.fullname" $ }}-{{ $conn }}:{{ index $.Values.apps $conn "service" "port" | default 80 }}"
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}

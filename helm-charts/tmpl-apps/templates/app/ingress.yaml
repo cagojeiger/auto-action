@@ -1,0 +1,51 @@
+{{- range $appName, $appConfig := .Values.apps }}
+{{- $mergedConfig := include "tmpl-apps.mergeConfig" (dict "root" $ "app" $appConfig) | fromYaml }}
+{{- $app := mergeOverwrite $appConfig $mergedConfig }}
+{{- $app = set $app "name" $appName }}
+{{- if and $app.ingress $app.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "tmpl-apps.appFullname" (dict "root" $ "app" $app) }}
+  labels:
+    {{- include "tmpl-apps.labels" (dict "root" $ "app" $app) | nindent 4 }}
+  {{- with $app.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $app.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $app.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ $app.ingress.host }}
+      secretName: {{ include "tmpl-apps.appFullname" (dict "root" $ "app" $app) }}-tls
+  {{- end }}
+  rules:
+    - host: {{ $app.ingress.host }}
+      http:
+        paths:
+          {{- if $app.ingress.paths }}
+          {{- range $app.ingress.paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ include "tmpl-apps.appFullname" (dict "root" $ "app" $app) }}
+                port:
+                  number: {{ $app.service.port | default 80 }}
+          {{- end }}
+          {{- else }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "tmpl-apps.appFullname" (dict "root" $ "app" $app) }}
+                port:
+                  number: {{ $app.service.port | default 80 }}
+          {{- end }}
+{{- end }}
+{{- end }}
