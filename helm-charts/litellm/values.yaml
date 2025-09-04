@@ -194,15 +194,11 @@ litellm-helm:
     UI_PASSWORD: "qwer1234"  # Set via secret or environment variable
     NUM_WORKERS: "3"  # Worker 프로세스 수
 
-  # Extra environment variables with secret references
-  extraEnvVars:
-    - name: LITELLM_MASTER_KEY
-      valueFrom:
-        secretKeyRef:
-          name: litellm-masterkey
-          key: masterkey
-    # - name: PROXY_BASE_URL
-    #   value: "https://litellm.example.com"  # Set your proxy base URL
+  # Extra environment variables (optional)
+  # The LITELLM_MASTER_KEY is automatically set by the chart template
+  # extraEnvVars:
+  #   - name: PROXY_BASE_URL
+  #     value: "https://litellm.example.com"  # Set your proxy base URL
 
 # SpendLogs 자동 정리 설정
 cleanup:

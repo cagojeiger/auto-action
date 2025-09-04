@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: {{ include "litellm.fullname" . }}-create-indexes-
+  name: {{ include "litellm.fullname" . }}-create-indexes
   labels:
     {{- include "litellm.labels" . | nindent 4 }}
     app.kubernetes.io/component: index-creation
