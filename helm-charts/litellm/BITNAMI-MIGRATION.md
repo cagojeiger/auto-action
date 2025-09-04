@@ -57,17 +57,12 @@ litellm-helm:
 
 ## Installation
 
-### Method 1: Using Modified values.yaml (Recommended)
+### Method 1: Using values.yaml (Recommended)
 ```bash
-helm install litellm . -f values.yaml
+helm install litellm .
 ```
 
-### Method 2: Using Override File
-```bash
-helm install litellm . -f bitnami-legacy-values.yaml
-```
-
-### Method 3: Command Line Override
+### Method 2: Command Line Override
 ```bash
 helm install litellm . \\
   --set "litellm-helm.global.security.allowInsecureImages=true" \\
@@ -76,6 +71,8 @@ helm install litellm . \\
   --set "litellm-helm.redis.image.repository=bitnamilegacy/redis" \\
   --set "litellm-helm.redis.image.tag=8.2.1-debian-12-r0"
 ```
+
+*Note: Method 2 is redundant as these settings are already included in values.yaml*
 
 ## Upgrade from Previous Version
 
