@@ -1,0 +1,193 @@
+# Values for orchard-litellm
+# This overrides the default values in the litellm-helm subchart
+
+litellm-helm:
+  # PostgreSQL configuration (using Bitnami chart)
+  db:
+    deployStandalone: true
+    
+  postgresql:
+    auth:
+      username: litellm
+      database: litellm
+      # Password will be auto-generated or set via --set during install
+      # --set litellm-helm.postgresql.auth.password=<password>
+      # --set litellm-helm.postgresql.auth.postgresPassword=<password>
+    primary:
+      persistence:
+        enabled: true
+        size: 10Gi
+      resources:
+        requests:
+          memory: 512Mi
+          # cpu: 100m
+        limits:
+          memory: 1Gi
+          # cpu: 500m
+  
+  # Redis configuration (using Bitnami chart)
+  redis:
+    enabled: false  # Default is false
+    auth:
+      enabled: true
+      # Password will be auto-generated or set via --set during install
+      # --set litellm-helm.redis.auth.password=<password>
+    master:
+      persistence:
+        enabled: false  # No PVC, memory-only cache
+      resources:
+        requests:
+          memory: 256Mi
+          # cpu: 100m
+        limits:
+          memory: 512Mi
+          # cpu: 200m
+  
+  # LiteLLM proxy configuration
+  image:
+    repository: ghcr.io/berriai/litellm-database
+    tag: "main-latest"
+    pullPolicy: Always
+  
+  # Master key will be auto-generated if not provided
+  # --set litellm-helm.masterkey=<your-master-key>
+  
+  # HPA (Horizontal Pod Autoscaler) configuration
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  # Proxy configuration
+  proxy_config:
+    general_settings:
+      master_key: os.environ/LITELLM_MASTER_KEY
+      database_url: os.environ/DATABASE_URL
+      database_connection_pool_limit: 10  # LiteLLM 공식 권장값
+      database_connection_timeout: 30
+    
+    litellm_settings:
+      cache: false
+      drop_params: true
+      
+      # Telemetry
+      telemetry: false
+      
+      # UI settings
+      ui_access_mode: "all"
+    
+    # Model configuration examples
+    # Configure your models here based on your backend services
+    model_list: []
+    # Example configurations:
+    # - model_name: "gpt-3.5-turbo"  # OpenAI example
+    #   litellm_params:
+    #     model: "gpt-3.5-turbo"
+    #     api_key: "${OPENAI_API_KEY}"  # Use environment variable
+    #   model_info:
+    #     max_tokens: 4096
+    #     supports_function_calling: true
+    #
+    # - model_name: "llama2"  # Ollama example
+    #   litellm_params:
+    #     model: "ollama/llama2"
+    #     api_base: "http://ollama-service.default.svc.cluster.local:11434"
+    #     custom_llm_provider: "ollama"
+    #   model_info:
+    #     max_tokens: 4096
+    #
+    # - model_name: "claude-3"  # Anthropic example
+    #   litellm_params:
+    #     model: "claude-3-opus-20240229"
+    #     api_key: "${ANTHROPIC_API_KEY}"
+    #   model_info:
+    #     max_tokens: 4096
+    #     supports_function_calling: true
+
+  # Ingress configuration
+  ingress:
+    enabled: false  # Set to true to enable ingress
+    annotations:
+      # Example annotations for NGINX ingress controller
+      # nginx.ingress.kubernetes.io/limit-rps: "100"
+      # nginx.ingress.kubernetes.io/limit-burst-multiplier: "10"
+      # nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+      # nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    hosts:
+      - host: litellm.example.com  # Replace with your domain
+        paths:
+          - path: /
+    tls: []
+    # Example TLS configuration:
+    # tls:
+    #   - secretName: litellm-tls
+    #     hosts:
+    #       - litellm.example.com
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+  
+  # Security contexts - using defaults for Prisma compatibility
+  # LiteLLM requires specific permissions for Prisma query engine
+  podSecurityContext: {}
+  securityContext: {}
+  
+  # Additional environment variables
+  envVars:
+    LITELLM_MODE: "PRODUCTION"
+    STORE_MODEL_IN_DB: "true"
+    STORE_PROMPTS_IN_SPEND_LOGS: "true"
+    UI_USERNAME: "admin"  # Uncomment and set your username
+    UI_PASSWORD: "qwer1234"  # Set via secret or environment variable
+    NUM_WORKERS: "3"  # Worker 프로세스 수
+
+  # Extra environment variables with secret references
+  extraEnvVars:
+    - name: LITELLM_MASTER_KEY
+      valueFrom:
+        secretKeyRef:
+          name: litellm-masterkey
+          key: masterkey
+    # - name: PROXY_BASE_URL
+    #   value: "https://litellm.example.com"  # Set your proxy base URL
+
+# SpendLogs 자동 정리 설정
+cleanup:
+  enabled: true
+  schedule: "15 0 * * *"  # 매일 새벽 0시 15분
+  concurrencyPolicy: Forbid  # 동시 실행 방지
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  
+  # 정리 설정
+  retentionDays: 30  # 30일 이상 된 로그 삭제
+  batchSize: 1000    # 배치당 삭제 개수
+  maxIterations: 100  # 최대 반복 횟수
+  
+  # PostgreSQL 연결 설정
+  database:
+    host: litellm-postgresql
+    port: 5432
+    name: litellm
+  
+  # Container 설정
+  image:
+    repository: postgres
+    tag: 16-alpine
+    pullPolicy: IfNotPresent
+  
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"

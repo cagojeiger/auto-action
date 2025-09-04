@@ -1,0 +1,97 @@
+{{- if .Values.cleanup.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: {{ include "litellm.fullname" . }}-create-indexes-
+  labels:
+    {{- include "litellm.labels" . | nindent 4 }}
+    app.kubernetes.io/component: index-creation
+  annotations:
+    # ArgoCD native annotations for GitOps compatibility
+    "argocd.argoproj.io/hook": PostSync
+    "argocd.argoproj.io/hook-delete-policy": HookSucceeded
+    "argocd.argoproj.io/sync-wave": "10"  # Run after main resources
+spec:
+  ttlSecondsAfterFinished: 3600  # Auto-cleanup after 1 hour
+  backoffLimit: 3  # Retry up to 3 times on failure
+  activeDeadlineSeconds: 300  # Timeout after 5 minutes
+  template:
+    metadata:
+      labels:
+        {{- include "litellm.labels" . | nindent 8 }}
+        app.kubernetes.io/component: index-creation
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: create-indexes
+        image: postgres:15
+        env:
+        - name: PGHOST
+          value: {{ .Release.Name }}-postgresql
+        - name: PGPORT
+          value: "5432"
+        - name: PGDATABASE
+          value: {{ index .Values "litellm-helm" "postgresql" "auth" "database" | default "litellm" }}
+        - name: PGUSER
+          value: {{ index .Values "litellm-helm" "postgresql" "auth" "username" | default "litellm" }}
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-postgresql
+              key: password
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          set -euo pipefail
+          
+          echo "[$(date)] Starting index creation for SpendLogs optimization..."
+          
+          # Wait for PostgreSQL to be ready
+          until pg_isready; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          
+          # Create indexes with CONCURRENTLY to avoid locks
+          echo "[$(date)] Creating indexes..."
+          psql <<EOF
+          -- Primary performance index for cleanup operations
+          CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_litellm_spendlogs_starttime 
+          ON "LiteLLM_SpendLogs" ("startTime");
+          
+          -- Foreign key index for 100x DELETE performance improvement
+          CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_litellm_spendlogs_request_id 
+          ON "LiteLLM_SpendLogs" (request_id);
+          
+          -- Composite index for complex queries (if needed)
+          -- CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_litellm_spendlogs_composite 
+          -- ON "LiteLLM_SpendLogs" ("startTime", request_id);
+          
+          -- Update table statistics for query planner
+          ANALYZE "LiteLLM_SpendLogs";
+          
+          -- Log index creation completion
+          SELECT 
+            schemaname, 
+            tablename, 
+            indexname, 
+            indexdef 
+          FROM pg_indexes 
+          WHERE tablename = 'LiteLLM_SpendLogs' 
+          AND indexname LIKE 'idx_litellm_spendlogs%';
+          EOF
+          
+          echo "[$(date)] Index creation completed successfully"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
+{{- end }}

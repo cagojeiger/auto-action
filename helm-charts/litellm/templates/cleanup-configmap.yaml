@@ -1,0 +1,60 @@
+{{- if .Values.cleanup.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "litellm.fullname" . }}-cleanup-script
+  labels:
+    {{- include "litellm.labels" . | nindent 4 }}
+data:
+  cleanup.sh: |
+    #!/bin/bash
+    # Robust error handling: exit on error, undefined vars, pipe failures
+    set -euo pipefail
+    
+    echo "[$(date)] Starting SpendLogs cleanup..."
+    
+    # Index creation is handled by ArgoCD PostSync hook (responsibility separation)
+    # This script focuses only on data cleanup
+    
+    DELETED_TOTAL=0
+    MAX_ITERATIONS={{ .Values.cleanup.maxIterations | default 100 }}
+    
+    for ITERATION in $(seq 1 $MAX_ITERATIONS); do
+      # PostgreSQL returns "DELETE N" format, parse directly for accuracy
+      RESULT=$(psql -c "
+        DELETE FROM \"LiteLLM_SpendLogs\"
+        WHERE ctid IN (
+          SELECT ctid
+          FROM \"LiteLLM_SpendLogs\"
+          WHERE \"startTime\" < NOW() - INTERVAL '{{ .Values.cleanup.retentionDays }} days'
+          LIMIT {{ .Values.cleanup.batchSize }}
+        );
+      ")
+      
+      # Extract number from "DELETE 1000" output
+      DELETED_COUNT=$(echo "$RESULT" | awk '/^DELETE/ {print $2}')
+      
+      # Exit if nothing to delete
+      if [ -z "$DELETED_COUNT" ] || [ "$DELETED_COUNT" -eq 0 ]; then
+        echo "[$(date)] No more records to delete"
+        break
+      fi
+      
+      DELETED_TOTAL=$((DELETED_TOTAL + DELETED_COUNT))
+      echo "[$(date)] Iteration $ITERATION: Deleted $DELETED_COUNT records (Total: $DELETED_TOTAL)"
+      
+      # Warn if max iterations reached
+      if [ $ITERATION -eq $MAX_ITERATIONS ]; then
+        echo "[$(date)] WARNING: Reached max iterations ($MAX_ITERATIONS). Consider increasing limit."
+      fi
+    done
+    
+    # Run VACUUM only if data was actually deleted
+    if [ "$DELETED_TOTAL" -gt 0 ]; then
+      echo "[$(date)] Running VACUUM ANALYZE..."
+      psql -c "VACUUM ANALYZE \"LiteLLM_SpendLogs\";"
+      echo "[$(date)] Completed. Total deleted: $DELETED_TOTAL records"
+    else
+      echo "[$(date)] No records deleted, skipping VACUUM"
+    fi
+{{- end }}

@@ -1,0 +1,52 @@
+{{- if .Values.cleanup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "litellm.fullname" . }}-spendlogs-cleanup
+  labels:
+    {{- include "litellm.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cleanup.schedule | quote }}
+  concurrencyPolicy: {{ .Values.cleanup.concurrencyPolicy | default "Forbid" }}
+  successfulJobsHistoryLimit: {{ .Values.cleanup.successfulJobsHistoryLimit | default 3 }}
+  failedJobsHistoryLimit: {{ .Values.cleanup.failedJobsHistoryLimit | default 3 }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "litellm.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: cleanup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: cleanup
+            image: "{{ .Values.cleanup.image.repository }}:{{ .Values.cleanup.image.tag }}"
+            imagePullPolicy: {{ .Values.cleanup.image.pullPolicy | default "IfNotPresent" }}
+            command: ["/bin/bash", "/scripts/cleanup.sh"]
+            env:
+            - name: PGHOST
+              value: {{ .Values.cleanup.database.host | default "litellm-postgresql" }}
+            - name: PGPORT
+              value: {{ .Values.cleanup.database.port | default "5432" | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.cleanup.database.name | default "litellm" }}
+            - name: PGUSER
+              value: {{ index .Values "litellm-helm" "postgresql" "auth" "username" | default "litellm" }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgresql
+                  key: password
+            volumeMounts:
+            - name: cleanup-script
+              mountPath: /scripts
+              readOnly: true
+            resources:
+              {{- toYaml .Values.cleanup.resources | nindent 14 }}
+          volumes:
+          - name: cleanup-script
+            configMap:
+              name: {{ include "litellm.fullname" . }}-cleanup-script
+              defaultMode: 0755
+{{- end }}

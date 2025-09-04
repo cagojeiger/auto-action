@@ -1,0 +1,27 @@
+apiVersion: v2
+name: orchard-litellm
+description: A Helm chart for LiteLLM - OpenAI-compatible LLM Gateway with 100+ LLM support
+type: application
+version: 0.1.741
+appVersion: "v0.1.741"
+
+keywords:
+  - litellm
+  - llm
+  - openai
+  - gateway
+  - proxy
+  - ai
+
+maintainers:
+  - name: orchard-ai
+
+home: https://github.com/BerriAI/litellm
+sources:
+  - https://github.com/BerriAI/litellm
+  - https://github.com/orchard-ai/orchard-ai
+
+dependencies:
+  - name: litellm-helm
+    version: "0.1.741"
+    repository: "oci://ghcr.io/berriai"
