@@ -1,9 +1,15 @@
 apiVersion: v2
 name: orchard-litellm
-description: A Helm chart for LiteLLM - OpenAI-compatible LLM Gateway with 100+ LLM support
+description: A Helm chart for LiteLLM - OpenAI-compatible LLM Gateway with 100+ LLM support (Bitnami Legacy Migration)
 type: application
-version: 0.1.741
-appVersion: "v0.1.741"
+version: 0.1.768
+appVersion: "v0.1.768"
+
+annotations:
+  bitnami.migration: "legacy"
+  bitnami.migration.date: "2025-01-04"
+  bitnami.migration.deadline: "2025-09-29"
+  bitnami.migration.note: "Uses bitnamilegacy repository due to commercialization. Plan migration within 6-12 months."
 
 keywords:
   - litellm
@@ -23,5 +29,5 @@ sources:
 
 dependencies:
   - name: litellm-helm
-    version: "0.1.741"
+    version: "0.1.768"
     repository: "oci://ghcr.io/berriai"

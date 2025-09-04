@@ -1,0 +1,71 @@
+# Bitnami Legacy Migration Override Values
+# 
+# This file contains override values to migrate from Bitnami images to bitnamilegacy repository
+# Use this file with: helm install litellm . -f bitnami-legacy-values.yaml
+#
+# WARNING: Legacy images receive no security updates after August 28, 2025
+# Plan migration to alternative solutions within 6-12 months
+#
+# Last updated: 2025-01-04
+# Migration deadline: August 28, 2025 (postponed to September 29, 2025)
+
+litellm-helm:
+  # PostgreSQL Legacy Configuration
+  postgresql:
+    # Core PostgreSQL image
+    image:
+      repository: bitnamilegacy/postgresql
+      tag: "17.6.0-debian-12-r4"  # Exact version from chart 16.7.27
+      debug: false
+    
+    # Volume permissions init container
+    volumePermissions:
+      enabled: true
+      image:
+        repository: bitnamilegacy/os-shell
+        tag: "12-debian-12-r51"
+    
+    # PostgreSQL metrics exporter (optional)
+    metrics:
+      enabled: false  # Disabled to reduce legacy dependencies
+      image:
+        repository: bitnamilegacy/postgres-exporter
+        tag: "0.17.1-debian-12-r16"
+    
+    # Global security settings for legacy images
+    global:
+      security:
+        allowInsecureImages: true
+        
+  # Redis Legacy Configuration  
+  redis:
+    # Core Redis image
+    image:
+      repository: bitnamilegacy/redis
+      tag: "8.2.1-debian-12-r0"  # Exact version from chart 22.0.7
+      debug: false
+    
+    # Redis Sentinel for HA (if using sentinel mode)
+    sentinel:
+      enabled: false
+      image:
+        repository: bitnamilegacy/redis-sentinel
+        tag: "8.2.1-debian-12-r0"
+    
+    # Redis metrics exporter (optional)
+    metrics:
+      enabled: false  # Disabled to reduce legacy dependencies
+      image:
+        repository: bitnamilegacy/redis-exporter
+        tag: "1.76.0-debian-12-r0"
+
+# Alternative quick override for command line usage:
+#
+# helm upgrade litellm ./helm-charts/litellm \
+#   --set "litellm-helm.postgresql.image.repository=bitnamilegacy/postgresql" \
+#   --set "litellm-helm.postgresql.image.tag=17.6.0-debian-12-r4" \
+#   --set "litellm-helm.postgresql.volumePermissions.image.repository=bitnamilegacy/os-shell" \
+#   --set "litellm-helm.postgresql.volumePermissions.image.tag=12-debian-12-r51" \
+#   --set "litellm-helm.global.security.allowInsecureImages=true" \
+#   --set "litellm-helm.redis.image.repository=bitnamilegacy/redis" \
+#   --set "litellm-helm.redis.image.tag=8.2.1-debian-12-r0"

@@ -2,11 +2,36 @@
 # This overrides the default values in the litellm-helm subchart
 
 litellm-helm:
-  # PostgreSQL configuration (using Bitnami chart)
+  # Global settings for Bitnami Legacy migration
+  global:
+    security:
+      allowInsecureImages: true  # Required for bitnamilegacy repositories
+  
+  # PostgreSQL configuration (using Bitnami Legacy repository)
+  # NOTE: Using bitnamilegacy repository due to Bitnami commercialization (Aug 28, 2025)
+  # Legacy images receive no security updates - plan migration within 6-12 months
   db:
     deployStandalone: true
     
   postgresql:
+    # Override Bitnami image to use legacy repository
+    image:
+      repository: bitnamilegacy/postgresql
+      tag: "17.6.0-debian-12-r4"  # Exact version from chart 16.7.27
+    
+    # Volume permissions image override
+    volumePermissions:
+      image:
+        repository: bitnamilegacy/os-shell
+        tag: "12-debian-12-r51"
+    
+    # Metrics exporter image override
+    metrics:
+      enabled: false  # Disable to avoid additional legacy dependencies
+      image:
+        repository: bitnamilegacy/postgres-exporter
+        tag: "0.17.1-debian-12-r16"
+    
     auth:
       username: litellm
       database: litellm
@@ -25,9 +50,29 @@ litellm-helm:
           memory: 1Gi
           # cpu: 500m
   
-  # Redis configuration (using Bitnami chart)
+  # Redis configuration (using Bitnami Legacy repository)
+  # NOTE: Using bitnamilegacy repository due to Bitnami commercialization (Aug 28, 2025)
   redis:
     enabled: false  # Default is false
+    
+    # Override Bitnami image to use legacy repository (when enabled)
+    image:
+      repository: bitnamilegacy/redis
+      tag: "8.2.1-debian-12-r0"  # Exact version from chart 22.0.7
+    
+    # Sentinel image override (for HA setup)
+    sentinel:
+      image:
+        repository: bitnamilegacy/redis-sentinel
+        tag: "8.2.1-debian-12-r0"
+    
+    # Metrics exporter image override
+    metrics:
+      enabled: false  # Disable to avoid additional legacy dependencies
+      image:
+        repository: bitnamilegacy/redis-exporter
+        tag: "1.76.0-debian-12-r0"
+    
     auth:
       enabled: true
       # Password will be auto-generated or set via --set during install
@@ -181,7 +226,7 @@ cleanup:
   # Container 설정
   image:
     repository: postgres
-    tag: 16-alpine
+    tag: 17-alpine
     pullPolicy: IfNotPresent
   
   resources:

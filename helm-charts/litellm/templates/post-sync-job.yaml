@@ -24,7 +24,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: create-indexes
-        image: postgres:15
+        image: postgres:17-alpine
         env:
         - name: PGHOST
           value: {{ .Release.Name }}-postgresql
