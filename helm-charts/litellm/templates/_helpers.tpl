@@ -49,3 +49,10 @@ Selector labels
 app.kubernetes.io/name: {{ include "litellm.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+PostgreSQL service hostname
+*/}}
+{{- define "litellm.postgresql.host" -}}
+{{- printf "%s-postgresql" .Release.Name -}}
+{{- end }}

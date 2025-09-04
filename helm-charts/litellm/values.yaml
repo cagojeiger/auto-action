@@ -215,7 +215,8 @@ cleanup:
   
   # PostgreSQL 연결 설정
   database:
-    host: litellm-postgresql
+    # host: ""  # 비워두면 자동으로 <release-name>-postgresql 사용
+    # host: custom-postgresql  # 커스텀 PostgreSQL 호스트를 사용하려면 주석 해제
     port: 5432
     name: litellm
   

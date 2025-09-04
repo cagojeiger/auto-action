@@ -27,7 +27,7 @@ spec:
         image: postgres:17-alpine
         env:
         - name: PGHOST
-          value: {{ .Release.Name }}-postgresql
+          value: {{ include "litellm.postgresql.host" . }}
         - name: PGPORT
           value: "5432"
         - name: PGDATABASE

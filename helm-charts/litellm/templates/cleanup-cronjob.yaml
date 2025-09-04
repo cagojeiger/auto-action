@@ -26,7 +26,7 @@ spec:
             command: ["/bin/bash", "/scripts/cleanup.sh"]
             env:
             - name: PGHOST
-              value: {{ .Values.cleanup.database.host | default "litellm-postgresql" }}
+              value: {{ .Values.cleanup.database.host | default (include "litellm.postgresql.host" .) }}
             - name: PGPORT
               value: {{ .Values.cleanup.database.port | default "5432" | quote }}
             - name: PGDATABASE
