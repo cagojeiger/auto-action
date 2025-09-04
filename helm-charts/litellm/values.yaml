@@ -213,10 +213,8 @@ cleanup:
   batchSize: 1000    # 배치당 삭제 개수
   maxIterations: 100  # 최대 반복 횟수
   
-  # PostgreSQL 연결 설정
+  # PostgreSQL 연결 설정 (호스트는 자동으로 <release-name>-postgresql 사용)
   database:
-    # host: ""  # 비워두면 자동으로 <release-name>-postgresql 사용
-    # host: custom-postgresql  # 커스텀 PostgreSQL 호스트를 사용하려면 주석 해제
     port: 5432
     name: litellm
   
