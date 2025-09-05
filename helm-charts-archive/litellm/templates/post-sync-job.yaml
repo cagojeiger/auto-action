@@ -45,7 +45,7 @@ spec:
         - |
           set -euo pipefail
           
-          echo "[$(date)] Starting index creation for SpendLogs optimization..."
+          echo "[$(date)] Starting optimized index creation for SpendLogs..."
           
           # Wait for PostgreSQL to be ready
           until pg_isready; do
@@ -53,36 +53,43 @@ spec:
             sleep 2
           done
           
-          # Create indexes with CONCURRENTLY to avoid locks
-          echo "[$(date)] Creating indexes..."
-          psql <<EOF
-          -- Primary performance index for cleanup operations
-          CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_litellm_spendlogs_starttime 
-          ON "LiteLLM_SpendLogs" ("startTime");
+          # Check if our optimized composite index already exists
+          INDEX_EXISTS=$(psql -t -c "
+            SELECT 1 FROM pg_indexes 
+            WHERE tablename = 'LiteLLM_SpendLogs' 
+            AND indexname = 'idx_litellm_spendlogs_cleanup_optimized'
+          " | tr -d ' ')
           
-          -- Foreign key index for 100x DELETE performance improvement
-          CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_litellm_spendlogs_request_id 
-          ON "LiteLLM_SpendLogs" (request_id);
+          if [ -n "$INDEX_EXISTS" ]; then
+            echo "[$(date)] Optimized cleanup index already exists, skipping creation..."
+          else
+            echo "[$(date)] Creating optimized cleanup index..."
+            
+            # Create single optimized composite index for cleanup operations
+            psql -c "
+            CREATE INDEX CONCURRENTLY idx_litellm_spendlogs_cleanup_optimized 
+            ON \"LiteLLM_SpendLogs\" (\"startTime\", request_id);
+            "
+            
+            echo "[$(date)] Optimized index created successfully"
+          fi
           
-          -- Composite index for complex queries (if needed)
-          -- CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_litellm_spendlogs_composite 
-          -- ON "LiteLLM_SpendLogs" ("startTime", request_id);
+          # Always update statistics for query planner
+          echo "[$(date)] Updating table statistics..."
+          psql -c "ANALYZE \"LiteLLM_SpendLogs\";"
           
-          -- Update table statistics for query planner
-          ANALYZE "LiteLLM_SpendLogs";
-          
-          -- Log index creation completion
+          # Log all SpendLogs indexes for verification
+          echo "[$(date)] Current SpendLogs indexes:"
+          psql -c "
           SELECT 
-            schemaname, 
-            tablename, 
             indexname, 
             indexdef 
           FROM pg_indexes 
           WHERE tablename = 'LiteLLM_SpendLogs' 
-          AND indexname LIKE 'idx_litellm_spendlogs%';
-          EOF
+          ORDER BY indexname;
+          "
           
-          echo "[$(date)] Index creation completed successfully"
+          echo "[$(date)] Index optimization completed successfully"
         resources:
           requests:
             cpu: 100m

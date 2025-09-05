@@ -23,7 +23,64 @@ spec:
           - name: cleanup
             image: "{{ .Values.cleanup.image.repository }}:{{ .Values.cleanup.image.tag }}"
             imagePullPolicy: {{ .Values.cleanup.image.pullPolicy | default "IfNotPresent" }}
-            command: ["/bin/bash", "/scripts/cleanup.sh"]
+            command: ["/bin/bash", "-c"]
+            args:
+            - |
+              set -euo pipefail
+              
+              echo "[$(date)] Starting optimized SpendLogs cleanup..."
+              
+              DELETED_TOTAL=0
+              MAX_ITERATIONS={{ .Values.cleanup.maxIterations | default 100 }}
+              BATCH_SIZE={{ .Values.cleanup.batchSize | default 1000 }}
+              
+              for ITERATION in $(seq 1 $MAX_ITERATIONS); do
+                # CTE 기반 더 효율적인 삭제
+                DELETED_COUNT=$(psql -t -c "
+                  WITH deleted AS (
+                    DELETE FROM \"LiteLLM_SpendLogs\"
+                    WHERE \"startTime\" < NOW() - INTERVAL '{{ .Values.cleanup.retentionDays }} days'
+                    AND request_id IN (
+                      SELECT request_id 
+                      FROM \"LiteLLM_SpendLogs\"
+                      WHERE \"startTime\" < NOW() - INTERVAL '{{ .Values.cleanup.retentionDays }} days'
+                      ORDER BY \"startTime\"
+                      LIMIT $BATCH_SIZE
+                    )
+                    RETURNING 1
+                  )
+                  SELECT COUNT(*) FROM deleted;
+                ")
+                
+                DELETED_COUNT=$(echo $DELETED_COUNT | tr -d ' ')
+                
+                if [ -z "$DELETED_COUNT" ] || [ "$DELETED_COUNT" -eq 0 ]; then
+                  echo "[$(date)] No more records to delete"
+                  break
+                fi
+                
+                DELETED_TOTAL=$((DELETED_TOTAL + DELETED_COUNT))
+                echo "[$(date)] Iteration $ITERATION: Deleted $DELETED_COUNT records (Total: $DELETED_TOTAL)"
+                
+                if [ $ITERATION -eq $MAX_ITERATIONS ]; then
+                  echo "[$(date)] WARNING: Reached max iterations ($MAX_ITERATIONS). Consider increasing limit."
+                fi
+              done
+              
+              # 조건부 VACUUM - 대량 삭제 시에만 VACUUM ANALYZE
+              if [ "$DELETED_TOTAL" -gt 10000 ]; then
+                echo "[$(date)] Major cleanup detected - Running VACUUM ANALYZE..."
+                psql -c "VACUUM ANALYZE \"LiteLLM_SpendLogs\";"
+                echo "[$(date)] VACUUM ANALYZE completed"
+              elif [ "$DELETED_TOTAL" -gt 0 ]; then
+                echo "[$(date)] Minor cleanup - Running ANALYZE only..."
+                psql -c "ANALYZE \"LiteLLM_SpendLogs\";"
+                echo "[$(date)] ANALYZE completed"
+              else
+                echo "[$(date)] No records deleted, skipping maintenance"
+              fi
+              
+              echo "[$(date)] Cleanup completed successfully. Total deleted: $DELETED_TOTAL records"
             env:
             - name: PGHOST
               value: {{ include "litellm.postgresql.host" . }}
@@ -38,15 +95,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-postgresql
                   key: password
-            volumeMounts:
-            - name: cleanup-script
-              mountPath: /scripts
-              readOnly: true
             resources:
               {{- toYaml .Values.cleanup.resources | nindent 14 }}
-          volumes:
-          - name: cleanup-script
-            configMap:
-              name: {{ include "litellm.fullname" . }}-cleanup-script
-              defaultMode: 0755
 {{- end }}
