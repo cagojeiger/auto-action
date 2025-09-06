@@ -1,0 +1,104 @@
+{{- if .Values.cleanup.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "litellm.fullname" . }}-create-indexes
+  labels:
+    {{- include "litellm.labels" . | nindent 4 }}
+    app.kubernetes.io/component: index-creation
+  annotations:
+    # ArgoCD native annotations for GitOps compatibility
+    "argocd.argoproj.io/hook": PostSync
+    "argocd.argoproj.io/hook-delete-policy": HookSucceeded
+    "argocd.argoproj.io/sync-wave": "10"  # Run after main resources
+spec:
+  ttlSecondsAfterFinished: 3600  # Auto-cleanup after 1 hour
+  backoffLimit: 3  # Retry up to 3 times on failure
+  activeDeadlineSeconds: 300  # Timeout after 5 minutes
+  template:
+    metadata:
+      labels:
+        {{- include "litellm.labels" . | nindent 8 }}
+        app.kubernetes.io/component: index-creation
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: create-indexes
+        image: postgres:17-alpine
+        env:
+        - name: PGHOST
+          value: {{ include "litellm.postgresql.host" . }}
+        - name: PGPORT
+          value: "5432"
+        - name: PGDATABASE
+          value: {{ index .Values "litellm-helm" "postgresql" "auth" "database" | default "litellm" }}
+        - name: PGUSER
+          value: {{ index .Values "litellm-helm" "postgresql" "auth" "username" | default "litellm" }}
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-postgresql
+              key: password
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          set -euo pipefail
+          
+          echo "[$(date)] Starting optimized index creation for SpendLogs..."
+          
+          # Wait for PostgreSQL to be ready
+          until pg_isready; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          
+          # Check if our optimized composite index already exists
+          INDEX_EXISTS=$(psql -t -c "
+            SELECT 1 FROM pg_indexes 
+            WHERE tablename = 'LiteLLM_SpendLogs' 
+            AND indexname = 'idx_litellm_spendlogs_cleanup_optimized'
+          " | tr -d ' ')
+          
+          if [ -n "$INDEX_EXISTS" ]; then
+            echo "[$(date)] Optimized cleanup index already exists, skipping creation..."
+          else
+            echo "[$(date)] Creating optimized cleanup index..."
+            
+            # Create single optimized composite index for cleanup operations
+            psql -c "
+            CREATE INDEX CONCURRENTLY idx_litellm_spendlogs_cleanup_optimized 
+            ON \"LiteLLM_SpendLogs\" (\"startTime\", request_id);
+            "
+            
+            echo "[$(date)] Optimized index created successfully"
+          fi
+          
+          # Always update statistics for query planner
+          echo "[$(date)] Updating table statistics..."
+          psql -c "ANALYZE \"LiteLLM_SpendLogs\";"
+          
+          # Log all SpendLogs indexes for verification
+          echo "[$(date)] Current SpendLogs indexes:"
+          psql -c "
+          SELECT 
+            indexname, 
+            indexdef 
+          FROM pg_indexes 
+          WHERE tablename = 'LiteLLM_SpendLogs' 
+          ORDER BY indexname;
+          "
+          
+          echo "[$(date)] Index optimization completed successfully"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroup: 999
+{{- end }}
