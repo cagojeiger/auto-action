@@ -50,16 +50,16 @@ litellm-helm:
         size: 10Gi
       resources:
         requests:
-          memory: 512Mi
-          # cpu: 100m
-        limits:
           memory: 1Gi
-          # cpu: 500m
+          cpu: 250m
+        limits:
+          memory: 2Gi
+          cpu: 1000m
   
   # Redis configuration (using Bitnami Legacy repository)
   # NOTE: Using bitnamilegacy repository due to Bitnami commercialization (Aug 28, 2025)
   redis:
-    enabled: false  # Default is false
+    enabled: true  # Enable for 100+ concurrent users
     
     # Override Bitnami image to use legacy repository (when enabled)
     image:
@@ -88,11 +88,11 @@ litellm-helm:
         enabled: false  # No PVC, memory-only cache
       resources:
         requests:
-          memory: 256Mi
-          # cpu: 100m
-        limits:
           memory: 512Mi
-          # cpu: 200m
+          cpu: 200m
+        limits:
+          memory: 1Gi
+          cpu: 500m
   
   # LiteLLM proxy configuration
   image:
@@ -117,21 +117,26 @@ litellm-helm:
   
   # HPA (Horizontal Pod Autoscaler) configuration
   autoscaling:
-    enabled: false
-    minReplicas: 1
-    maxReplicas: 3
-    targetCPUUtilizationPercentage: 70
-    targetMemoryUtilizationPercentage: 80
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 70
   
   # Proxy configuration
   proxy_config:
     general_settings:
       master_key: os.environ/PROXY_MASTER_KEY
-      database_connection_pool_limit: 10  # LiteLLM 공식 권장값
-      database_connection_timeout: 30
+      database_connection_pool_limit: 15  # Increased for 100 concurrent users
+      database_connection_timeout: 60
+      proxy_batch_write_at: 60  # Batch write every 60s for performance
     
     litellm_settings:
-      cache: false
+      cache: true  # Enable Redis caching
+      cache_params:
+        type: "redis"
+        ttl: 3600  # 1 hour cache TTL
+        supported_call_types: ["completion", "chat/completions", "embeddings"]
       drop_params: true
       
       # Telemetry
@@ -139,6 +144,10 @@ litellm-helm:
       
       # UI settings
       ui_access_mode: "all"
+      
+      # Router settings for load balancing
+      router_settings:
+        routing_strategy: "simple-shuffle"  # Recommended for high traffic
     
     # Model configuration - At least one model must exist for the proxy to start
     model_list:
@@ -194,13 +203,13 @@ litellm-helm:
     #     hosts:
     #       - litellm.example.com
   
-  # Resource limits
+  # Resource limits (optimized for 100 concurrent users)
   resources:
     requests:
-      memory: 1Gi
-      cpu: 500m
+      memory: 1.5Gi
+      cpu: 750m
     limits:
-      memory: 2Gi
+      memory: 3Gi
       cpu: 2000m
   
   # Security contexts - using defaults for Prisma compatibility
@@ -215,7 +224,7 @@ litellm-helm:
     STORE_PROMPTS_IN_SPEND_LOGS: "true"
     UI_USERNAME: "admin"  # Uncomment and set your username
     UI_PASSWORD: "qwer1234"  # Set via secret or environment variable
-    NUM_WORKERS: "3"  # Worker 프로세스 수
+    NUM_WORKERS: "4"  # Increased workers for 100+ concurrent users
 
   # Extra environment variables (optional)
   # The LITELLM_MASTER_KEY is automatically set by the chart template
