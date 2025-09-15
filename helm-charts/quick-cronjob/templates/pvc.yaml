@@ -1,0 +1,39 @@
+{{- range $name, $job := .Values.jobs }}
+{{- if and (or (not (hasKey $job "enabled")) $job.enabled) (and $job.persistence $job.persistence.enabled) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "quick-cronjob.pvcName" (dict "root" $ "name" $name "job" $job) }}
+  labels:
+    {{- include "quick-cronjob.labels" (dict "root" $ "name" $name) | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+    {{- with $job.persistence.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  accessModes:
+    - {{ $job.persistence.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ $job.persistence.size }}
+  {{- $storageClass := "" }}
+  {{- if $job.persistence.storageClassName }}
+    {{- $storageClass = $job.persistence.storageClassName }}
+  {{- else if $.Values.global.storageClass }}
+    {{- $storageClass = $.Values.global.storageClass }}
+  {{- end }}
+  {{- if $storageClass }}
+  storageClassName: {{ $storageClass }}
+  {{- end }}
+  {{- with $job.persistence.selector }}
+  selector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $job.persistence.dataSource }}
+  dataSource:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}

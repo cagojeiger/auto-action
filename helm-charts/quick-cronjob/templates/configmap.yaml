@@ -1,0 +1,16 @@
+{{- range $name, $job := .Values.jobs }}
+{{- if and (or (not (hasKey $job "enabled")) $job.enabled) $job.configMap.create }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "quick-cronjob.configMapName" (dict "root" $ "name" $name "job" $job) }}
+  labels:
+    {{- include "quick-cronjob.labels" (dict "root" $ "name" $name) | nindent 4 }}
+data:
+  {{- range $key, $value := $job.configMap.data }}
+  {{ $key }}: |-
+    {{- $value | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
