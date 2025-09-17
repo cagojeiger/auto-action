@@ -1,5 +1,5 @@
-# Default values for quick-cronjob
-# This provides a test environment with Ubuntu 22.04
+# Quick-CronJob Chart
+# Test-then-Schedule pattern for Kubernetes CronJobs
 
 ########################################################
 # Global Configuration
@@ -8,152 +8,20 @@ global:
   imageRegistry: ""
   imagePullSecrets: []
   timezone: "UTC"
-  storageClass: ""
 
 ########################################################
-# CronJobs
+# Jobs Configuration
 ########################################################
-# 기본적으로 Ubuntu 22.04 테스트 환경 제공
-jobs:
-  # 테스트/개발용 기본 환경
-  test-environment:
-    enabled: true
+# Start with empty jobs and add as needed
+jobs: {}
 
-    # CronJob 설정 (실제로는 실행되지 않음)
-    schedule: "0 0 31 2 *"  # 2월 31일 = 절대 실행 안됨
-    suspend: true  # CronJob 일시 중지
-    timeZone: "UTC"
-
-    # Ubuntu 22.04 이미지
-    image:
-      repository: ubuntu
-      tag: "22.04"
-      pullPolicy: IfNotPresent
-
-    # 기본 명령 (CronJob용 - 실제로는 실행 안됨)
-    command: ["/bin/bash"]
-    args: ["-c", "echo 'Test environment ready'"]
-
-    # 환경변수
-    env:
-      - name: TEST_MODE
-        value: "true"
-      - name: ENVIRONMENT
-        value: "development"
-
-    # ConfigMap - 유용한 스크립트 제공
-    configMap:
-      create: true
-      data:
-        README.md: |
-          # Quick-CronJob Test Environment
-
-          Ubuntu 22.04 테스트 환경에 오신 것을 환영합니다!
-
-          ## 접속 방법:
-          kubectl exec -it deploy/[release-name]-test-environment-test -- bash
-
-          ## 사용 가능한 도구:
-          - bash, sh
-          - python3
-          - 기본 Linux 유틸리티
-
-          ## 도구 설치:
-          /scripts/install-tools.sh 실행
-
-          ## 예제 스크립트:
-          - /scripts/test-db-connection.sh
-          - /scripts/test-api-call.sh
-          - /scripts/test-file-operations.sh
-
-        install-tools.sh: |
-          #!/bin/bash
-          echo "=== 유용한 도구 설치 중... ==="
-
-          apt-get update > /dev/null 2>&1
-          apt-get install -y \
-            curl \
-            wget \
-            vim \
-            net-tools \
-            dnsutils \
-            postgresql-client \
-            mysql-client \
-            redis-tools \
-            jq \
-            git \
-            python3-pip \
-            htop > /dev/null 2>&1
-
-          echo "✅ 도구 설치 완료!"
-          echo ""
-          echo "설치된 도구:"
-          echo "- curl, wget: HTTP 클라이언트"
-          echo "- vim: 텍스트 에디터"
-          echo "- postgresql-client: PostgreSQL 클라이언트"
-          echo "- mysql-client: MySQL 클라이언트"
-          echo "- redis-tools: Redis 클라이언트"
-          echo "- jq: JSON 처리기"
-          echo "- python3-pip: Python 패키지 관리자"
-
-        test-db-connection.sh: |
-          #!/bin/bash
-          echo "=== 데이터베이스 연결 테스트 ==="
-          echo "PostgreSQL 연결 테스트 예제:"
-          echo "psql \$DATABASE_URL -c 'SELECT version();'"
-          echo ""
-          echo "MySQL 연결 테스트 예제:"
-          echo "mysql -h \$DB_HOST -u \$DB_USER -p\$DB_PASSWORD -e 'SELECT VERSION();'"
-          echo ""
-          echo "Redis 연결 테스트 예제:"
-          echo "redis-cli -h \$REDIS_HOST ping"
-          echo ""
-          echo "환경변수를 설정하고 실제 명령을 실행하세요."
-
-        test-api-call.sh: |
-          #!/bin/bash
-          echo "=== API 호출 테스트 ==="
-          echo "HTTP GET 요청 예제:"
-          echo "curl -s https://httpbin.org/get | jq"
-          echo ""
-          echo "HTTP POST 요청 예제:"
-          echo "curl -s -X POST -H 'Content-Type: application/json' \\"
-          echo "  -d '{\"key\": \"value\"}' \\"
-          echo "  https://httpbin.org/post | jq"
-          echo ""
-          echo "실제 API 엔드포인트로 테스트해보세요."
-
-        test-file-operations.sh: |
-          #!/bin/bash
-          echo "=== 파일 작업 테스트 ==="
-          echo "작업 디렉토리: $(pwd)"
-          echo "디스크 사용량:"
-          df -h
-          echo ""
-          echo "메모리 사용량:"
-          free -h
-          echo ""
-          echo "임시 파일 생성 테스트:"
-          echo "Hello from Quick-CronJob!" > /tmp/test.txt
-          cat /tmp/test.txt
-          rm /tmp/test.txt
-          echo "✅ 파일 작업 테스트 완료"
-
-    # 테스트 Deployment 활성화
-    testDeployment:
-      enabled: true
-      installTools: false  # 수동 설치로 변경
-      welcomeMessage: |
-        ========================================
-        Quick-CronJob 테스트 환경에 오신 것을 환영합니다!
-        ========================================
-
-        🐧 Ubuntu 22.04 개발 환경
-
-        빠른 시작:
-        1. 도구 설치: /scripts/install-tools.sh
-        2. 예제 스크립트 확인: ls /scripts/
-        3. 문서 읽기: cat /scripts/README.md
-
-        CronJob 스크립트를 테스트하고 개발하세요!
-        ========================================
+# Example: Uncomment to create a test job
+# jobs:
+#   my-job:
+#     image:
+#       repository: alpine
+#       tag: latest
+#     schedule: "*/5 * * * *"
+#     command: ["echo", "Hello World"]
+#     testDeployment:
+#       enabled: true  # Enable test deployment for validation

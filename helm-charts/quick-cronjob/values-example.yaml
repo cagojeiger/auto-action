@@ -1,0 +1,152 @@
+# Quick-CronJob Examples
+# Simple and practical configurations
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  timezone: "Asia/Seoul"
+
+jobs:
+  # Example 1: Simple backup with inline script
+  quick-backup:
+    image:
+      repository: alpine
+      tag: latest
+    schedule: "0 2 * * *"
+    suspend: true  # Start suspended for testing
+    timeZone: "Asia/Seoul"
+
+    # Inline script for immediate field modifications
+    configMap:
+      create: true
+      data:
+        backup.sh: |
+          #!/bin/sh
+          echo "Backup started at $(date)"
+          echo "Database: ${DATABASE_URL}"
+          echo "Target: ${BACKUP_PATH}"
+
+          # Add your backup logic here
+          # Example: pg_dump $DATABASE_URL > $BACKUP_PATH/$(date +%Y%m%d).sql
+
+          echo "Backup completed"
+
+    env:
+      - name: DATABASE_URL
+        value: "postgresql://user:pass@db:5432/mydb"
+      - name: BACKUP_PATH
+        value: "/data"
+
+    command: ["/bin/sh", "/scripts/backup.sh"]
+
+    # Test deployment with same config
+    testDeployment:
+      enabled: true
+      command: ["sleep", "infinity"]  # Override for testing
+
+  # Example 2: Log cleanup without RBAC
+  log-cleanup:
+    image:
+      repository: alpine
+      tag: latest
+    schedule: "0 1 * * *"
+    suspend: true
+
+    configMap:
+      create: true
+      data:
+        cleanup.sh: |
+          #!/bin/sh
+          echo "Cleaning up logs older than 7 days..."
+          find /logs -name "*.log" -mtime +7 -delete
+          echo "Cleanup completed"
+
+    command: ["/bin/sh", "/scripts/cleanup.sh"]
+
+    persistence:
+      enabled: true
+      size: 5Gi
+      mountPath: /logs
+
+    testDeployment:
+      enabled: false  # Disable test deployment for this job
+
+  # Example 3: Cluster maintenance with RBAC (when kubectl needed)
+  cluster-maintenance:
+    image:
+      repository: bitnami/kubectl
+      tag: latest
+    schedule: "0 3 * * 0"  # Weekly on Sunday
+    suspend: true
+
+    # Enable RBAC only when needed
+    serviceAccount:
+      create: true
+
+    clusterRole:
+      create: true
+      rules:
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["list", "delete"]
+        - apiGroups: [""]
+          resources: ["nodes"]
+          verbs: ["get", "list"]
+
+    configMap:
+      create: true
+      data:
+        maintenance.sh: |
+          #!/bin/sh
+          echo "Starting cluster maintenance..."
+
+          # Delete completed pods
+          kubectl delete pods --field-selector=status.phase=Succeeded --all-namespaces
+
+          # List node status
+          kubectl get nodes -o wide
+
+          echo "Maintenance completed"
+
+    command: ["/bin/sh", "/scripts/maintenance.sh"]
+
+    testDeployment:
+      enabled: true
+      command: ["sleep", "infinity"]
+
+  # Example 4: API health check
+  health-check:
+    image:
+      repository: curlimages/curl
+      tag: latest
+    schedule: "*/15 * * * *"  # Every 15 minutes
+    suspend: true
+
+    configMap:
+      create: true
+      data:
+        healthcheck.sh: |
+          #!/bin/sh
+          echo "Health check at $(date)"
+
+          # Check multiple endpoints
+          ENDPOINTS="https://api.example.com/health https://api.example.com/status"
+
+          for endpoint in $ENDPOINTS; do
+            echo "Checking: $endpoint"
+            if curl -f -s "$endpoint" > /dev/null; then
+              echo "✅ $endpoint is healthy"
+            else
+              echo "❌ $endpoint is down"
+              # Add notification logic here
+            fi
+          done
+
+          echo "Health check completed"
+
+    command: ["/bin/sh", "/scripts/healthcheck.sh"]
+
+    testDeployment:
+      enabled: true
+      # Test with immediate execution
+      command: ["/bin/sh", "/scripts/healthcheck.sh"]
