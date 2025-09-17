@@ -12,16 +12,55 @@ global:
 ########################################################
 # Jobs Configuration
 ########################################################
-# Start with empty jobs and add as needed
-jobs: {}
+# Default test environment with Ubuntu 22.04
+jobs:
+  test-environment:
+    enabled: true
 
-# Example: Uncomment to create a test job
+    # CronJob configuration (suspended for testing)
+    schedule: "0 0 * * *"  # Daily at midnight
+    suspend: true  # Always start suspended for safety
+    timeZone: "UTC"
+
+    # Ubuntu 22.04 image
+    image:
+      repository: ubuntu
+      tag: "22.04"
+      pullPolicy: IfNotPresent
+
+    # Simple command for CronJob (when activated)
+    command: ["/bin/bash", "-c", "echo 'CronJob executed at $(date)'"]
+
+    # Test deployment enabled by default
+    testDeployment:
+      enabled: true
+      command: ["sleep", "infinity"]  # Keep container running for testing
+
+    # Simple welcome script for orientation
+    configMap:
+      create: true
+      data:
+        welcome.sh: |
+          #!/bin/bash
+          echo "======================================"
+          echo "Quick-CronJob Test Environment"
+          echo "======================================"
+          echo ""
+          echo "🐧 Ubuntu 22.04 - Ready for testing!"
+          echo ""
+          echo "Quick setup:"
+          echo "  apt update && apt install -y curl vim jq"
+          echo ""
+          echo "Test your CronJob scripts here!"
+          echo "Modify this job or add new ones as needed."
+
+# Add more jobs as needed:
 # jobs:
-#   my-job:
+#   my-backup:
 #     image:
-#       repository: alpine
-#       tag: latest
-#     schedule: "*/5 * * * *"
-#     command: ["echo", "Hello World"]
+#       repository: postgres
+#       tag: 15-alpine
+#     schedule: "0 2 * * *"
+#     command: ["pg_dump", "..."]
 #     testDeployment:
-#       enabled: true  # Enable test deployment for validation
+#       enabled: true
