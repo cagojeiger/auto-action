@@ -1,0 +1,517 @@
+########################################################
+# Global Configuration
+########################################################
+global:
+  imageRegistry: ""                    # Global image registry (e.g., "docker.io", "gcr.io")
+  imagePullSecrets: []                 # Global image pull secrets
+    # - name: dockerhub-secret
+  timezone: "Asia/Seoul"               # Default timezone for all CronJobs
+  storageClass: ""                     # Default storage class
+
+########################################################
+# Multiple CronJobs Examples
+########################################################
+jobs:
+  # ===========================================
+  # Example 1: Database Backup Job
+  # ===========================================
+  postgres-backup:
+    enabled: true
+
+    # Schedule: Every day at 3 AM
+    schedule: "0 3 * * *"
+    timeZone: "Asia/Seoul"
+
+    # Job lifecycle
+    ttlSecondsAfterFinished: 86400     # Delete after 24 hours
+    activeDeadlineSeconds: 3600        # 1 hour timeout
+    backoffLimit: 3
+
+    # PostgreSQL image
+    image:
+      repository: postgres
+      tag: "14"
+      pullPolicy: IfNotPresent
+
+    # Environment variables
+    env:
+      - name: PGPASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: postgres-secret
+            key: password
+      - name: DATABASE_URL
+        value: "postgresql://user@postgres:5432/mydb"
+      - name: S3_BUCKET
+        value: "my-backup-bucket"
+
+    # Backup scripts in ConfigMap
+    configMap:
+      create: true
+      data:
+        backup.sh: |
+          #!/bin/bash
+          set -e
+
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BACKUP_FILE="/backup/db_${TIMESTAMP}.sql"
+
+          echo "Starting PostgreSQL backup at ${TIMESTAMP}"
+
+          # Create backup
+          pg_dump ${DATABASE_URL} > ${BACKUP_FILE}
+
+          # Compress
+          gzip ${BACKUP_FILE}
+
+          # Upload to S3 (requires aws-cli)
+          if [ -n "${S3_BUCKET}" ]; then
+            aws s3 cp ${BACKUP_FILE}.gz s3://${S3_BUCKET}/postgres/
+            echo "Backup uploaded to S3"
+          fi
+
+          # Clean old backups (keep 7 days)
+          find /backup -name "*.gz" -mtime +7 -delete
+
+          echo "Backup completed successfully"
+
+    # Storage for backups
+    persistence:
+      enabled: true
+      size: "100Gi"
+      storageClassName: "fast-ssd"
+      mountPath: "/backup"
+
+    # ServiceAccount with S3 access (AWS)
+    serviceAccount:
+      create: true
+      annotations:
+        eks.amazonaws.com/role-arn: "arn:aws:iam::123456789:role/backup-role"
+
+    # Run backup script
+    command: ["/bin/bash"]
+    args: ["/scripts/backup.sh"]
+
+    # Resources
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+
+    # Test mode for development
+    testDeployment:
+      enabled: true
+      installTools: true
+
+  # ===========================================
+  # Example 2: Kubernetes Cluster Cleanup
+  # ===========================================
+  cluster-cleanup:
+    enabled: true
+
+    # Schedule: Every day at 2 AM
+    schedule: "0 2 * * *"
+    timeZone: "UTC"
+
+    # kubectl image
+    image:
+      repository: bitnami/kubectl
+      tag: "latest"
+      pullPolicy: Always
+
+    # ServiceAccount for cluster access
+    serviceAccount:
+      create: true
+
+    # Cluster permissions for cleanup
+    clusterRole:
+      create: true
+      rules:
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["get", "list", "delete"]
+        - apiGroups: ["batch"]
+          resources: ["jobs", "cronjobs"]
+          verbs: ["get", "list", "delete"]
+        - apiGroups: [""]
+          resources: ["events"]
+          verbs: ["get", "list", "delete"]
+
+    # Cleanup scripts
+    configMap:
+      create: true
+      data:
+        cleanup.sh: |
+          #!/bin/bash
+
+          echo "=== Kubernetes Cluster Cleanup ==="
+          echo "Date: $(date)"
+
+          # 1. Clean evicted pods
+          echo "Cleaning evicted pods..."
+          kubectl get pods --all-namespaces -o json | \
+            jq -r '.items[] | select(.status.reason=="Evicted") |
+            "\(.metadata.namespace) \(.metadata.name)"' | \
+            while read ns pod; do
+              echo "Deleting evicted pod: $ns/$pod"
+              kubectl delete pod -n $ns $pod
+            done
+
+          # 2. Clean completed jobs older than 7 days
+          echo "Cleaning old completed jobs..."
+          kubectl get jobs --all-namespaces -o json | \
+            jq -r '.items[] | select(.status.completionTime != null) |
+            select(.status.completionTime | fromdateiso8601 < (now - 604800)) |
+            "\(.metadata.namespace) \(.metadata.name)"' | \
+            while read ns job; do
+              echo "Deleting old job: $ns/$job"
+              kubectl delete job -n $ns $job
+            done
+
+          # 3. Clean old events (older than 1 hour)
+          echo "Cleaning old events..."
+          kubectl get events --all-namespaces \
+            --field-selector="lastTimestamp<$(date -d '1 hour ago' -Iseconds)" \
+            -o name | xargs -r kubectl delete
+
+          echo "Cleanup completed"
+
+        report.sh: |
+          #!/bin/bash
+
+          echo "=== Cluster Status Report ==="
+          echo "Generated: $(date)"
+          echo ""
+
+          echo "Node Status:"
+          kubectl get nodes -o wide
+          echo ""
+
+          echo "Resource Usage:"
+          kubectl top nodes 2>/dev/null || echo "Metrics not available"
+          echo ""
+
+          echo "Problematic Pods:"
+          kubectl get pods --all-namespaces | grep -v Running | grep -v Completed
+          echo ""
+
+          echo "Disk Usage by Namespace:"
+          kubectl get pvc --all-namespaces
+
+    command: ["/bin/bash"]
+    args: ["/scripts/cleanup.sh"]
+
+    # Test mode
+    testDeployment:
+      enabled: true
+
+  # ===========================================
+  # Example 3: Data Processing ETL Job
+  # ===========================================
+  etl-processor:
+    enabled: true
+
+    # Schedule: Every 30 minutes
+    schedule: "*/30 * * * *"
+
+    # Python image
+    image:
+      repository: python
+      tag: "3.11-slim"
+      pullPolicy: IfNotPresent
+
+    # Environment variables
+    env:
+      - name: SOURCE_DB
+        value: "postgresql://user:pass@source-db:5432/data"
+      - name: TARGET_DB
+        value: "postgresql://user:pass@target-db:5432/warehouse"
+      - name: BATCH_SIZE
+        value: "1000"
+
+    # ETL scripts and requirements
+    configMap:
+      create: true
+      data:
+        requirements.txt: |
+          pandas==2.0.3
+          sqlalchemy==2.0.19
+          psycopg2-binary==2.9.7
+          redis==4.6.0
+          boto3==1.28.25
+
+        etl.py: |
+          import pandas as pd
+          import sqlalchemy
+          import os
+          import sys
+          from datetime import datetime, timedelta
+
+          def extract():
+              """Extract data from source database"""
+              print("Extracting data...")
+              engine = sqlalchemy.create_engine(os.environ['SOURCE_DB'])
+
+              # Get data from last hour
+              query = """
+              SELECT * FROM transactions
+              WHERE created_at >= %s
+              """
+              cutoff = datetime.now() - timedelta(hours=1)
+              df = pd.read_sql(query, engine, params=[cutoff])
+              print(f"Extracted {len(df)} records")
+              return df
+
+          def transform(df):
+              """Transform data"""
+              print("Transforming data...")
+
+              # Clean data
+              df = df.dropna()
+              df = df[df['amount'] > 0]
+
+              # Add processing timestamp
+              df['processed_at'] = datetime.now()
+
+              # Calculate derived fields
+              df['amount_usd'] = df['amount'] * df['exchange_rate']
+
+              print(f"Transformed to {len(df)} clean records")
+              return df
+
+          def load(df):
+              """Load data to target database"""
+              print("Loading data...")
+              engine = sqlalchemy.create_engine(os.environ['TARGET_DB'])
+
+              df.to_sql(
+                  'processed_transactions',
+                  engine,
+                  if_exists='append',
+                  index=False,
+                  chunksize=int(os.environ.get('BATCH_SIZE', 1000))
+              )
+              print(f"Loaded {len(df)} records to warehouse")
+
+          def main():
+              try:
+                  print(f"Starting ETL process at {datetime.now()}")
+
+                  # ETL pipeline
+                  data = extract()
+                  if len(data) == 0:
+                      print("No new data to process")
+                      return
+
+                  data = transform(data)
+                  load(data)
+
+                  print("ETL process completed successfully")
+
+              except Exception as e:
+                  print(f"ETL process failed: {str(e)}")
+                  sys.exit(1)
+
+          if __name__ == "__main__":
+              main()
+
+        entrypoint.sh: |
+          #!/bin/bash
+          set -e
+
+          echo "Installing Python dependencies..."
+          pip install --no-cache-dir -r /scripts/requirements.txt
+
+          echo "Starting ETL process..."
+          python /scripts/etl.py
+
+    command: ["/bin/bash"]
+    args: ["/scripts/entrypoint.sh"]
+
+    # Resources for data processing
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+
+    # Test mode
+    testDeployment:
+      enabled: true
+      installTools: true
+
+  # ===========================================
+  # Example 4: Log Rotation and Cleanup
+  # ===========================================
+  log-cleanup:
+    enabled: false                     # Disabled by default
+
+    # Schedule: Every Sunday at 1 AM
+    schedule: "0 1 * * 0"
+
+    # Alpine with common tools
+    image:
+      repository: alpine
+      tag: "3.18"
+      pullPolicy: IfNotPresent
+
+    # Cleanup configuration
+    env:
+      - name: LOG_RETENTION_DAYS
+        value: "30"
+      - name: MAX_LOG_SIZE_MB
+        value: "100"
+
+    configMap:
+      create: true
+      data:
+        install-tools.sh: |
+          #!/bin/sh
+          apk add --no-cache \
+            curl \
+            jq \
+            findutils \
+            gzip \
+            tar
+
+        log-cleanup.sh: |
+          #!/bin/sh
+
+          echo "=== Log Cleanup Process ==="
+
+          # Install required tools
+          /scripts/install-tools.sh
+
+          # Find and compress old logs
+          find /logs -name "*.log" -mtime +7 -type f | while read logfile; do
+            echo "Compressing: $logfile"
+            gzip "$logfile"
+          done
+
+          # Remove very old compressed logs
+          find /logs -name "*.gz" -mtime +${LOG_RETENTION_DAYS:-30} -delete
+
+          # Clean large log files
+          find /logs -name "*.log" -size +${MAX_LOG_SIZE_MB:-100}M | while read largefile; do
+            echo "Truncating large file: $largefile"
+            tail -n 1000 "$largefile" > "${largefile}.tmp"
+            mv "${largefile}.tmp" "$largefile"
+          done
+
+          echo "Log cleanup completed"
+
+    # Mount logs volume
+    persistence:
+      enabled: true
+      size: "50Gi"
+      mountPath: "/logs"
+
+    command: ["/bin/sh"]
+    args: ["/scripts/log-cleanup.sh"]
+
+    # Test mode
+    testDeployment:
+      enabled: false
+
+  # ===========================================
+  # Default Test Environment (Always Enabled)
+  # ===========================================
+  test-environment:
+    enabled: true
+
+    # Never actually run as CronJob
+    schedule: "0 0 31 2 *"  # February 31st = never
+    suspend: true
+
+    # Ubuntu test environment
+    image:
+      repository: ubuntu
+      tag: "22.04"
+      pullPolicy: IfNotPresent
+
+    # Test scripts and documentation
+    configMap:
+      create: true
+      data:
+        README.md: |
+          # Quick-CronJob Examples
+
+          이 환경에서 위의 모든 예제를 테스트할 수 있습니다.
+
+          ## 접속 방법:
+          kubectl exec -it deploy/[release-name]-test-environment-test -- bash
+
+          ## 예제 테스트:
+          1. /scripts/test-db-backup.sh      # DB 백업 테스트
+          2. /scripts/test-kubectl.sh        # kubectl 명령 테스트
+          3. /scripts/test-python-etl.sh     # Python ETL 테스트
+
+          ## 도구 설치:
+          /scripts/install-all-tools.sh
+
+        install-all-tools.sh: |
+          #!/bin/bash
+          echo "=== Installing comprehensive toolset ==="
+
+          apt-get update
+          apt-get install -y \
+            curl wget vim nano \
+            net-tools dnsutils iputils-ping \
+            postgresql-client mysql-client redis-tools \
+            python3 python3-pip \
+            nodejs npm \
+            git jq yq \
+            htop tree \
+            unzip zip \
+            awscli
+
+          # Install kubectl
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          mv kubectl /usr/local/bin/
+
+          echo "✅ All tools installed!"
+
+        test-db-backup.sh: |
+          #!/bin/bash
+          echo "=== Database Backup Test ==="
+          echo "1. Check PostgreSQL client:"
+          pg_dump --version
+
+          echo "2. Test connection (set DATABASE_URL first):"
+          echo "   export DATABASE_URL='postgresql://user:pass@host:5432/db'"
+          echo "   pg_dump \$DATABASE_URL --schema-only"
+
+        test-kubectl.sh: |
+          #!/bin/bash
+          echo "=== Kubectl Test ==="
+          echo "1. Check kubectl:"
+          kubectl version --client
+
+          echo "2. Test cluster access:"
+          kubectl get nodes
+
+          echo "3. Test permissions:"
+          kubectl auth can-i get pods
+
+        test-python-etl.sh: |
+          #!/bin/bash
+          echo "=== Python ETL Test ==="
+          echo "1. Check Python:"
+          python3 --version
+
+          echo "2. Install common packages:"
+          pip3 install pandas sqlalchemy psycopg2-binary
+
+          echo "3. Test imports:"
+          python3 -c "import pandas, sqlalchemy; print('✅ ETL packages ready')"
+
+    # Always enable test deployment
+    testDeployment:
+      enabled: true
+      installTools: false  # Manual installation with comprehensive tools

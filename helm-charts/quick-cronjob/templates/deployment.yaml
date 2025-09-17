@@ -1,0 +1,193 @@
+{{- range $name, $job := .Values.jobs }}
+{{- if and (or (not (hasKey $job "enabled")) $job.enabled) $job.testDeployment.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "quick-cronjob.jobFullname" (dict "root" $ "name" $name) }}-test
+  labels:
+    {{- include "quick-cronjob.labels" (dict "root" $ "name" $name) | nindent 4 }}
+    app.kubernetes.io/component: test-deployment
+  annotations:
+    description: "Test deployment for {{ $name }} cronjob. Use kubectl exec to access."
+spec:
+  replicas: {{ $job.testDeployment.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "quick-cronjob.name" $ }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+      cronjob: {{ $name }}
+      mode: test
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "quick-cronjob.name" $ }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+        cronjob: {{ $name }}
+        mode: test
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        kubectl.kubernetes.io/default-container: {{ $name }}
+        {{- with $job.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if or (and $job.serviceAccount $job.serviceAccount.create) $.Values.global.imagePullSecrets $job.imagePullSecrets }}
+      {{- if and $job.serviceAccount $job.serviceAccount.create }}
+      serviceAccountName: {{ include "quick-cronjob.serviceAccountName" (dict "root" $ "name" $name "job" $job) }}
+      {{- end }}
+      {{- end }}
+
+      {{- with (coalesce $job.imagePullSecrets $.Values.global.imagePullSecrets) }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- if $job.initContainers }}
+      initContainers:
+        {{- toYaml $job.initContainers | nindent 8 }}
+      {{- end }}
+
+      containers:
+      - name: {{ $name }}
+        image: {{ include "quick-cronjob.image" (dict "root" $ "job" $job) }}
+        imagePullPolicy: {{ $job.image.pullPolicy | default "IfNotPresent" }}
+
+        # Sleep container with welcome message
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - |
+            echo "🚀 Quick-CronJob Test Environment Ready!"
+            echo "📝 Original CronJob command available in /scripts/"
+            echo "🔗 Access: kubectl exec -it deploy/{{ include "quick-cronjob.jobFullname" (dict "root" $ "name" $name) }}-test -- bash"
+            echo ""
+            while true; do sleep 86400; done
+
+        # Environment variables (same as CronJob)
+        {{- if or $job.env $job.envFrom }}
+        {{- with $job.env }}
+        env:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        {{- with $job.envFrom }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- end }}
+
+        # Resources (development-friendly defaults)
+        resources:
+          {{- if $job.resources }}
+          {{- toYaml $job.resources | nindent 10 }}
+          {{- else }}
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+          {{- end }}
+
+        # Volume mounts (same as CronJob)
+        {{- if or $job.volumeMounts $job.configMap.create (and $job.persistence $job.persistence.enabled) }}
+        volumeMounts:
+        {{- if $job.configMap.create }}
+        - name: config
+          mountPath: /scripts
+          readOnly: false  # Allow editing scripts for testing
+        {{- end }}
+        {{- if and $job.persistence $job.persistence.enabled }}
+        - name: data
+          mountPath: {{ $job.persistence.mountPath | default "/data" }}
+        {{- end }}
+        - name: workspace
+          mountPath: /workspace
+        {{- with $job.volumeMounts }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- else }}
+        volumeMounts:
+        - name: workspace
+          mountPath: /workspace
+        {{- end }}
+
+        # Security context (same as CronJob)
+        {{- with $job.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        # Working directory
+        workingDir: /workspace
+
+        # Enable TTY for better shell experience
+        tty: true
+        stdin: true
+
+        # Health checks
+        livenessProbe:
+          exec:
+            command: ["/bin/bash", "-c", "true"]
+          periodSeconds: 60
+          timeoutSeconds: 5
+
+        readinessProbe:
+          exec:
+            command: ["/bin/bash", "-c", "true"]
+          initialDelaySeconds: 5
+          periodSeconds: 30
+
+      {{- if $job.sidecars }}
+      # Sidecar containers (same as CronJob)
+      {{- with $job.sidecars }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- end }}
+
+      # Volumes (same as CronJob + workspace)
+      volumes:
+      {{- if $job.configMap.create }}
+      - name: config
+        configMap:
+          name: {{ include "quick-cronjob.configMapName" (dict "root" $ "name" $name "job" $job) }}
+          defaultMode: 0755
+      {{- end }}
+      {{- if and $job.persistence $job.persistence.enabled }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "quick-cronjob.pvcName" (dict "root" $ "name" $name "job" $job) }}
+      {{- end }}
+      - name: workspace
+        emptyDir: {}
+      {{- with $job.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      # Node configuration (same as CronJob)
+      {{- with $job.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with $job.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with $job.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      # Pod security context (same as CronJob)
+      {{- with $job.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      # Restart policy for development
+      restartPolicy: Always
+{{- end }}
+{{- end }}
