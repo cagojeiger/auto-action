@@ -84,6 +84,10 @@ spec:
               protocol: TCP
             {{- end }}
           {{- end }}
+          {{- with $app.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with $app.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
