@@ -11,13 +11,27 @@ metadata:
 spec:
   type: {{ $app.service.type | default "ClusterIP" }}
   ports:
+    {{- if $app.service.ports }}
+    {{- range $app.service.ports }}
+    - name: {{ .name | default "http" }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort | default .port }}
+      protocol: TCP
+      {{- if and (eq ($app.service.type | default "ClusterIP") "NodePort") .nodePort }}
+      nodePort: {{ .nodePort }}
+      {{- end }}
+    {{- end }}
+    {{- else }}
     - name: {{ $app.service.portName | default "http" }}
       port: {{ $app.service.port }}
       targetPort: {{ $app.service.targetPort | default $app.service.port }}
       protocol: TCP
-      {{- if eq $app.service.type "NodePort" }}
-      nodePort: {{ $app.service.nodePort | default "null" }}
+      {{- if eq ($app.service.type | default "ClusterIP") "NodePort" }}
+      {{- with $app.service.nodePort }}
+      nodePort: {{ . }}
       {{- end }}
+      {{- end }}
+    {{- end }}
   selector:
     {{- include "quick-deploy.selectorLabels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
 {{- end }}

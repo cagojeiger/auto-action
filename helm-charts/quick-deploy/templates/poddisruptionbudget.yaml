@@ -6,6 +6,8 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}
+  labels:
+    {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
 spec:
   minAvailable: {{ $app.podDisruptionBudget.minAvailable | default 1 }}  
   selector:

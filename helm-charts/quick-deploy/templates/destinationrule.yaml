@@ -1,18 +1,19 @@
 {{- range $name, $app := .Values.apps }}
+{{- if or (not (hasKey $app "enabled")) $app.enabled }}
 {{- if and $app.istio $app.istio.destinationRule $app.istio.destinationRule.enabled }}
 {{- $dr := $app.istio.destinationRule }}
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
-  name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}-dr
+  name: {{ printf "%s-dr" (include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app)) | trunc 63 | trimSuffix "-" }}
   labels:
     {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
 spec:
   {{- if $dr.rawSpec }}
   {{- toYaml $dr.rawSpec | nindent 2 }}
   {{- else }}
-  host: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}
+  host: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}.{{ $.Release.Namespace }}.svc.cluster.local
   {{- if $dr.trafficPolicy }}
   trafficPolicy:
     {{- toYaml $dr.trafficPolicy | nindent 4 }}
@@ -22,5 +23,6 @@ spec:
     {{- toYaml $dr.subsets | nindent 4 }}
   {{- end }}
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

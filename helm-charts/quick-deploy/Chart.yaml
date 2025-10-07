@@ -3,7 +3,7 @@ appVersion: 1.0.0
 description: Rapid multi-application deployment template for Kubernetes
 name: quick-deploy
 type: application
-version: 0.1.8
+version: 0.1.9
 keywords:
   - deployment
   - multi-app

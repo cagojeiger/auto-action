@@ -1,17 +1,18 @@
 {{- range $name, $app := .Values.apps }}
+{{- if or (not (hasKey $app "enabled")) $app.enabled }}
 {{- if and $app.istio $app.istio.enabled $app.istio.virtualService }}
 {{- $vs := $app.istio.virtualService }}
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}-vs
+  name: {{ printf "%s-vs" (include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app)) | trunc 63 | trimSuffix "-" }}
   labels:
     {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
 spec:
-  {{- if $vs.rawSpec }}
-  {{- toYaml $vs.rawSpec | nindent 2 }}
-  {{- else }}
+  {{- if not $vs.gateways }}
+    {{- fail (printf "App '%s': istio.virtualService.gateways is required when using VirtualService" $name) }}
+  {{- end }}
   {{- if $vs.gateways }}
   gateways:
     {{- toYaml $vs.gateways | nindent 4 }}
@@ -23,18 +24,14 @@ spec:
   {{- if $vs.http }}
   http:
     {{- range $vs.http }}
-    - {{- toYaml . | nindent 6 }}
-      {{- if not .route }}
+    - {{ if .route }}{{ toYaml . | nindent 6 | trim }}{{ else }}{{ toYaml . | nindent 6 | trim }}
       route:
         - destination:
-            host: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}
-            {{- if $app.service }}
+            host: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}.{{ $.Release.Namespace }}.svc.cluster.local
             port:
-              number: {{ $app.service.port | default 80 }}
-            {{- end }}
-      {{- end }}
+              number: {{ $app.service.port | default 80 }}{{ end }}
     {{- end }}
   {{- end }}
-  {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
