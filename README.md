@@ -1,42 +1,42 @@
 # auto-action
 
-이 저장소는 Docker 이미지와 Helm 차트를 이용해 여러 인프라 서비스를 배포하기 위해 사용됩니다. GitHub Actions 워크플로가 이미지 빌드와 차트 배포를 자동화합니다.
+GitOps 기반 자동화 인프라 배포 저장소입니다. GitHub Actions를 통해 Docker 이미지와 Helm 차트를 자동으로 빌드하고 배포합니다.
+
+## 주요 특징
+
+- **완전 자동화**: 코드 변경 감지 시 이미지 빌드 및 차트 배포 자동 실행
+- **멀티 플랫폼 지원**: linux/amd64, linux/arm64 이미지 동시 빌드
+- **의존성 자동 업데이트**: upstream 저장소의 최신 버전 자동 추적 및 반영
+- **동적 매트릭스 빌드**: 변경된 아티팩트만 선택적으로 병렬 처리
+
+## 빠른 시작
+
+```bash
+# Helm 차트 설치
+helm install casdoor oci://docker.io/cagojeiger/casdoor
+
+# 또는 로컬에서 직접 설치
+helm install casdoor helm-charts/casdoor -f helm-charts/casdoor/values.yaml
+```
 
 ## 디렉터리 구조
 
-- **containers/** - 컨테이너 이미지를 위한 Dockerfile과 스크립트가 있습니다. `code-server` 이미지는 Kubernetes 관련 도구를 포함합니다.
-- **docker-composes/** - 로컬 테스트용 Docker Compose 설정을 제공합니다. 예를 들어 OpenHands 애플리케이션 구성 파일이 있습니다.
-- **helm-charts/** - 활성 서비스 배포용 Helm 차트입니다.
-  - `casdoor`: 인증 서버 배포
-  - `code-server`: Kubernetes 도구가 포함된 코드 서버
-- **helm-charts-archive/** - 고급 기능을 포함한 아카이브 차트들입니다.
-  - `template-deployment`: 사용자 정의 배포를 위한 템플릿 (고급 테스트 포함)
-  - `monitoring`: Prometheus, Loki, Promtail 패키지
-  - `ops-stack`: Redis, PostgreSQL, MinIO, Harbor, Gitea, Argo CD 등이 포함된 번들
-  - `oss-ai-stack`, `oss-data-infra`: 오픈소스 AI 및 데이터 작업을 위한 인프라
-- **.github/workflows/** - 아티팩트 업데이트와 배포를 담당하는 CI 설정이 위치합니다.
+- **containers/** - Docker 이미지 (Casdoor, Code-server 등)
+- **helm-charts/** - 프로덕션 Helm 차트
+- **helm-charts-archive/** - 고급 기능 포함 아카이브 차트 (template-deployment, ops-stack 등)
+- **docker-composes/** - 로컬 개발용 Docker Compose 설정
 
-## 워크플로 개요
+각 디렉터리의 README에서 상세 정보를 확인할 수 있습니다.
 
-- **unified-artifact-push.yaml**: Dockerfile이나 Helm 차트 변경 시 자동으로 이미지를 빌드하고 차트를 배포합니다.
-- **update-casdoor.yaml**, **update-code-server.yaml**: 외부 저장소의 최신 버전을 가져와 차트와 Dockerfile을 갱신하는 작업을 수행합니다.
-- **slack-notifications.yaml**: 다른 워크플로우가 실패할 경우 Slack으로 알림을 전송합니다.
+## 자동화 워크플로
 
-## 사용 방법
+- **unified-artifact-push**: 변경 감지 시 이미지/차트 자동 빌드 및 배포
+- **update-\***: upstream 의존성 자동 업데이트 (일일/주간)
+- **slack-notifications**: 빌드 실패 시 Slack 알림
 
-일반적으로 이미지는 자동으로 빌드되고 차트는 자동으로 배포됩니다. 수동으로 수행하려면 다음 명령을 참고하세요.
+## 상세 문서
 
-```bash
-# 컨테이너 이미지 빌드
-cd containers/code-server
-docker buildx build --platform linux/amd64,linux/arm64 -t <image>:<tag> .
-
-# 차트 설치
-helm dependency update helm-charts/ops-stack
-helm install ops-stack helm-charts/ops-stack -f helm-charts/ops-stack/values.yaml
-```
-
-각 디렉터리의 README에서 세부 정보를 확인할 수 있습니다.
+개발 가이드, 템플릿 시스템, 테스트 방법 등 상세 정보는 [CLAUDE.md](CLAUDE.md)를 참고하세요.
 
 ## 기여 방법
 
