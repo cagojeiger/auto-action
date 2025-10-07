@@ -5,7 +5,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ $app.configMap.name }}
+  name: {{ $app.configMap.name | default (include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app)) }}
   labels:
     {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
 data:

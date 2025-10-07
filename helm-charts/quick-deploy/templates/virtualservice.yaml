@@ -10,9 +10,6 @@ metadata:
   labels:
     {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
 spec:
-  {{- if $vs.rawSpec }}
-  {{- toYaml $vs.rawSpec | nindent 2 }}
-  {{- else }}
   {{- if not $vs.gateways }}
     {{- fail (printf "App '%s': istio.virtualService.gateways is required when using VirtualService" $name) }}
   {{- end }}
@@ -27,18 +24,13 @@ spec:
   {{- if $vs.http }}
   http:
     {{- range $vs.http }}
-    - {{- if .route }}
-      {{- toYaml . | nindent 2 }}
-      {{- else }}
-      {{- toYaml . | nindent 2 }}
+    - {{ if .route }}{{ toYaml . | nindent 6 | trim }}{{ else }}{{ toYaml . | nindent 6 | trim }}
       route:
         - destination:
             host: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}.{{ $.Release.Namespace }}.svc.cluster.local
             port:
-              number: {{ $app.service.port | default 80 }}
-      {{- end }}
+              number: {{ $app.service.port | default 80 }}{{ end }}
     {{- end }}
-  {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}
