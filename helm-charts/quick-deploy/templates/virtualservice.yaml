@@ -27,31 +27,16 @@ spec:
   {{- if $vs.http }}
   http:
     {{- range $vs.http }}
-    {{- if .route }}
-    - {{- toYaml . | nindent 6 }}
-    {{- else }}
-      {{- if not $app.service }}
-        {{- fail (printf "App '%s': service is required when using VirtualService without explicit route" $name) }}
-      {{- else if not $app.service.enabled }}
-        {{- fail (printf "App '%s': service.enabled must be true when using VirtualService without explicit route" $name) }}
-      {{- end }}
-    - {{- range $key, $value := . }}
-      {{ $key }}:
-        {{- toYaml $value | nindent 8 }}
-      {{- end }}
+    - {{- if .route }}
+      {{- toYaml . | nindent 2 }}
+      {{- else }}
+      {{- toYaml . | nindent 2 }}
       route:
         - destination:
             host: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}.{{ $.Release.Namespace }}.svc.cluster.local
-            {{- if $app.service }}
-            {{- if hasKey $app.service "port" }}
             port:
-              number: {{ $app.service.port }}
-            {{- else }}
-            port:
-              number: 80
-            {{- end }}
-            {{- end }}
-    {{- end }}
+              number: {{ $app.service.port | default 80 }}
+      {{- end }}
     {{- end }}
   {{- end }}
   {{- end }}
