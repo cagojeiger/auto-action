@@ -13,7 +13,7 @@ GitOps 기반 자동화 인프라 배포 저장소입니다. GitHub Actions를 �
 
 ```bash
 # Helm 차트 설치
-helm install casdoor oci://docker.io/<username>/casdoor
+helm install casdoor oci://docker.io/cagojeiger/casdoor
 
 # 또는 로컬에서 직접 설치
 helm install casdoor helm-charts/casdoor -f helm-charts/casdoor/values.yaml
