@@ -2,6 +2,106 @@ apiVersion: v1
 entries:
   casdoor-helm-charts:
   - apiVersion: v2
+    appVersion: v2.88.0
+    created: "2025-10-17T16:33:43.110576522Z"
+    description: A Helm chart for Kubernetes
+    digest: c199b1645c92df6a669aa48142a091084470a29f4bfc0f8eacc6fcc6d8ca94a3
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.88.0.tgz
+    version: v2.88.0
+  - apiVersion: v2
+    appVersion: v2.87.0
+    created: "2025-10-17T15:40:17.680123802Z"
+    description: A Helm chart for Kubernetes
+    digest: 50575ad76c4cba0ac387a8786e8604920b9dd58b4786776a17dd24e74670f074
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.87.0.tgz
+    version: v2.87.0
+  - apiVersion: v2
+    appVersion: v2.86.0
+    created: "2025-10-15T11:45:29.25836949Z"
+    description: A Helm chart for Kubernetes
+    digest: 4b38b37bd4abc892e0587c7704794e8841fd8ae9a3da098b40976a6a0942c348
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.86.0.tgz
+    version: v2.86.0
+  - apiVersion: v2
+    appVersion: v2.85.0
+    created: "2025-10-14T14:47:08.319687078Z"
+    description: A Helm chart for Kubernetes
+    digest: 89014c1bb186e57a2e171de3a5f4a18ddc0494e63ddaa1282857b32b9d6777c3
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.85.0.tgz
+    version: v2.85.0
+  - apiVersion: v2
+    appVersion: v2.84.0
+    created: "2025-10-14T14:31:10.436992549Z"
+    description: A Helm chart for Kubernetes
+    digest: b8a86df49748d6bb561659fab0c420719c0b67ef5572a2ba35ff504229c6d04d
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.84.0.tgz
+    version: v2.84.0
+  - apiVersion: v2
+    appVersion: v2.83.0
+    created: "2025-10-14T13:16:41.77731833Z"
+    description: A Helm chart for Kubernetes
+    digest: b9415d235e2939fea8963728ea63568083fe19722db13069632d5eba849e51c8
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.83.0.tgz
+    version: v2.83.0
+  - apiVersion: v2
+    appVersion: v2.82.0
+    created: "2025-10-14T11:08:48.167827925Z"
+    description: A Helm chart for Kubernetes
+    digest: 5727f1adbc31ea60bc3e6d0a5afd5b08f1e63f0ecf54c55a8772181747eb52b8
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.82.0.tgz
+    version: v2.82.0
+  - apiVersion: v2
+    appVersion: v2.81.0
+    created: "2025-10-13T16:45:04.02636043Z"
+    description: A Helm chart for Kubernetes
+    digest: dda3f098857102aba8d28453f0d2d63a6095fd293bee3e8999ee30e323e9e8c6
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.81.0.tgz
+    version: v2.81.0
+  - apiVersion: v2
+    appVersion: v2.80.0
+    created: "2025-10-13T16:10:55.34766912Z"
+    description: A Helm chart for Kubernetes
+    digest: b50265af377bb08be43adbfe6e7c6f9226a800c56e857e57aa38171a7c750a48
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.80.0.tgz
+    version: v2.80.0
+  - apiVersion: v2
+    appVersion: v2.79.0
+    created: "2025-10-13T15:30:19.620196544Z"
+    description: A Helm chart for Kubernetes
+    digest: a1794ca6811d17f316785587aba48faf3cdcf8b5bf707e256253210190379c27
+    name: casdoor-helm-charts
+    type: application
+    urls:
+    - oci://registry-1.docker.io/casbin/casdoor-helm-charts-v2.79.0.tgz
+    version: v2.79.0
+  - apiVersion: v2
     appVersion: v2.78.0
     created: "2025-10-09T14:34:58.809364807Z"
     description: A Helm chart for Kubernetes
@@ -5581,4 +5681,4 @@ entries:
     urls:
     - oci://registry-1.docker.io/casbin/casdoor-helm-charts-0.4.3.tgz
     version: 0.4.3
-generated: "2025-10-09T14:34:58.804234074Z"
+generated: "2025-10-17T16:33:43.109011825Z"
