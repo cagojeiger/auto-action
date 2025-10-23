@@ -695,3 +695,132 @@ apps:
         #   trafficPolicy:
         #     tls:
         #       mode: ISTIO_MUTUAL
+
+  # =====================================
+  # AuthorizationPolicy Configuration (Access Control)
+  # =====================================
+  # Use Istio AuthorizationPolicy for authentication and authorization
+  # Supports OAuth2-Proxy, JWT validation, RBAC, and more
+  example-oauth2-app:
+    enabled: true
+
+    # Basic deployment configuration
+    image:
+      repository: nginx
+      tag: "1.21"
+      pullPolicy: IfNotPresent
+
+    replicaCount: 1
+
+    # Service configuration
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+      targetPort: 80
+
+    # Istio configuration
+    istio:
+      enabled: true
+
+      # VirtualService for HTTP routing
+      virtualService:
+        gateways:
+          - istio-system/main-gateway  # Reference to existing Gateway
+        hosts:
+          - admin.example.com           # Admin UI domain
+        http:
+          - match:
+              - uri:
+                  prefix: /
+            timeout: 30s
+
+      # AuthorizationPolicy for access control
+      # Protects the admin UI with OAuth2-Proxy authentication
+      authorizationPolicy:
+        enabled: true                   # Enable authorization policy
+
+        # Namespace to create the policy (usually istio-ingressgateway for Gateway-level auth)
+        namespace: istio-ingressgateway
+
+        # Workload selector - apply to Istio Ingress Gateway
+        selector:
+          matchLabels:
+            app: istio-ingressgateway
+
+        # Action: CUSTOM delegates to external authorization provider
+        action: CUSTOM                  # ALLOW, DENY, or CUSTOM
+
+        # External authorization provider (OAuth2-Proxy)
+        provider:
+          name: "oauth2-proxy"          # Name of the provider configured in Istio
+
+        # Authorization rules - protect specific hosts
+        rules:
+          - to:
+              - operation:
+                  hosts:
+                    - "admin.example.com"
+                  # Optional: specify methods
+                  # methods: ["GET", "POST"]
+                  # Optional: specify paths
+                  # paths: ["/admin/*"]
+
+        # === Advanced Examples (commented for future use) ===
+
+        # Example: JWT validation (CUSTOM action)
+        # authorizationPolicy:
+        #   enabled: true
+        #   namespace: my-app            # App namespace for pod-level auth
+        #   action: CUSTOM
+        #   provider:
+        #     name: "jwt-validator"
+        #   rules:
+        #     - to:
+        #         - operation:
+        #             paths: ["/api/*"]
+
+        # Example: RBAC - Allow only specific service accounts
+        # authorizationPolicy:
+        #   enabled: true
+        #   namespace: my-app
+        #   action: ALLOW
+        #   rules:
+        #     - from:
+        #         - source:
+        #             principals:
+        #               - "cluster.local/ns/default/sa/frontend"
+        #               - "cluster.local/ns/default/sa/backend"
+        #       to:
+        #         - operation:
+        #             methods: ["GET", "POST"]
+
+        # Example: Deny specific namespaces
+        # authorizationPolicy:
+        #   enabled: true
+        #   namespace: my-app
+        #   action: DENY
+        #   rules:
+        #     - from:
+        #         - source:
+        #             namespaces: ["untrusted"]
+
+        # Example: Raw spec override (full control)
+        # authorizationPolicy:
+        #   enabled: true
+        #   namespace: istio-ingressgateway
+        #   rawSpec:
+        #     selector:
+        #       matchLabels:
+        #         app: istio-ingressgateway
+        #     action: CUSTOM
+        #     provider:
+        #       name: "oauth2-proxy"
+        #     rules:
+        #       - to:
+        #           - operation:
+        #               hosts:
+        #                 - "*.example.com"
+        #               notPaths:
+        #                 - "/health"
+        #                 - "/metrics"

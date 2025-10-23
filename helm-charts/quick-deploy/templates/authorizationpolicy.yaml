@@ -1,0 +1,35 @@
+{{- range $name, $app := .Values.apps }}
+{{- if or (not (hasKey $app "enabled")) $app.enabled }}
+{{- if and $app.istio $app.istio.authorizationPolicy $app.istio.authorizationPolicy.enabled }}
+{{- $ap := $app.istio.authorizationPolicy }}
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: {{ printf "%s-authz" (include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app)) | trunc 63 | trimSuffix "-" }}
+  namespace: {{ $ap.namespace | default $.Release.Namespace }}
+  labels:
+    {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
+spec:
+  {{- if $ap.rawSpec }}
+  {{- toYaml $ap.rawSpec | nindent 2 }}
+  {{- else }}
+  {{- with $ap.selector }}
+  selector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $ap.action }}
+  action: {{ . }}
+  {{- end }}
+  {{- with $ap.provider }}
+  provider:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $ap.rules }}
+  rules:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
