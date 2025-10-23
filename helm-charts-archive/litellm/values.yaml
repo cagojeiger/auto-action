@@ -1,0 +1,265 @@
+# Values for orchard-litellm
+# This overrides the default values in the litellm-helm subchart
+
+litellm-helm:
+  # Replica count for the deployment
+  replicaCount: 1
+  
+  # Health app configuration
+  separateHealthApp: false
+  
+  # Global settings for Bitnami Legacy migration
+  global:
+    security:
+      allowInsecureImages: true  # Required for bitnamilegacy repositories
+  
+  # PostgreSQL configuration (using Bitnami Legacy repository)
+  # NOTE: Using bitnamilegacy repository due to Bitnami commercialization (Aug 28, 2025)
+  # Legacy images receive no security updates - plan migration within 6-12 months
+  db:
+    deployStandalone: true
+    
+  postgresql:
+    # Override Bitnami image to use legacy repository
+    image:
+      repository: bitnamilegacy/postgresql
+      tag: "17.6.0-debian-12-r4"  # Exact version from chart 16.7.27
+    
+    # Volume permissions image override
+    volumePermissions:
+      image:
+        repository: bitnamilegacy/os-shell
+        tag: "12-debian-12-r51"
+    
+    # Metrics exporter image override
+    metrics:
+      enabled: false  # Disable to avoid additional legacy dependencies
+      image:
+        repository: bitnamilegacy/postgres-exporter
+        tag: "0.17.1-debian-12-r16"
+    
+    auth:
+      username: litellm
+      database: litellm
+      # Password will be auto-generated or set via --set during install
+      # --set litellm-helm.postgresql.auth.password=<password>
+      # --set litellm-helm.postgresql.auth.postgresPassword=<password>
+    primary:
+      persistence:
+        enabled: true
+        size: 10Gi
+      resources:
+        requests:
+          memory: 1Gi
+          cpu: 250m
+        limits:
+          memory: 2Gi
+          cpu: 1000m
+  
+  # Redis configuration (using Bitnami Legacy repository)
+  # NOTE: Using bitnamilegacy repository due to Bitnami commercialization (Aug 28, 2025)
+  redis:
+    enabled: true  # Enable for 100+ concurrent users
+    
+    # Override Bitnami image to use legacy repository (when enabled)
+    image:
+      repository: bitnamilegacy/redis
+      tag: "8.2.1-debian-12-r0"  # Exact version from chart 22.0.7
+    
+    # Sentinel image override (for HA setup)
+    sentinel:
+      image:
+        repository: bitnamilegacy/redis-sentinel
+        tag: "8.2.1-debian-12-r0"
+    
+    # Metrics exporter image override
+    metrics:
+      enabled: false  # Disable to avoid additional legacy dependencies
+      image:
+        repository: bitnamilegacy/redis-exporter
+        tag: "1.76.0-debian-12-r0"
+    
+    auth:
+      enabled: true
+      # Password will be auto-generated or set via --set during install
+      # --set litellm-helm.redis.auth.password=<password>
+    master:
+      persistence:
+        enabled: false  # No PVC, memory-only cache
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 200m
+        limits:
+          memory: 1Gi
+          cpu: 500m
+  
+  # LiteLLM proxy configuration
+  image:
+    repository: ghcr.io/berriai/litellm-database
+    tag: "main-latest"
+    pullPolicy: Always
+  
+  # Master key will be auto-generated if not provided
+  # --set litellm-helm.masterkey=<your-master-key>
+  
+  # Migration job configuration
+  migrationJob:
+    enabled: true
+    retries: 3
+    backoffLimit: 4
+    ttlSecondsAfterFinished: 120
+    hooks:
+      argocd:
+        enabled: true
+      helm:
+        enabled: false
+  
+  # HPA (Horizontal Pod Autoscaler) configuration
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 70
+  
+  # Proxy configuration
+  proxy_config:
+    general_settings:
+      master_key: os.environ/PROXY_MASTER_KEY
+      database_connection_pool_limit: 15  # Increased for 100 concurrent users
+      database_connection_timeout: 60
+      proxy_batch_write_at: 60  # Batch write every 60s for performance
+    
+    litellm_settings:
+      cache: true  # Enable Redis caching
+      cache_params:
+        type: "redis"
+        ttl: 3600  # 1 hour cache TTL
+        supported_call_types: ["completion", "chat/completions", "embeddings"]
+      drop_params: true
+      
+      # Telemetry
+      telemetry: false
+      
+      # UI settings
+      ui_access_mode: "all"
+      
+      # Router settings for load balancing
+      router_settings:
+        routing_strategy: "simple-shuffle"  # Recommended for high traffic
+    
+    # Model configuration - At least one model must exist for the proxy to start
+    model_list:
+      - model_name: test-model
+        litellm_params:
+          model: openai/fake
+          api_key: fake-key
+          api_base: https://example.com
+    
+    # Additional model examples (uncomment to use):
+    # - model_name: "gpt-3.5-turbo"  # OpenAI example
+    #   litellm_params:
+    #     model: "gpt-3.5-turbo"
+    #     api_key: "${OPENAI_API_KEY}"  # Use environment variable
+    #   model_info:
+    #     max_tokens: 4096
+    #     supports_function_calling: true
+    #
+    # - model_name: "llama2"  # Ollama example
+    #   litellm_params:
+    #     model: "ollama/llama2"
+    #     api_base: "http://ollama-service.default.svc.cluster.local:11434"
+    #     custom_llm_provider: "ollama"
+    #   model_info:
+    #     max_tokens: 4096
+    #
+    # - model_name: "claude-3"  # Anthropic example
+    #   litellm_params:
+    #     model: "claude-3-opus-20240229"
+    #     api_key: "${ANTHROPIC_API_KEY}"
+    #   model_info:
+    #     max_tokens: 4096
+    #     supports_function_calling: true
+
+  # Ingress configuration
+  ingress:
+    enabled: false  # Set to true to enable ingress
+    annotations:
+      # Example annotations for NGINX ingress controller
+      # nginx.ingress.kubernetes.io/limit-rps: "100"
+      # nginx.ingress.kubernetes.io/limit-burst-multiplier: "10"
+      # nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+      # nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    hosts:
+      - host: litellm.example.com  # Replace with your domain
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: []
+    # Example TLS configuration:
+    # tls:
+    #   - secretName: litellm-tls
+    #     hosts:
+    #       - litellm.example.com
+  
+  # Resource limits (optimized for 100 concurrent users)
+  resources:
+    requests:
+      memory: 1.5Gi
+      cpu: 750m
+    limits:
+      memory: 3Gi
+      cpu: 2000m
+  
+  # Security contexts - using defaults for Prisma compatibility
+  # LiteLLM requires specific permissions for Prisma query engine
+  podSecurityContext: {}
+  securityContext: {}
+  
+  # Additional environment variables
+  envVars:
+    LITELLM_MODE: "PRODUCTION"
+    STORE_MODEL_IN_DB: "true"
+    STORE_PROMPTS_IN_SPEND_LOGS: "true"
+    UI_USERNAME: "admin"  # Uncomment and set your username
+    UI_PASSWORD: "qwer1234"  # Set via secret or environment variable
+    NUM_WORKERS: "4"  # Increased workers for 100+ concurrent users
+
+  # Extra environment variables (optional)
+  # The LITELLM_MASTER_KEY is automatically set by the chart template
+  # extraEnvVars:
+  #   - name: PROXY_BASE_URL
+  #     value: "https://litellm.example.com"  # Set your proxy base URL
+
+# SpendLogs 자동 정리 설정
+cleanup:
+  enabled: true
+  schedule: "15 0 * * *"  # 매일 새벽 0시 15분
+  concurrencyPolicy: Forbid  # 동시 실행 방지
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  
+  # 정리 설정
+  retentionDays: 30  # 30일 이상 된 로그 삭제
+  batchSize: 1000    # 배치당 삭제 개수
+  maxIterations: 100  # 최대 반복 횟수
+  
+  # PostgreSQL 연결 설정 (호스트는 자동으로 <release-name>-postgresql 사용)
+  database:
+    port: 5432
+    name: litellm
+  
+  # Container 설정
+  image:
+    repository: postgres
+    tag: 17-alpine
+    pullPolicy: IfNotPresent
+  
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
