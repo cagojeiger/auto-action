@@ -469,6 +469,45 @@
                     "description": "Raw DestinationRule spec override"
                   }
                 }
+              },
+              "authorizationPolicy": {
+                "type": "object",
+                "description": "Istio AuthorizationPolicy configuration for access control",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Enable AuthorizationPolicy for this application",
+                    "default": false
+                  },
+                  "namespace": {
+                    "type": "string",
+                    "description": "Namespace to create AuthorizationPolicy (defaults to Release.Namespace if not specified)"
+                  },
+                  "selector": {
+                    "type": "object",
+                    "description": "Workload selector to apply the policy"
+                  },
+                  "action": {
+                    "type": "string",
+                    "description": "Action to take when a request matches the policy",
+                    "enum": ["ALLOW", "DENY", "CUSTOM"]
+                  },
+                  "provider": {
+                    "type": "object",
+                    "description": "External authorization provider configuration (required when action is CUSTOM)"
+                  },
+                  "rules": {
+                    "type": "array",
+                    "description": "List of authorization rules",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "rawSpec": {
+                    "type": "object",
+                    "description": "Raw AuthorizationPolicy spec override (overrides all above fields)"
+                  }
+                }
               }
             }
           }
