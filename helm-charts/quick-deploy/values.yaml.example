@@ -75,6 +75,7 @@ apps:
       port: 8080                       # Service port
       targetPort: 8080                 # Container port (defaults to 'port' if not specified)
       portName: http                   # Port name
+      # appProtocol: http              # Optional: for Istio/Service Mesh protocol detection (http, grpc, tcp, etc.)
       # nodePort: 30080                # Only for type: NodePort
       # loadBalancerIP: "10.0.0.1"     # Only for type: LoadBalancer
       # externalTrafficPolicy: Local   # Cluster or Local
@@ -88,10 +89,12 @@ apps:
       #     port: 8080
       #     targetPort: http-port
       #     protocol: TCP
+      #     appProtocol: http              # Optional: for Istio/Service Mesh protocol detection
       #   - name: grpc
       #     port: 9090
       #     targetPort: 9090
       #     protocol: TCP
+      #     appProtocol: grpc              # Optional: for Istio/Service Mesh protocol detection
 
     # Ingress configuration
     ingress:
