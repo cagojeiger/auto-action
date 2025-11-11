@@ -17,6 +17,9 @@ spec:
       port: {{ .port }}
       targetPort: {{ .targetPort | default .port }}
       protocol: TCP
+      {{- with .appProtocol }}
+      appProtocol: {{ . }}
+      {{- end }}
       {{- if and (eq ($app.service.type | default "ClusterIP") "NodePort") .nodePort }}
       nodePort: {{ .nodePort }}
       {{- end }}
@@ -26,6 +29,9 @@ spec:
       port: {{ $app.service.port }}
       targetPort: {{ $app.service.targetPort | default $app.service.port }}
       protocol: TCP
+      {{- with $app.service.appProtocol }}
+      appProtocol: {{ . }}
+      {{- end }}
       {{- if eq ($app.service.type | default "ClusterIP") "NodePort" }}
       {{- with $app.service.nodePort }}
       nodePort: {{ . }}
