@@ -1,4 +1,4 @@
-{{- if and .Values.clusterAdmin .Values.clusterAdmin.enable }}
+{{- if and .Values.clusterAdmin .Values.clusterAdmin.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
