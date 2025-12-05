@@ -16,7 +16,7 @@ spec:
     - name: {{ .name | default "http" }}
       port: {{ .port }}
       targetPort: {{ .targetPort | default .port }}
-      protocol: TCP
+      protocol: {{ .protocol | default "TCP" }}
       {{- with .appProtocol }}
       appProtocol: {{ . }}
       {{- end }}
@@ -28,7 +28,7 @@ spec:
     - name: {{ $app.service.portName | default "http" }}
       port: {{ $app.service.port }}
       targetPort: {{ $app.service.targetPort | default $app.service.port }}
-      protocol: TCP
+      protocol: {{ $app.service.protocol | default "TCP" }}
       {{- with $app.service.appProtocol }}
       appProtocol: {{ . }}
       {{- end }}
