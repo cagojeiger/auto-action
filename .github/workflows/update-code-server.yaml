@@ -21,6 +21,34 @@ jobs:
         with:
           token: ${{ github.token }}
 
+      # GitHub Releases API에서 최신 버전 가져오기 (upstream Chart.yaml 대신)
+      - name: Fetch latest version from GitHub Releases
+        id: fetch_version
+        run: |
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/coder/code-server/releases/latest)
+          LATEST_VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name' | sed 's/^v//')
+
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            echo "::error::Failed to fetch latest version from GitHub Releases API"
+            exit 1
+          fi
+
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+          echo "::notice::Latest GitHub Release: $LATEST_VERSION"
+
+      # Docker Hub 이미지 존재 확인
+      - name: Validate Docker Hub image exists
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://hub.docker.com/v2/repositories/codercom/code-server/tags/${{ env.LATEST_VERSION }}")
+
+          if [ "$RESPONSE" != "200" ]; then
+            echo "::error::Docker image codercom/code-server:${{ env.LATEST_VERSION }} not found on Docker Hub"
+            exit 1
+          fi
+          echo "::notice::Docker image codercom/code-server:${{ env.LATEST_VERSION }} validated"
+
+      # Chart 템플릿 동기화를 위해 upstream 체크아웃
       - name: Checkout code-server repository
         uses: actions/checkout@v4
         with:
@@ -28,34 +56,37 @@ jobs:
           path: ./temp-code-server-source
           token: ${{ github.token }}
 
-      - name: Extract versions
-        id: extract_versions
+      # APP_VERSION 설정 (GitHub Releases 버전 사용)
+      - name: Set version variables
         run: |
-          CHART_VERSION=$(grep -E '^version:' ./temp-code-server-source/ci/helm-chart/Chart.yaml \
-            | awk '{print $2}' | tr -d "\"'" | xargs)
-          echo "CHART_VERSION=$CHART_VERSION" >> $GITHUB_ENV
+          echo "APP_VERSION=${{ env.LATEST_VERSION }}" >> $GITHUB_ENV
+          echo "앱 버전: ${{ env.LATEST_VERSION }}"
 
-          APP_VERSION=$(grep -E '^appVersion:' ./temp-code-server-source/ci/helm-chart/Chart.yaml \
-            | awk '{print $2}' | tr -d "\"'" | xargs)
-          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
-
-          echo "추출된 차트 버전: $CHART_VERSION, 앱 버전: $APP_VERSION"
-
+      # Helm Chart 동기화 및 버전 덮어쓰기
       - name: Update Helm chart files
         run: |
           mkdir -p helm-charts/code-server
-          
+
           # rsync를 사용하여 원본 차트 동기화 (커스텀 파일 제외)
           rsync -av --delete \
             --exclude='clusterrole.yaml' \
             --exclude='clusterrolebinding.yaml' \
             ./temp-code-server-source/ci/helm-chart/ \
             helm-charts/code-server/
-          
+
           echo "Helm 차트를 rsync로 동기화했습니다."
 
+          # appVersion을 GitHub Releases 버전으로 덮어쓰기 (핵심 변경)
+          sed -i "s/^appVersion:.*/appVersion: ${{ env.APP_VERSION }}/" helm-charts/code-server/Chart.yaml
+          echo "Chart.yaml appVersion을 ${{ env.APP_VERSION }}으로 업데이트했습니다."
+
+          # repository 변경
           sed -i 's|repository: codercom/code-server|repository: ${{ secrets.DOCKERHUB_USERNAME }}/code-server|' helm-charts/code-server/values.yaml
-          echo "Helm 차트의 repository 값을 ${{ secrets.DOCKERHUB_USERNAME }}/code-server로 수정했습니다."
+          echo "values.yaml repository를 ${{ secrets.DOCKERHUB_USERNAME }}/code-server로 수정했습니다."
+
+          # image.tag 업데이트
+          sed -i "s/^  tag: .*/  tag: '${{ env.APP_VERSION }}'/" helm-charts/code-server/values.yaml
+          echo "values.yaml image.tag를 ${{ env.APP_VERSION }}으로 업데이트했습니다."
 
       - name: Update Dockerfile version
         run: |
@@ -102,7 +133,7 @@ jobs:
 
           echo "생성된 PR URL: $PR_URL"
           PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
-          
+
           echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
@@ -116,23 +147,23 @@ jobs:
           PR_NUMBER=${{ steps.create_pr.outputs.pr_number }}
           PR_URL=${{ steps.create_pr.outputs.pr_url }}
           echo "PR #$PR_NUMBER 병합을 기다리는 중..."
-          
+
           START_TIME=$(date +%s)
-          
+
           for i in {1..30}; do
             CURRENT_TIME=$(date +%s)
             ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
-            
+
             PR_STATE=$(gh pr view "$PR_NUMBER" --json state -q .state)
             if [ "$PR_STATE" = "MERGED" ]; then
               echo "PR이 성공적으로 병합되었습니다. 총 소요 시간: ${ELAPSED_TIME}초"
               break
             fi
-            
+
             echo "대기 중... ($i/30) - 경과 시간: ${ELAPSED_TIME}초"
             sleep 15
           done
-          
+
           FINAL_TIME=$(date +%s)
           TOTAL_TIME=$((FINAL_TIME - START_TIME))
           echo "PR 병합 대기 총 시간: ${TOTAL_TIME}초"
