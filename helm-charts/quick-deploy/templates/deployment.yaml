@@ -76,12 +76,12 @@ spec:
             {{- range $app.service.ports }}
             - name: {{ .name | default "http" }}
               containerPort: {{ .targetPort | default .port }}
-              protocol: TCP
+              protocol: {{ .protocol | default "TCP" }}
             {{- end }}
             {{- else }}
             - name: {{ $app.service.portName | default "http" }}
               containerPort: {{ $app.service.port | default 80 }}
-              protocol: TCP
+              protocol: {{ $app.service.protocol | default "TCP" }}
             {{- end }}
           {{- end }}
           {{- with $app.startupProbe }}
