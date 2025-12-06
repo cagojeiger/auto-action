@@ -77,11 +77,17 @@ spec:
             - name: {{ .name | default "http" }}
               containerPort: {{ .targetPort | default .port }}
               protocol: {{ .protocol | default "TCP" }}
+              {{- with .hostPort }}
+              hostPort: {{ . }}
+              {{- end }}
             {{- end }}
             {{- else }}
             - name: {{ $app.service.portName | default "http" }}
               containerPort: {{ $app.service.port | default 80 }}
               protocol: {{ $app.service.protocol | default "TCP" }}
+              {{- with $app.service.hostPort }}
+              hostPort: {{ . }}
+              {{- end }}
             {{- end }}
           {{- end }}
           {{- with $app.startupProbe }}
