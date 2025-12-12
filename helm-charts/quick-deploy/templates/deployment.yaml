@@ -12,6 +12,10 @@ spec:
   {{- if not (or (and $app.autoscaling $app.autoscaling.enabled) (and $app.keda $app.keda.enabled)) }}
   replicas: {{ $app.replicaCount | default 1 }}
   {{- end }}
+  {{- with $app.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "quick-deploy.selectorLabels" (dict "root" $ "name" $name "app" $app) | nindent 6 }}

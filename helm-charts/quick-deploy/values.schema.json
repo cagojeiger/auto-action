@@ -61,6 +61,31 @@
             "type": "integer",
             "description": "Number of replicas"
           },
+          "strategy": {
+            "type": "object",
+            "description": "Deployment strategy (RollingUpdate or Recreate)",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Deployment strategy type",
+                "enum": ["RollingUpdate", "Recreate"]
+              },
+              "rollingUpdate": {
+                "type": "object",
+                "description": "Rolling update configuration (only used when type is RollingUpdate)",
+                "properties": {
+                  "maxSurge": {
+                    "type": ["string", "integer"],
+                    "description": "Maximum number of pods that can be created over the desired number"
+                  },
+                  "maxUnavailable": {
+                    "type": ["string", "integer"],
+                    "description": "Maximum number of pods that can be unavailable during the update"
+                  }
+                }
+              }
+            }
+          },
           "nameOverride": {
             "type": "string",
             "description": "Override the name"
