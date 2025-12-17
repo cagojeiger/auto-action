@@ -1,7 +1,11 @@
+# ClusterRole for code-server ServiceAccount
+# - Default: empty rules (no permissions)
+# - When clusterAdmin.enabled=true: full cluster-admin permissions
+# Note: Name kept as '-cluster-admin' for backwards compatibility
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "code-server.fullname" . }}-cluster-role
+  name: {{ include "code-server.fullname" . }}-cluster-admin
   labels:
     {{- include "code-server.labels" . | nindent 4 }}
 {{- if and .Values.clusterAdmin .Values.clusterAdmin.enabled }}
