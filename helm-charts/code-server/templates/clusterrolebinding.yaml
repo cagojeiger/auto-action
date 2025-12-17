@@ -1,8 +1,7 @@
-{{- if and .Values.clusterAdmin .Values.clusterAdmin.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "code-server.fullname" . }}-cluster-admin
+  name: {{ include "code-server.fullname" . }}-cluster-role-binding
   labels:
     {{- include "code-server.labels" . | nindent 4 }}
 subjects:
@@ -11,6 +10,5 @@ subjects:
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: {{ include "code-server.fullname" . }}-cluster-admin
+  name: {{ include "code-server.fullname" . }}-cluster-role
   apiGroup: rbac.authorization.k8s.io
-{{- end }}

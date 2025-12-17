@@ -1,12 +1,14 @@
-{{- if and .Values.clusterAdmin .Values.clusterAdmin.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "code-server.fullname" . }}-cluster-admin
+  name: {{ include "code-server.fullname" . }}-cluster-role
   labels:
     {{- include "code-server.labels" . | nindent 4 }}
+{{- if and .Values.clusterAdmin .Values.clusterAdmin.enabled }}
 rules:
   - apiGroups: ["*"]
     resources: ["*"]
     verbs: ["*"]
+{{- else }}
+rules: []
 {{- end }}
