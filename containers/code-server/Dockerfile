@@ -110,7 +110,7 @@ RUN apt-get update && apt-get install -y unzip && \
         AWS_ARCH="aarch64"; \
     fi && \
     curl -LO "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_ARCH}.zip" && \
-    unzip awscli-exe-linux-${AWS_ARCH}.zip && \
+    unzip -o awscli-exe-linux-${AWS_ARCH}.zip && \
     ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli && \
     rm -rf awscli-exe-linux-${AWS_ARCH}.zip aws && \
     echo "➡️  AWS CLI installed: $(aws --version)"
@@ -130,7 +130,7 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
 RUN TERRAFORM_VERSION=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
     echo "➡️  Using Terraform version: ${TERRAFORM_VERSION}" && \
     curl -LO "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip" && \
-    unzip terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip && \
+    unzip -o terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip && \
     install -o root -g root -m 0755 terraform /usr/local/bin/terraform && \
     rm -f terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip terraform
 
@@ -138,7 +138,7 @@ RUN TERRAFORM_VERSION=$(curl -s https://api.github.com/repos/hashicorp/terraform
 RUN VAULT_VERSION=$(curl -s https://api.github.com/repos/hashicorp/vault/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
     echo "➡️  Using Vault version: ${VAULT_VERSION}" && \
     curl -LO "https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip" && \
-    unzip vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip && \
+    unzip -o vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip && \
     install -o root -g root -m 0755 vault /usr/local/bin/vault && \
     rm -f vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip vault
 
