@@ -121,7 +121,7 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     elif [ "$TARGETARCH" = "arm64" ]; then \
         DOCKER_ARCH="aarch64"; \
     fi && \
-    DOCKER_VERSION=$(curl -s https://api.github.com/repos/moby/moby/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+    DOCKER_VERSION=$(curl -s https://api.github.com/repos/moby/moby/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^docker-v//') && \
     echo "➡️  Using Docker version: ${DOCKER_VERSION}" && \
     curl -fsSL "https://download.docker.com/linux/static/stable/${DOCKER_ARCH}/docker-${DOCKER_VERSION}.tgz" | \
     tar -xz --strip-components=1 -C /usr/local/bin docker/docker
