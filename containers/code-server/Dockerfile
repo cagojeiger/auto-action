@@ -102,6 +102,60 @@ RUN GO_LATEST_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -n1) && \
     tar -C /usr/local -xzf "${GO_FILENAME}" && \
     rm -f "${GO_FILENAME}"
 
+# AWS CLI v2 설치
+RUN apt-get update && apt-get install -y unzip && \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+        AWS_ARCH="x86_64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        AWS_ARCH="aarch64"; \
+    fi && \
+    curl -LO "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_ARCH}.zip" && \
+    unzip awscli-exe-linux-${AWS_ARCH}.zip && \
+    ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli && \
+    rm -rf awscli-exe-linux-${AWS_ARCH}.zip aws && \
+    echo "➡️  AWS CLI installed: $(aws --version)"
+
+# Docker CLI 설치 (daemon 없이 CLI만)
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+        DOCKER_ARCH="x86_64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        DOCKER_ARCH="aarch64"; \
+    fi && \
+    DOCKER_VERSION=$(curl -s https://api.github.com/repos/moby/moby/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+    echo "➡️  Using Docker version: ${DOCKER_VERSION}" && \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${DOCKER_ARCH}/docker-${DOCKER_VERSION}.tgz" | \
+    tar -xz --strip-components=1 -C /usr/local/bin docker/docker
+
+# Terraform 설치
+RUN TERRAFORM_VERSION=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+    echo "➡️  Using Terraform version: ${TERRAFORM_VERSION}" && \
+    curl -LO "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip" && \
+    unzip terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip && \
+    install -o root -g root -m 0755 terraform /usr/local/bin/terraform && \
+    rm -f terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip terraform
+
+# Vault CLI 설치
+RUN VAULT_VERSION=$(curl -s https://api.github.com/repos/hashicorp/vault/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+    echo "➡️  Using Vault version: ${VAULT_VERSION}" && \
+    curl -LO "https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip" && \
+    unzip vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip && \
+    install -o root -g root -m 0755 vault /usr/local/bin/vault && \
+    rm -f vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip vault
+
+# SOPS 설치
+RUN SOPS_VERSION=$(curl -s https://api.github.com/repos/getsops/sops/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    echo "➡️  Using SOPS version: ${SOPS_VERSION}" && \
+    curl -LO "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.${TARGETARCH}" && \
+    install -o root -g root -m 0755 sops-${SOPS_VERSION}.linux.${TARGETARCH} /usr/local/bin/sops && \
+    rm -f sops-${SOPS_VERSION}.linux.${TARGETARCH}
+
+# direnv 설치
+RUN DIRENV_VERSION=$(curl -s https://api.github.com/repos/direnv/direnv/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    echo "➡️  Using direnv version: ${DIRENV_VERSION}" && \
+    curl -LO "https://github.com/direnv/direnv/releases/download/${DIRENV_VERSION}/direnv.linux-${TARGETARCH}" && \
+    install -o root -g root -m 0755 direnv.linux-${TARGETARCH} /usr/local/bin/direnv && \
+    rm -f direnv.linux-${TARGETARCH}
+
 # =============================================
 # 2) Final Stage
 # =============================================
@@ -110,25 +164,32 @@ FROM codercom/code-server:${CODE_SERVER_VERSION}
 USER root
 
 # 빌더 스테이지에서 설치된 툴을 최종 스테이지로 복사
-COPY --from=builder /usr/local/bin/kubectl /usr/local/bin/kubectl
-COPY --from=builder /usr/local/bin/helm   /usr/local/bin/helm
-COPY --from=builder /usr/local/bin/k9s    /usr/local/bin/k9s
-COPY --from=builder /usr/local/bin/skopeo /usr/local/bin/skopeo
-COPY --from=builder /usr/local/bin/mc     /usr/local/bin/mc
-COPY --from=builder /usr/local/bin/argocd /usr/local/bin/argocd
-COPY --from=builder /usr/local/bin/jq     /usr/local/bin/jq
-COPY --from=builder /usr/local/bin/yq     /usr/local/bin/yq
-COPY --from=builder /usr/local/bin/gh     /usr/local/bin/gh
-COPY --from=builder /usr/local/bin/rg     /usr/local/bin/rg
-COPY --from=builder /usr/local/go         /usr/local/go
+COPY --from=builder /usr/local/bin/kubectl   /usr/local/bin/kubectl
+COPY --from=builder /usr/local/bin/helm      /usr/local/bin/helm
+COPY --from=builder /usr/local/bin/k9s       /usr/local/bin/k9s
+COPY --from=builder /usr/local/bin/skopeo    /usr/local/bin/skopeo
+COPY --from=builder /usr/local/bin/mc        /usr/local/bin/mc
+COPY --from=builder /usr/local/bin/argocd    /usr/local/bin/argocd
+COPY --from=builder /usr/local/bin/jq        /usr/local/bin/jq
+COPY --from=builder /usr/local/bin/yq        /usr/local/bin/yq
+COPY --from=builder /usr/local/bin/gh        /usr/local/bin/gh
+COPY --from=builder /usr/local/bin/rg        /usr/local/bin/rg
+COPY --from=builder /usr/local/go            /usr/local/go
+COPY --from=builder /usr/local/bin/aws       /usr/local/bin/aws
+COPY --from=builder /usr/local/aws-cli       /usr/local/aws-cli
+COPY --from=builder /usr/local/bin/docker    /usr/local/bin/docker
+COPY --from=builder /usr/local/bin/terraform /usr/local/bin/terraform
+COPY --from=builder /usr/local/bin/vault     /usr/local/bin/vault
+COPY --from=builder /usr/local/bin/sops      /usr/local/bin/sops
+COPY --from=builder /usr/local/bin/direnv    /usr/local/bin/direnv
 
 
 # Node.js 최신 버전 설치 (NodeSource 사용) - Python3도 함께 설치됨
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get install -y nodejs
 
-# pipx, bash-completion, tig, fzf, make, tree 설치 (시스템 패키지로 설치 - Debian 12의 권장 방법)
-RUN apt-get update && apt-get install -y pipx bash-completion tig fzf make tree && \
+# pipx, bash-completion, tig, fzf, make, tree, pre-commit 설치 (시스템 패키지로 설치 - Debian 12의 권장 방법)
+RUN apt-get update && apt-get install -y pipx bash-completion tig fzf make tree pre-commit && \
     rm -rf /var/lib/apt/lists/*
 
 # 스크립트들 복사
