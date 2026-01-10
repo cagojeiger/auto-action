@@ -126,6 +126,19 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     curl -fsSL "https://download.docker.com/linux/static/stable/${DOCKER_ARCH}/docker-${DOCKER_VERSION}.tgz" | \
     tar -xz --strip-components=1 -C /usr/local/bin docker/docker
 
+# Docker Compose 플러그인 설치
+RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+        COMPOSE_ARCH="x86_64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        COMPOSE_ARCH="aarch64"; \
+    fi && \
+    COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    echo "➡️  Using Docker Compose version: ${COMPOSE_VERSION}" && \
+    curl -SL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-${COMPOSE_ARCH}" \
+    -o /usr/local/lib/docker/cli-plugins/docker-compose && \
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
 # Terraform 설치
 RUN TERRAFORM_VERSION=$(curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
     echo "➡️  Using Terraform version: ${TERRAFORM_VERSION}" && \
@@ -181,6 +194,8 @@ COPY --from=builder /usr/local/aws-cli       /usr/local/aws-cli
 RUN ln -s /usr/local/aws-cli/v2/current/bin/aws /usr/local/bin/aws && \
     ln -s /usr/local/aws-cli/v2/current/bin/aws_completer /usr/local/bin/aws_completer
 COPY --from=builder /usr/local/bin/docker    /usr/local/bin/docker
+RUN mkdir -p /usr/local/lib/docker/cli-plugins
+COPY --from=builder /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
 COPY --from=builder /usr/local/bin/terraform /usr/local/bin/terraform
 COPY --from=builder /usr/local/bin/vault     /usr/local/bin/vault
 COPY --from=builder /usr/local/bin/sops      /usr/local/bin/sops
