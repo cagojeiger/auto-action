@@ -175,8 +175,11 @@ COPY --from=builder /usr/local/bin/yq        /usr/local/bin/yq
 COPY --from=builder /usr/local/bin/gh        /usr/local/bin/gh
 COPY --from=builder /usr/local/bin/rg        /usr/local/bin/rg
 COPY --from=builder /usr/local/go            /usr/local/go
-COPY --from=builder /usr/local/bin/aws       /usr/local/bin/aws
+# AWS CLI - 디렉토리만 복사하고 심볼릭 링크는 수동 생성
+# (PyInstaller 바이너리는 상대 경로로 libpython을 찾으므로 원래 위치 유지 필요)
 COPY --from=builder /usr/local/aws-cli       /usr/local/aws-cli
+RUN ln -s /usr/local/aws-cli/v2/current/bin/aws /usr/local/bin/aws && \
+    ln -s /usr/local/aws-cli/v2/current/bin/aws_completer /usr/local/bin/aws_completer
 COPY --from=builder /usr/local/bin/docker    /usr/local/bin/docker
 COPY --from=builder /usr/local/bin/terraform /usr/local/bin/terraform
 COPY --from=builder /usr/local/bin/vault     /usr/local/bin/vault
