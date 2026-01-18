@@ -1,4 +1,4 @@
-ARG CODE_SERVER_VERSION=4.108.0
+ARG CODE_SERVER_VERSION=4.108.1
 
 # =============================================
 # 1) Builder Stage
