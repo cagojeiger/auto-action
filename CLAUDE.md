@@ -95,12 +95,36 @@ helm lint helm-charts/<chart-name>
 helm template <release-name> helm-charts/<chart-name> -f values.yaml
 ```
 
+### Helm Repository (GitHub Pages)
+```bash
+# Helm Repository 추가
+helm repo add auto-action https://cagojeiger.github.io/auto-action
+helm repo update
+
+# 차트 검색
+helm search repo auto-action
+
+# 차트 설치
+helm install code-server auto-action/code-server
+helm install my-app auto-action/quick-deploy -f values.yaml
+
+# 특정 버전 설치
+helm install code-server auto-action/code-server --version 1.0.0
+```
+
 ### Workflow Management
 ```bash
-# Manually trigger artifact push
+# Helm 차트 배포 (GitHub Pages)
+gh workflow run publish-helm-charts.yaml -f chart_name=<chart-name>
+
+# Helm 차트 배포 (OCI - Docker Hub)
 gh workflow run unified-artifact-push.yaml -f artifact_type=helm -f artifact_name=<chart-name>
 
+# Docker 이미지 빌드 및 푸시
+gh workflow run unified-artifact-push.yaml -f artifact_type=docker -f artifact_name=<container-name>
+
 # Check workflow status
+gh run list --workflow=publish-helm-charts.yaml
 gh run list --workflow=unified-artifact-push.yaml
 
 # View PR status

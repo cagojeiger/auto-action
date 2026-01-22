@@ -2,10 +2,11 @@ name: Slack Notifications
 
 on:
   workflow_run:
-    workflows: 
+    workflows:
       - "Unified Artifact Push"
       - "Update Casdoor"
       - "Update Code-Server"
+      - "Publish Helm Charts to GitHub Pages"
     types:
       - completed
 

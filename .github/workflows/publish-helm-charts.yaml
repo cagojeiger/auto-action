@@ -1,0 +1,129 @@
+name: Publish Helm Charts to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'helm-charts/**'
+  workflow_dispatch:
+    inputs:
+      chart_name:
+        description: '특정 차트 이름 (비워두면 변경된 모든 차트 배포)'
+        required: false
+        type: string
+
+concurrency:
+  group: publish-helm-charts
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  detect-charts:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_charts: ${{ steps.set-matrix.outputs.has_charts }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed charts
+        id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.chart_name }}" ]; then
+              CHART="${{ github.event.inputs.chart_name }}"
+              if [ -d "helm-charts/$CHART" ]; then
+                echo "matrix=[\"$CHART\"]" >> $GITHUB_OUTPUT
+                echo "has_charts=true" >> $GITHUB_OUTPUT
+              else
+                echo "has_charts=false" >> $GITHUB_OUTPUT
+                echo "::error::차트를 찾을 수 없음: $CHART"
+              fi
+            else
+              CHARTS=$(find helm-charts -maxdepth 1 -mindepth 1 -type d -exec basename {} \; | jq -R -s -c 'split("\n")[:-1]')
+              echo "matrix=$CHARTS" >> $GITHUB_OUTPUT
+              echo "has_charts=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
+                     | grep '^helm-charts/' \
+                     | awk -F/ '{print $2}' | sort -u)
+            if [ -z "$CHANGED" ]; then
+              echo "has_charts=false" >> $GITHUB_OUTPUT
+            else
+              JSON=$(printf '%s\n' $CHANGED | jq -R -s -c 'split("\n")[:-1]')
+              echo "matrix=$JSON" >> $GITHUB_OUTPUT
+              echo "has_charts=true" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  publish:
+    needs: detect-charts
+    if: needs.detect-charts.outputs.has_charts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Package charts
+        id: package
+        run: |
+          mkdir -p .deploy
+          CHARTS='${{ needs.detect-charts.outputs.matrix }}'
+          PUBLISHED=""
+
+          for CHART in $(echo $CHARTS | jq -r '.[]'); do
+            DIR="helm-charts/$CHART"
+            if [ -d "$DIR" ]; then
+              NAME=$(helm show chart "$DIR" | awk '/^name:/ {print $2}')
+              VERSION=$(helm show chart "$DIR" | awk '/^version:/ {print $2}')
+              helm package "$DIR" -d .deploy/
+              PUBLISHED="$PUBLISHED $NAME-$VERSION"
+              echo "::notice::Packaged $NAME-$VERSION"
+            fi
+          done
+
+          echo "published=$PUBLISHED" >> $GITHUB_OUTPUT
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Update gh-pages
+        run: |
+          cp .deploy/*.tgz gh-pages/
+
+          cd gh-pages
+
+          # 차트당 최근 10개 버전만 유지
+          for CHART in code-server quick-deploy casdoor; do
+            ls -t ${CHART}-*.tgz 2>/dev/null | tail -n +11 | xargs -r rm -f
+          done
+
+          # index.yaml 생성/병합
+          if [ -f index.yaml ]; then
+            helm repo index . --merge index.yaml --url https://cagojeiger.github.io/auto-action
+          else
+            helm repo index . --url https://cagojeiger.github.io/auto-action
+          fi
+
+      - name: Push to gh-pages
+        run: |
+          cd gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add *.tgz index.yaml
+          if ! git diff --staged --quiet; then
+            git commit -m "Publish:${{ steps.package.outputs.published }}"
+            git push
+          fi
