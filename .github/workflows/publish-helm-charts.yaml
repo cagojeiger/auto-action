@@ -119,20 +119,15 @@ jobs:
 
           # index.yaml 정렬: 각 차트의 entries를 created 기준 내림차순 정렬 (최신 먼저)
           # Build metadata 버전이 동일 SemVer로 취급되므로, 정렬로 최신 버전이 기본 선택되도록 함
-          python3 << 'SORT_SCRIPT'
-import yaml
-
-with open('index.yaml', 'r') as f:
-    index = yaml.safe_load(f)
-
-for chart_name, versions in index.get('entries', {}).items():
-    # created 필드 기준 내림차순 정렬 (최신 먼저)
-    versions.sort(key=lambda x: x.get('created', ''), reverse=True)
-
-with open('index.yaml', 'w') as f:
-    yaml.dump(index, f, default_flow_style=False, allow_unicode=True)
-SORT_SCRIPT
-
+          python3 -c "
+          import yaml
+          with open('index.yaml', 'r') as f:
+              index = yaml.safe_load(f)
+          for chart_name, versions in index.get('entries', {}).items():
+              versions.sort(key=lambda x: x.get('created', ''), reverse=True)
+          with open('index.yaml', 'w') as f:
+              yaml.dump(index, f, default_flow_style=False, allow_unicode=True)
+          "
           echo "index.yaml을 created 기준으로 정렬했습니다 (최신 버전 우선)."
 
       - name: Push to gh-pages
