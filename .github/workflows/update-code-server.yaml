@@ -80,6 +80,14 @@ jobs:
           sed -i "s/^appVersion:.*/appVersion: ${{ env.APP_VERSION }}/" helm-charts/code-server/Chart.yaml
           echo "Chart.yaml appVersion을 ${{ env.APP_VERSION }}으로 업데이트했습니다."
 
+          # 원본 chart version 추출 (+ 이전 부분만, upstream 버전 보존)
+          CHART_VERSION=$(grep "^version:" helm-charts/code-server/Chart.yaml | awk '{print $2}' | cut -d'+' -f1)
+
+          # version에 build metadata 추가 (upstream 버전 + appVersion)
+          # 예: 3.32.0+4.108.1 (원본 차트 3.32.0, code-server 4.108.1)
+          sed -i "s/^version:.*/version: ${CHART_VERSION}+${{ env.APP_VERSION }}/" helm-charts/code-server/Chart.yaml
+          echo "Chart.yaml version을 ${CHART_VERSION}+${{ env.APP_VERSION }}으로 업데이트했습니다."
+
           # repository 변경
           sed -i 's|repository: codercom/code-server|repository: ${{ secrets.DOCKERHUB_USERNAME }}/code-server|' helm-charts/code-server/values.yaml
           echo "values.yaml repository를 ${{ secrets.DOCKERHUB_USERNAME }}/code-server로 수정했습니다."
