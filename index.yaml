@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  code-server:
+  - apiVersion: v2
+    appVersion: 4.108.1
+    created: "2026-01-23T08:15:50.161305317Z"
+    description: A Helm chart for coder/code-server
+    digest: 3b8d88f9c868d6eb95a7dde4a384533d16d2e48548ae2d44d3f0f25362c1b9dc
+    name: code-server
+    type: application
+    urls:
+    - https://cagojeiger.github.io/auto-action/code-server-3.32.0.tgz
+    version: 3.32.0
+generated: "2026-01-23T08:15:50.160436247Z"
