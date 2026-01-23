@@ -117,18 +117,30 @@ jobs:
             helm repo index . --url https://cagojeiger.github.io/auto-action
           fi
 
-          # index.yaml 정렬: 각 차트의 entries를 created 기준 내림차순 정렬 (최신 먼저)
-          # Build metadata 버전이 동일 SemVer로 취급되므로, 정렬로 최신 버전이 기본 선택되도록 함
+          # index.yaml 정렬: build metadata 버전이 기본 선택되도록 정렬
+          # 정렬 기준: 1) base version 내림차순, 2) build metadata 있는 버전 우선
           python3 -c "
           import yaml
+          def sort_key(entry):
+              ver = entry.get('version', '')
+              base = ver.split('+')[0]
+              has_metadata = '+' in ver
+              # base version 파싱 (예: 3.32.0 -> (3, 32, 0))
+              parts = []
+              for p in base.split('.'):
+                  try: parts.append(int(p))
+                  except: parts.append(0)
+              while len(parts) < 3: parts.append(0)
+              # 정렬: base version 내림차순, build metadata 있으면 우선
+              return (-parts[0], -parts[1], -parts[2], 0 if has_metadata else 1)
           with open('index.yaml', 'r') as f:
               index = yaml.safe_load(f)
           for chart_name, versions in index.get('entries', {}).items():
-              versions.sort(key=lambda x: x.get('created', ''), reverse=True)
+              versions.sort(key=sort_key)
           with open('index.yaml', 'w') as f:
               yaml.dump(index, f, default_flow_style=False, allow_unicode=True)
           "
-          echo "index.yaml을 created 기준으로 정렬했습니다 (최신 버전 우선)."
+          echo "index.yaml을 정렬했습니다 (build metadata 버전 우선)."
 
       - name: Push to gh-pages
         run: |
