@@ -169,6 +169,18 @@ RUN DIRENV_VERSION=$(curl -s https://api.github.com/repos/direnv/direnv/releases
     install -o root -g root -m 0755 direnv.linux-${TARGETARCH} /usr/local/bin/direnv && \
     rm -f direnv.linux-${TARGETARCH}
 
+# OpenCode 설치
+RUN OPENCODE_VERSION=$(curl -s https://api.github.com/repos/anomalyco/opencode/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    echo "➡️  Using OpenCode version: ${OPENCODE_VERSION}" && \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+        OPENCODE_ARCH="x64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        OPENCODE_ARCH="arm64"; \
+    fi && \
+    curl -fsSL "https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-${OPENCODE_ARCH}.tar.gz" | \
+    tar -xz -C /tmp && \
+    install -o root -g root -m 0755 /tmp/opencode /usr/local/bin/opencode
+
 # =============================================
 # 2) Final Stage
 # =============================================
@@ -200,6 +212,7 @@ COPY --from=builder /usr/local/bin/terraform /usr/local/bin/terraform
 COPY --from=builder /usr/local/bin/vault     /usr/local/bin/vault
 COPY --from=builder /usr/local/bin/sops      /usr/local/bin/sops
 COPY --from=builder /usr/local/bin/direnv    /usr/local/bin/direnv
+COPY --from=builder /usr/local/bin/opencode  /usr/local/bin/opencode
 
 
 # Node.js 최신 버전 설치 (NodeSource 사용) - Python3도 함께 설치됨
