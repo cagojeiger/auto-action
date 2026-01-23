@@ -3,28 +3,18 @@ entries:
   code-server:
   - apiVersion: v2
     appVersion: 4.108.1
-    created: '2026-01-23T16:28:31.673873381Z'
+    created: "2026-01-24T01:39:40.312379+09:00"
     description: A Helm chart for coder/code-server
-    digest: 2efb76972bb11655ddeb4cfcb98978f540707ee55df5eae0a5258567b9646ea6
+    digest: ba0c4dbd367da548a337ffc2fb4708d3a6924f5ce452da4f3f2f16f36bc84684
     name: code-server
     type: application
     urls:
     - https://cagojeiger.github.io/auto-action/code-server-3.32.0+4.108.1.tgz
     version: 3.32.0+4.108.1
-  - apiVersion: v2
-    appVersion: 4.108.1
-    created: '2026-01-23T16:28:31.674368452Z'
-    description: A Helm chart for coder/code-server
-    digest: 3e8c41c616d63367dbe94f127be9f4545c555a13241d1beebd12d263f7a7b5b3
-    name: code-server
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/code-server-3.32.0.tgz
-    version: 3.32.0
   quick-deploy:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-01-23T16:28:31.67491593Z'
+    created: "2026-01-24T01:39:40.312928+09:00"
     description: Rapid multi-application deployment template for Kubernetes
     digest: 2be9ba4c228dc1db6d0fc7f178d6ccc5b9c7f09bd8cdd519a3a000de3dfa8dae
     keywords:
@@ -37,4 +27,4 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/quick-deploy-0.1.14.tgz
     version: 0.1.14
-generated: '2026-01-23T16:28:31.67326072Z'
+generated: "2026-01-24T01:39:40.311537+09:00"
