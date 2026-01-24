@@ -169,8 +169,8 @@ RUN DIRENV_VERSION=$(curl -s https://api.github.com/repos/direnv/direnv/releases
     install -o root -g root -m 0755 direnv.linux-${TARGETARCH} /usr/local/bin/direnv && \
     rm -f direnv.linux-${TARGETARCH}
 
-# OpenCode 설치
-RUN OPENCODE_VERSION=$(curl -s https://api.github.com/repos/anomalyco/opencode/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+# OpenCode 설치 (jq 사용 - QEMU 에뮬레이션에서 grep/cut 불안정)
+RUN OPENCODE_VERSION=$(curl -s https://api.github.com/repos/anomalyco/opencode/releases/latest | jq -r '.tag_name') && \
     echo "➡️  Using OpenCode version: ${OPENCODE_VERSION}" && \
     if [ "$TARGETARCH" = "amd64" ]; then \
         OPENCODE_ARCH="x64"; \
