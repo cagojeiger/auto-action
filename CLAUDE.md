@@ -12,7 +12,8 @@ This repository automates the deployment of infrastructure services using Docker
 The repository implements an automated dependency update system:
 - **Update workflows** fetch latest versions from upstream repositories (Casdoor, Code-server)
 - Changes are committed via auto-merged PRs
-- The `unified-artifact-push` workflow is triggered automatically after merges
+- Docker images are built via `docker-push` workflow
+- Helm charts are deployed to GitHub Pages via `publish-helm-charts` workflow
 - Updates run on schedules (daily/weekly) or can be triggered manually
 
 ### 2. Helm Chart Organization
@@ -117,15 +118,12 @@ helm install code-server auto-action/code-server --version 1.0.0
 # Helm 차트 배포 (GitHub Pages)
 gh workflow run publish-helm-charts.yaml -f chart_name=<chart-name>
 
-# Helm 차트 배포 (OCI - Docker Hub)
-gh workflow run unified-artifact-push.yaml -f artifact_type=helm -f artifact_name=<chart-name>
-
 # Docker 이미지 빌드 및 푸시
-gh workflow run unified-artifact-push.yaml -f artifact_type=docker -f artifact_name=<container-name>
+gh workflow run docker-push.yaml -f container_name=<container-name>
 
 # Check workflow status
 gh run list --workflow=publish-helm-charts.yaml
-gh run list --workflow=unified-artifact-push.yaml
+gh run list --workflow=docker-push.yaml
 
 # View PR status
 gh pr view <pr-number> --json state -q .state
@@ -149,10 +147,14 @@ Version resolution order:
 
 ## CI/CD Matrix Strategy
 
-The `unified-artifact-push` workflow uses dynamic matrix generation:
-- Automatically detects changed artifacts on push to main
+The `docker-push` workflow uses dynamic matrix generation:
+- Automatically detects changed containers on push to main
 - Supports manual selection via workflow_dispatch parameters
-- Builds artifacts in parallel for efficiency
+- Builds Docker images in parallel for efficiency
+
+The `publish-helm-charts` workflow handles Helm chart deployment:
+- Deploys charts to GitHub Pages for easy `helm repo add` access
+- Triggered automatically when `helm-charts/**` changes are pushed to main
 
 ## Required Secrets
 

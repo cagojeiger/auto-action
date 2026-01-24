@@ -1,0 +1,133 @@
+name: Docker Image Push
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'containers/**'
+  workflow_dispatch:
+    inputs:
+      container_name:
+        description: 'Docker 이미지 이름 (예: code-server)'
+        required: false
+        type: string
+
+jobs:
+  detect-containers:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_matrix: ${{ steps.set-docker.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed containers
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CONTAINER_NAME="${{ github.event.inputs.container_name }}"
+
+            if [ -n "$CONTAINER_NAME" ] && [ -d "containers/$CONTAINER_NAME" ]; then
+              echo "DOCKER_CHANGED=true" >> $GITHUB_ENV
+              echo "::notice::수동으로 지정된 Docker 이미지: $CONTAINER_NAME"
+            elif [ -z "$CONTAINER_NAME" ]; then
+              echo "DOCKER_CHANGED=true" >> $GITHUB_ENV
+              echo "::notice::모든 Docker 이미지 처리"
+            else
+              echo "DOCKER_CHANGED=false" >> $GITHUB_ENV
+              echo "::error::지정된 Docker 이미지가 존재하지 않습니다: $CONTAINER_NAME"
+            fi
+          else
+            DOCKER_CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^containers/' && echo "true" || echo "false")
+            echo "DOCKER_CHANGED=$DOCKER_CHANGED" >> $GITHUB_ENV
+
+            if [ "$DOCKER_CHANGED" = "true" ]; then
+              echo "::notice::Docker 이미지 변경 감지됨"
+            fi
+          fi
+
+      - name: Set Docker matrix
+        id: set-docker
+        if: env.DOCKER_CHANGED == 'true'
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.container_name }}" ]; then
+              echo "matrix=[\"${{ github.event.inputs.container_name }}\"]" >> $GITHUB_OUTPUT
+            else
+              CONTAINERS=$(find containers -maxdepth 1 -mindepth 1 -type d -exec basename {} \; | jq -R -s -c 'split("\n")[:-1]')
+              echo "matrix=$CONTAINERS" >> $GITHUB_OUTPUT
+            fi
+          else
+            changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
+                     | grep '^containers/' \
+                     | awk -F/ '{print $2}' | sort -u)
+
+            if [ -z "$changed" ]; then
+              echo "matrix=[]" >> $GITHUB_OUTPUT
+            else
+              json=$(printf '%s\n' $changed | jq -R -s -c 'split("\n")[:-1]')
+              echo "matrix=$json" >> $GITHUB_OUTPUT
+              echo "::notice::변경된 Docker 이미지: $json"
+            fi
+          fi
+
+  build-and-push-docker:
+    needs: detect-containers
+    if: ${{ needs.detect-containers.outputs.docker_matrix != '[]' && needs.detect-containers.outputs.docker_matrix != '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container: ${{ fromJson(needs.detect-containers.outputs.docker_matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version information
+        id: get_version
+        run: |
+          CONTAINER_DIR="containers/${{ matrix.container }}"
+
+          if [ -d "helm-charts/${{ matrix.container }}" ]; then
+            if command -v yq &> /dev/null; then
+              APP_VERSION=$(yq e '.appVersion' "helm-charts/${{ matrix.container }}/Chart.yaml" 2>/dev/null)
+            else
+              APP_VERSION=$(grep -E '^appVersion:' "helm-charts/${{ matrix.container }}/Chart.yaml" 2>/dev/null | awk '{print $2}' | tr -d '"'"'" | xargs)
+            fi
+          fi
+
+          if [ -z "$APP_VERSION" ] || [ "$APP_VERSION" = "null" ]; then
+            APP_VERSION=$(grep -E '^ARG.*_VERSION=' "$CONTAINER_DIR/Dockerfile" 2>/dev/null | head -1 | sed -E 's/ARG.*_VERSION=([0-9.]+).*/\1/' | xargs)
+          fi
+
+          if [ -z "$APP_VERSION" ] || [ "$APP_VERSION" = "null" ]; then
+            APP_VERSION="$(date +%Y.%m.%d)"
+            echo "::warning::버전 정보를 찾을 수 없어 날짜 기반 버전을 사용합니다: $APP_VERSION"
+          else
+            echo "::notice::버전 정보를 찾았습니다: $APP_VERSION"
+          fi
+
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./containers/${{ matrix.container }}
+          file: ./containers/${{ matrix.container }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            APP_VERSION=${{ env.APP_VERSION }}
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.container }}:${{ env.APP_VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.container }}:latest

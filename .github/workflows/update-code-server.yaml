@@ -176,19 +176,14 @@ jobs:
           TOTAL_TIME=$((FINAL_TIME - START_TIME))
           echo "PR 병합 대기 총 시간: ${TOTAL_TIME}초"
 
-      - name: Trigger unified-artifact-push workflow
+      - name: Trigger docker-push workflow
         if: steps.check_changes.outputs.changes == 'true'
         run: |
-          echo "unified-artifact-push 워크플로우를 수동으로 트리거합니다..."
+          echo "docker-push 워크플로우를 수동으로 트리거합니다..."
 
           # code-server 컨테이너 빌드 워크플로우 트리거
-          gh workflow run unified-artifact-push.yaml \
-            -f artifact_type=docker \
-            -f artifact_name=code-server
+          gh workflow run docker-push.yaml \
+            -f container_name=code-server
 
-          # code-server Helm 차트 푸시 워크플로우 트리거
-          gh workflow run unified-artifact-push.yaml \
-            -f artifact_type=helm \
-            -f artifact_name=code-server
-
-          echo "unified-artifact-push 워크플로우 트리거 완료"
+          echo "docker-push 워크플로우 트리거 완료"
+          echo "::notice::Helm 차트는 publish-helm-charts.yaml에서 자동으로 배포됩니다 (GitHub Pages)"
