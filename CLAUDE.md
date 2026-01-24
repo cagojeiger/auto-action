@@ -135,10 +135,9 @@ gh pr view <pr-number> --json state -q .state
 ## Version Management
 
 ### Docker Images
-Version resolution order:
-1. Check corresponding `helm-charts/{name}/Chart.yaml` appVersion
-2. Fallback to ARG *_VERSION in Dockerfile
-3. Default to date-based version (YYYY.MM.DD)
+Version is determined from a single source:
+- **Required**: `ARG *_VERSION` in Dockerfile (e.g., `ARG CODE_SERVER_VERSION=4.108.1`)
+- Build fails if ARG is not found (no fallback to ensure explicit versioning)
 
 ### Helm Charts
 - Chart versions use semantic versioning
