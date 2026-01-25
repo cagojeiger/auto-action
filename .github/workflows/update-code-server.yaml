@@ -25,7 +25,7 @@ jobs:
       - name: Fetch latest version from GitHub Releases
         id: fetch_version
         run: |
-          LATEST_RELEASE=$(curl -s https://api.github.com/repos/coder/code-server/releases/latest)
+          LATEST_RELEASE=$(gh api repos/coder/code-server/releases/latest)
           LATEST_VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name' | sed 's/^v//')
 
           if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
