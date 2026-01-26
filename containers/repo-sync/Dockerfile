@@ -3,7 +3,7 @@ ARG REPO_SYNC_VERSION=0.1.0
 # =============================================
 # 1) Builder Stage - rclone 바이너리 다운로드
 # =============================================
-FROM alpine:3.21 AS builder
+FROM alpine:3.23 AS builder
 
 ARG TARGETARCH
 
@@ -18,7 +18,7 @@ RUN apk add --no-cache curl unzip && \
 # =============================================
 # 2) Final Stage
 # =============================================
-FROM alpine:3.21
+FROM alpine:3.23
 
 RUN apk add --no-cache \
     bash \
