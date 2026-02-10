@@ -1,0 +1,117 @@
+name: Update File-Fetcher
+
+on:
+  schedule:
+    - cron: '0 1 * * 1'  # 매주 월요일 01:00 UTC(10:00 KST) 실행
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  update-file-fetcher:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+
+      - name: Fetch latest rclone version
+        id: fetch_rclone
+        run: |
+          LATEST_RELEASE=$(gh api repos/rclone/rclone/releases/latest)
+          LATEST_VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name' | sed 's/^v//')
+
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            echo "::error::Failed to fetch latest rclone version"
+            exit 1
+          fi
+
+          CURRENT_VERSION=$(grep '^ARG RCLONE_VERSION=' containers/file-fetcher/Dockerfile | sed 's/ARG RCLONE_VERSION=//')
+
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo "::notice::Current: $CURRENT_VERSION → Latest: $LATEST_VERSION"
+
+      - name: Update Dockerfile
+        run: |
+          sed -i "s/^ARG RCLONE_VERSION=.*/ARG RCLONE_VERSION=${{ env.LATEST_VERSION }}/" containers/file-fetcher/Dockerfile
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet -- containers/file-fetcher/Dockerfile; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set branch name
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          echo "BRANCH_NAME=update-file-fetcher-v${{ env.LATEST_VERSION }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+
+      - name: Commit changes
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git checkout -b "${BRANCH_NAME}"
+          git add containers/file-fetcher/Dockerfile
+          git commit -m "chore: file-fetcher 업데이트 (rclone v${{ env.LATEST_VERSION }})"
+
+      - name: Push changes and create PR
+        id: create_pr
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git push -u origin "${BRANCH_NAME}"
+
+          BODY="GitHub Action이 rclone을 업데이트하였습니다."
+          BODY="$BODY\n\n- rclone: ${{ env.CURRENT_VERSION }} → ${{ env.LATEST_VERSION }}"
+
+          PR_URL=$(gh pr create \
+            --title "chore: file-fetcher 업데이트 (rclone v${{ env.LATEST_VERSION }})" \
+            --body "$(echo -e "$BODY")" \
+            --base main \
+            --head "${BRANCH_NAME}")
+
+          echo "생성된 PR URL: $PR_URL"
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+          sleep 10
+          gh pr merge "$PR_NUMBER" --auto --merge
+
+      - name: Wait for PR to be merged
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          PR_NUMBER=${{ steps.create_pr.outputs.pr_number }}
+          START_TIME=$(date +%s)
+
+          for i in {1..30}; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+
+            PR_STATE=$(gh pr view "$PR_NUMBER" --json state -q .state)
+            if [ "$PR_STATE" = "MERGED" ]; then
+              echo "PR이 성공적으로 병합되었습니다. 총 소요 시간: ${ELAPSED_TIME}초"
+              break
+            fi
+
+            echo "대기 중... ($i/30) - 경과 시간: ${ELAPSED_TIME}초"
+            sleep 15
+          done
+
+      - name: Trigger docker-push workflow
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          gh workflow run docker-push.yaml \
+            -f container_name=file-fetcher
+
+          echo "::notice::docker-push 워크플로우 트리거 완료"
