@@ -38,30 +38,9 @@ jobs:
           echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
           echo "::notice::Current: $CURRENT_VERSION → Latest: $LATEST_VERSION"
 
-      - name: Fetch latest Alpine version
-        id: fetch_alpine
-        run: |
-          CURRENT_ALPINE=$(grep '^ARG ALPINE_VERSION=' containers/file-fetcher/Dockerfile | sed 's/ARG ALPINE_VERSION=//')
-          CURRENT_MAJOR_MINOR="$CURRENT_ALPINE"
-
-          LATEST_ALPINE=$(curl -s "https://registry.hub.docker.com/v2/repositories/library/alpine/tags/?page_size=50" \
-            | jq -r '.results[].name' \
-            | grep -E '^[0-9]+\.[0-9]+$' \
-            | sort -V \
-            | tail -1)
-
-          if [ -z "$LATEST_ALPINE" ] || [ "$LATEST_ALPINE" = "null" ]; then
-            LATEST_ALPINE="$CURRENT_ALPINE"
-          fi
-
-          echo "LATEST_ALPINE=$LATEST_ALPINE" >> $GITHUB_ENV
-          echo "CURRENT_ALPINE=$CURRENT_ALPINE" >> $GITHUB_ENV
-          echo "::notice::Alpine current: $CURRENT_ALPINE → latest: $LATEST_ALPINE"
-
       - name: Update Dockerfile
         run: |
           sed -i "s/^ARG RCLONE_VERSION=.*/ARG RCLONE_VERSION=${{ env.LATEST_VERSION }}/" containers/file-fetcher/Dockerfile
-          sed -i "s/^ARG ALPINE_VERSION=.*/ARG ALPINE_VERSION=${{ env.LATEST_ALPINE }}/" containers/file-fetcher/Dockerfile
 
       - name: Check for changes
         id: check_changes
@@ -84,7 +63,7 @@ jobs:
           git config --global user.email 'action@github.com'
           git checkout -b "${BRANCH_NAME}"
           git add containers/file-fetcher/Dockerfile
-          git commit -m "chore: file-fetcher 업데이트 (rclone v${{ env.LATEST_VERSION }}, alpine ${{ env.LATEST_ALPINE }})"
+          git commit -m "chore: file-fetcher 업데이트 (rclone v${{ env.LATEST_VERSION }})"
 
       - name: Push changes and create PR
         id: create_pr
@@ -92,9 +71,8 @@ jobs:
         run: |
           git push -u origin "${BRANCH_NAME}"
 
-          BODY="GitHub Action이 file-fetcher 의존성을 업데이트하였습니다."
+          BODY="GitHub Action이 rclone을 업데이트하였습니다."
           BODY="$BODY\n\n- rclone: ${{ env.CURRENT_VERSION }} → ${{ env.LATEST_VERSION }}"
-          BODY="$BODY\n- alpine: ${{ env.CURRENT_ALPINE }} → ${{ env.LATEST_ALPINE }}"
 
           PR_URL=$(gh pr create \
             --title "chore: file-fetcher 업데이트 (rclone v${{ env.LATEST_VERSION }})" \
