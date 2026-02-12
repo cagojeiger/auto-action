@@ -95,6 +95,23 @@ volumeMounts:
     mountPath: /home/openclaw/.openclaw
 ```
 
+## 사전 설치된 도구
+
+에이전트가 `exec` tool로 바로 사용할 수 있는 시스템 패키지:
+
+| 도구 | 용도 |
+|---|---|
+| `git` | 코드 관리, 레포 클론 |
+| `gh` | GitHub CLI (PR, 이슈, 릴리즈 관리) |
+| `curl`, `wget` | HTTP 요청, 파일 다운로드 |
+| `jq` | JSON 파싱 |
+| `python3` | 스크립팅 |
+| `ripgrep` (`rg`) | 빠른 코드/로그 검색 |
+| `ffmpeg` | 오디오/비디오 처리 (음성 메모 변환 등) |
+| `imagemagick` (`convert`) | 이미지 처리/변환 |
+| `unzip`, `zip` | 아카이브 파일 처리 |
+| `openssh-client` | SSH 접속 |
+
 ## 포트
 
 | 포트 | 설명 |
