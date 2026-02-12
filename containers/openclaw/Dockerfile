@@ -4,13 +4,16 @@ FROM node:22-bookworm-slim
 
 ARG OPENCLAW_VERSION
 
+# Install openclaw + essential agent tools
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git openssh-client ca-certificates && \
+    apt-get install -y --no-install-recommends \
+      git openssh-client ca-certificates \
+      curl jq python3 && \
     git config --global url."https://github.com/".insteadOf "ssh://git@github.com/" && \
     git config --global url."https://github.com/".insteadOf "git@github.com:" && \
     npm install -g openclaw@${OPENCLAW_VERSION} && \
     npm cache clean --force && \
-    apt-get purge -y git openssh-client && \
+    apt-get purge -y openssh-client && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
