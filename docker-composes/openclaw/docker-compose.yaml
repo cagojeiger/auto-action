@@ -1,0 +1,14 @@
+services:
+  openclaw:
+    image: cagojeiger/openclaw:latest
+    container_name: openclaw-gateway
+    ports:
+      - "18789:18789"
+    volumes:
+      - openclaw-data:/home/openclaw/.openclaw
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  openclaw-data:
