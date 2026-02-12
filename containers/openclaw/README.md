@@ -17,14 +17,38 @@ http://localhost:18789 에서 Control UI(WebChat)에 접속합니다.
 
 ## 환경 변수
 
+### Gateway
+
 | 변수 | 필수 | 설명 |
 |---|---|---|
 | `OPENCLAW_GATEWAY_TOKEN` | **필수** | Gateway 접속 토큰 (auth mode=token) |
-| `ANTHROPIC_API_KEY` | 최소 하나 | Anthropic API 키 |
-| `OPENAI_API_KEY` | 최소 하나 | OpenAI API 키 |
-| `TELEGRAM_BOT_TOKEN` | 선택 | Telegram 봇 토큰 |
-| `DISCORD_BOT_TOKEN` | 선택 | Discord 봇 토큰 |
-| `BRAVE_API_KEY` | 선택 | 웹 검색용 Brave API 키 |
+
+### AI 프로바이더 (최소 하나 필요)
+
+| 변수 | 설명 |
+|---|---|
+| `ANTHROPIC_API_KEY` | Anthropic API 키 |
+| `ANTHROPIC_BASE_URL` | Anthropic API 엔드포인트 (커스텀 프록시 사용 시) |
+| `OPENAI_API_KEY` | OpenAI API 키 |
+| `OPENAI_BASE_URL` | OpenAI API 엔드포인트 (커스텀 프록시 사용 시) |
+| `OPENROUTER_API_KEY` | OpenRouter API 키 (여러 모델 라우팅) |
+| `GEMINI_API_KEY` | Google Gemini API 키 |
+| `COPILOT_GITHUB_TOKEN` | GitHub Copilot 토큰 |
+
+### 채널 (선택)
+
+| 변수 | 설명 |
+|---|---|
+| `SLACK_BOT_TOKEN` | Slack 봇 토큰 (`xoxb-...`) |
+| `SLACK_APP_TOKEN` | Slack 앱 토큰 (`xapp-...`, Socket Mode용) |
+| `TELEGRAM_BOT_TOKEN` | Telegram 봇 토큰 |
+| `DISCORD_BOT_TOKEN` | Discord 봇 토큰 |
+
+### 도구 (선택)
+
+| 변수 | 설명 |
+|---|---|
+| `BRAVE_API_KEY` | 웹 검색용 Brave API 키 |
 
 ## 데이터 볼륨
 
@@ -47,8 +71,16 @@ services:
     volumes:
       - openclaw-data:/home/openclaw/.openclaw
     environment:
+      # Gateway (필수)
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+      # AI 프로바이더 (최소 하나)
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - ANTHROPIC_BASE_URL=https://my-proxy.example.com  # 커스텀 엔드포인트
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - OPENAI_BASE_URL=https://my-proxy.example.com/v1  # 커스텀 엔드포인트
+      # 채널 (선택)
+      # - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      # - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
     restart: unless-stopped
 
 volumes:
