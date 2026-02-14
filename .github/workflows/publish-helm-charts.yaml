@@ -106,7 +106,7 @@ jobs:
           cd gh-pages
 
           # 차트당 최근 10개 버전만 유지
-          for CHART in code-server quick-deploy casdoor openclaw-stack; do
+          for CHART in code-server quick-deploy openclaw-stack; do
             ls -t ${CHART}-*.tgz 2>/dev/null | tail -n +11 | xargs -r rm -f
           done
 

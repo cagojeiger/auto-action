@@ -3,9 +3,10 @@ name: Slack Notifications
 on:
   workflow_run:
     workflows:
-      - "Unified Artifact Push"
-      - "Update Casdoor"
+      - "Docker Image Push"
       - "Update Code-Server"
+      - "Update File-Fetcher"
+      - "Update OpenClaw"
       - "Publish Helm Charts to GitHub Pages"
     types:
       - completed
