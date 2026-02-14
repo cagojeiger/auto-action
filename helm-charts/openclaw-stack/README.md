@@ -70,7 +70,10 @@ helm install openclaw-stack auto-action/openclaw-stack -f values.yaml
 ### 5. App Home 설정
 
 1. 왼쪽 메뉴 **App Home**
-2. **Show Tabs > Messages Tab** 체크 (DM 지원용)
+2. **Show Tabs > Messages Tab** 체크
+3. **Allow users to send Slash commands and messages from the messages tab** 체크
+
+> 3번이 체크 안 되어 있으면 봇에게 DM 입력창이 나타나지 않습니다.
 
 ### 6. Workspace에 설치 (Bot Token 발급)
 
