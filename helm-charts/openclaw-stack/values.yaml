@@ -27,24 +27,56 @@ openclaw:
   secrets:
     existingSecret: openclaw-secrets
     gatewayTokenKey: gateway-token
-    litellmApiKeyKey: litellm-api-key
-    browserlessApiKeyKey: browserless-api-key
-    slackBotTokenKey: slack-bot-token
-    slackAppTokenKey: slack-app-token
-  slack:
-    enabled: false
-    dm:
-      policy: "open"
-      allowFrom: '["*"]'
-    replyToMode: "off"
-    groupPolicy: "open"
-  tools:
-    profile: "full"
-  litellm:
-    baseUrl: "http://litellm:4000/v1"
-    model:
-      id: "gemini/gemini-2.5-flash"
-      name: "Gemini 2.5 Flash (via LiteLLM)"
+    secretEnvVars:
+      - name: LITELLM_API_KEY
+        key: litellm-api-key
+      - name: SLACK_BOT_TOKEN
+        key: slack-bot-token
+      - name: SLACK_APP_TOKEN
+        key: slack-app-token
+      # - name: ANTHROPIC_API_KEY
+      #   key: anthropic-api-key
+      # - name: OPENAI_API_KEY
+      #   key: openai-api-key
+      # - name: TELEGRAM_BOT_TOKEN
+      #   key: telegram-bot-token
+
+  existingConfigMap: ""
+
+  config:
+    gateway:
+      controlUi:
+        allowInsecureAuth: true
+    agents:
+      defaults:
+        model:
+          primary: "litellm/gemini/gemini-2.5-flash"
+    tools:
+      profile: "full"
+    models:
+      providers:
+        litellm:
+          baseUrl: "http://litellm:4000/v1"
+          api: "openai-completions"
+          models:
+            - id: "gemini/gemini-2.5-flash"
+              name: "Gemini 2.5 Flash (via LiteLLM)"
+              contextWindow: 1048576
+              maxTokens: 8192
+              reasoning: false
+              input: ["text", "image"]
+              cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
+    channels:
+      slack:
+        dm:
+          policy: "open"
+          allowFrom: ["*"]
+        replyToMode: "off"
+        groupPolicy: "open"
+      # discord: {}
+      # telegram: {}
+
+  podAnnotations: {}
   podSecurityContext:
     fsGroup: 1000
   containerSecurityContext:
@@ -53,6 +85,7 @@ openclaw:
     allowPrivilegeEscalation: false
   persistence:
     enabled: true
+    mountPath: /home/openclaw/.openclaw
     size: 10Gi
     accessMode: ReadWriteOnce
     storageClass: ""
@@ -86,6 +119,9 @@ openclaw:
       memory: 512Mi
     limits:
       memory: 2Gi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
 
 browserless:
   enabled: true
@@ -94,6 +130,16 @@ browserless:
     repository: ghcr.io/browserless/chromium
     tag: "latest"
     pullPolicy: Always
+  nginxImage:
+    repository: nginx
+    tag: "1.27-alpine"
+    pullPolicy: IfNotPresent
+  nginxResources:
+    requests:
+      cpu: 5m
+      memory: 16Mi
+    limits:
+      memory: 32Mi
   service:
     type: ClusterIP
     port: 3000
@@ -144,3 +190,6 @@ browserless:
     minReplicas: 1
     maxReplicas: 3
     targetCPUUtilizationPercentage: 70
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}

@@ -21,6 +21,9 @@ spec:
         app.kubernetes.io/component: openclaw
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/openclaw-configmap.yaml") . | sha256sum }}
+        {{- with .Values.openclaw.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -74,29 +77,19 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.openclaw.secrets.existingSecret }}
                   key: {{ .Values.openclaw.secrets.gatewayTokenKey }}
-            - name: LITELLM_API_KEY
+            {{- range .Values.openclaw.secrets.secretEnvVars }}
+            - name: {{ .name }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.openclaw.secrets.existingSecret }}
-                  key: {{ .Values.openclaw.secrets.litellmApiKeyKey }}
-            {{- if .Values.openclaw.slack.enabled }}
-            - name: SLACK_BOT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.openclaw.secrets.existingSecret }}
-                  key: {{ .Values.openclaw.secrets.slackBotTokenKey }}
-            - name: SLACK_APP_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.openclaw.secrets.existingSecret }}
-                  key: {{ .Values.openclaw.secrets.slackAppTokenKey }}
+                  name: {{ $.Values.openclaw.secrets.existingSecret }}
+                  key: {{ .key }}
             {{- end }}
             {{- with .Values.openclaw.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           ports:
             - name: http
-              containerPort: 18789
+              containerPort: {{ .Values.openclaw.service.port }}
               protocol: TCP
           {{- with .Values.openclaw.livenessProbe }}
           livenessProbe:
@@ -112,10 +105,7 @@ spec:
           {{- end }}
           volumeMounts:
             - name: data
-              mountPath: /home/openclaw/.openclaw
-            - name: config
-              mountPath: /config
-              readOnly: true
+              mountPath: {{ .Values.openclaw.persistence.mountPath }}
       volumes:
         - name: data
           {{- if .Values.openclaw.persistence.enabled }}
@@ -126,5 +116,17 @@ spec:
           {{- end }}
         - name: config
           configMap:
-            name: {{ include "openclaw-stack.openclawName" . }}-config
+            name: {{ .Values.openclaw.existingConfigMap | default (printf "%s-config" (include "openclaw-stack.openclawName" .)) }}
+      {{- with .Values.openclaw.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.openclaw.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.openclaw.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end }}
