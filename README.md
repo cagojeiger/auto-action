@@ -6,41 +6,67 @@ GitOps 기반 자동화 인프라 배포 저장소입니다. GitHub Actions를 �
 
 - **완전 자동화**: 코드 변경 감지 시 이미지 빌드 및 차트 배포 자동 실행
 - **멀티 플랫폼 지원**: linux/amd64, linux/arm64 이미지 동시 빌드
-- **의존성 자동 업데이트**: upstream 저장소의 최신 버전 자동 추적 및 반영
+- **의존성 자동 업데이트**: upstream 최신 버전 자동 추적 및 PR 생성
 - **동적 매트릭스 빌드**: 변경된 아티팩트만 선택적으로 병렬 처리
-
-## 빠른 시작
-
-```bash
-# Helm 차트 설치
-helm install casdoor oci://docker.io/cagojeiger/casdoor
-
-# 또는 로컬에서 직접 설치
-helm install casdoor helm-charts/casdoor -f helm-charts/casdoor/values.yaml
-```
+- **빌드 실패 Slack 알림**: 모든 워크플로우 실패 시 Slack 자동 알림
 
 ## 디렉터리 구조
 
-- **containers/** - Docker 이미지 (Casdoor, Code-server 등)
-- **helm-charts/** - 프로덕션 Helm 차트
-- **helm-charts-archive/** - 고급 기능 포함 아카이브 차트 (template-deployment, ops-stack 등)
-- **docker-composes/** - 로컬 개발용 Docker Compose 설정
+```
+containers/           # Docker 이미지 소스
+├── code-server/      # 웹 기반 VS Code + K8s/DevOps 도구
+├── file-fetcher/     # rclone 기반 경량 파일 전송 init container
+└── openclaw/         # OpenClaw AI Gateway
 
-각 디렉터리의 README에서 상세 정보를 확인할 수 있습니다.
+helm-charts/          # Helm 차트
+├── code-server/      # code-server 배포용 차트
+├── openclaw-stack/   # OpenClaw + Browserless 통합 차트
+└── quick-deploy/     # 범용 빠른 배포 차트
 
-## 자동화 워크플로
+docs/                 # 문서
+└── ci-cd.md          # CI/CD 파이프라인 상세 가이드
+```
 
-- **unified-artifact-push**: 변경 감지 시 이미지/차트 자동 빌드 및 배포
-- **update-\***: upstream 의존성 자동 업데이트 (일일/주간)
-- **slack-notifications**: 빌드 실패 시 Slack 알림
+## 빠른 시작
 
-## 상세 문서
+### Helm 차트
 
-개발 가이드, 템플릿 시스템, 테스트 방법 등 상세 정보는 [CLAUDE.md](CLAUDE.md)를 참고하세요.
+```bash
+helm repo add auto-action https://cagojeiger.github.io/auto-action
+helm repo update
+helm search repo auto-action --versions
+helm install my-release auto-action/openclaw-stack
+```
+
+### Docker 이미지
+
+```bash
+# OpenClaw Gateway
+docker run -d -p 18789:18789 \
+  -e OPENCLAW_GATEWAY_TOKEN=my-token \
+  cagojeiger/openclaw:latest
+
+# Code-Server (K8s 도구 포함)
+docker run -d -p 8080:8080 -e PASSWORD=mypassword \
+  cagojeiger/code-server:latest
+```
+
+## CI/CD 워크플로우
+
+| 워크플로우 | 트리거 | 동작 |
+|-----------|--------|------|
+| Docker Image Push | `containers/**` 변경 | Docker Hub에 멀티 아키텍처 이미지 빌드/푸시 |
+| Publish Helm Charts | `helm-charts/**` 변경 | GitHub Pages에 차트 패키징/배포 |
+| Update Code-Server | 일일 | code-server 최신 버전 감지 → PR 생성 |
+| Update File-Fetcher | 일일 | rclone 최신 버전 감지 → PR 생성 |
+| Update OpenClaw | 일일 | OpenClaw npm 최신 버전 감지 → PR 생성 |
+| Slack Notifications | 워크플로우 실패 시 | Slack 채널에 실패 알림 전송 |
+
+상세 정보는 [docs/ci-cd.md](docs/ci-cd.md)를 참고하세요.
 
 ## 기여 방법
 
-코드 변경 시 Google Style Guide를 따르고, 커밋 메시지는 Conventional Commits 규칙에 맞춰 작성합니다. 가능한 한 기존 동작과의 호환성을 유지해 주세요.
+코드 변경 시 Google Style Guide를 따르고, 커밋 메시지는 Conventional Commits 규칙에 맞춰 작성합니다.
 
 ## 라이선스
 
