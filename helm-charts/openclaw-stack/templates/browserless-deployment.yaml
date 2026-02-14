@@ -52,10 +52,11 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
         - name: nginx-proxy
-          image: nginx:1.27-alpine
+          image: "{{ .Values.browserless.nginxImage.repository }}:{{ .Values.browserless.nginxImage.tag }}"
+          imagePullPolicy: {{ .Values.browserless.nginxImage.pullPolicy }}
           ports:
             - name: http
-              containerPort: 3000
+              containerPort: {{ .Values.browserless.service.port }}
               protocol: TCP
           volumeMounts:
             - name: nginx-config
@@ -68,14 +69,24 @@ spec:
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with .Values.browserless.nginxResources }}
           resources:
-            requests:
-              cpu: 5m
-              memory: 16Mi
-            limits:
-              memory: 32Mi
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
       volumes:
         - name: nginx-config
           configMap:
             name: {{ include "openclaw-stack.browserlessName" . }}-nginx
+      {{- with .Values.browserless.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.browserless.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.browserless.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end }}

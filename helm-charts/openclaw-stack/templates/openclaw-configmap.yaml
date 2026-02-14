@@ -1,4 +1,4 @@
-{{- if .Values.openclaw.enabled }}
+{{- if and .Values.openclaw.enabled (not .Values.openclaw.existingConfigMap) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,63 +8,13 @@ metadata:
     app.kubernetes.io/component: openclaw
 data:
   openclaw.json: |
-    {
-      "gateway": {
-        "controlUi": {
-          "allowInsecureAuth": true
-        }
-      },
-      "agents": {
-        "defaults": {
-          "model": {
-            "primary": "litellm/{{ .Values.openclaw.litellm.model.id }}"
-          }
-        }
-      },
-      "tools": {
-        "profile": "{{ .Values.openclaw.tools.profile }}"
-      },
-      "models": {
-        "providers": {
-          "litellm": {
-            "baseUrl": "{{ .Values.openclaw.litellm.baseUrl }}",
-            "api": "openai-completions",
-            "models": [
-              {
-                "id": "{{ .Values.openclaw.litellm.model.id }}",
-                "name": "{{ .Values.openclaw.litellm.model.name }}",
-                "contextWindow": 1048576,
-                "maxTokens": 8192,
-                "reasoning": false,
-                "input": ["text", "image"],
-                "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
-              }
-            ]
-          }
-        }
-      },
-      "browser": {
-        "enabled": {{ .Values.browserless.enabled }},
-        "attachOnly": true,
-        "defaultProfile": "browserless",
-        "profiles": {
-          "browserless": {
-            "cdpUrl": "http://{{ include "openclaw-stack.browserlessName" . }}:{{ .Values.browserless.service.port }}",
-            "color": "#FF4500"
-          }
-        }
-      }
-      {{- if .Values.openclaw.slack.enabled }},
-      "channels": {
-        "slack": {
-          "dm": {
-            "policy": "{{ .Values.openclaw.slack.dm.policy }}",
-            "allowFrom": {{ .Values.openclaw.slack.dm.allowFrom }}
-          },
-          "replyToMode": "{{ .Values.openclaw.slack.replyToMode }}",
-          "groupPolicy": "{{ .Values.openclaw.slack.groupPolicy }}"
-        }
-      }
-      {{- end }}
-    }
+    {{- $config := deepCopy .Values.openclaw.config }}
+    {{- if .Values.browserless.enabled }}
+    {{- $cdpUrl := printf "http://%s:%v" (include "openclaw-stack.browserlessName" .) (int .Values.browserless.service.port) }}
+    {{- $browser := dict "enabled" true "attachOnly" true "defaultProfile" "browserless" "profiles" (dict "browserless" (dict "cdpUrl" $cdpUrl "color" "#FF4500")) }}
+    {{- $_ := set $config "browser" $browser }}
+    {{- else }}
+    {{- $_ := set $config "browser" (dict "enabled" false) }}
+    {{- end }}
+    {{ toPrettyJson $config | nindent 4 }}
 {{- end }}
