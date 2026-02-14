@@ -29,6 +29,13 @@ openclaw:
     gatewayTokenKey: gateway-token
     litellmApiKeyKey: litellm-api-key
     browserlessApiKeyKey: browserless-api-key
+    slackBotTokenKey: slack-bot-token
+    slackAppTokenKey: slack-app-token
+  slack:
+    enabled: false
+    dm:
+      policy: "open"
+    groupPolicy: "open"
   tools:
     profile: "full"
   litellm:

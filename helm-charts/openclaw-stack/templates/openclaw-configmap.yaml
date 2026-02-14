@@ -54,5 +54,15 @@ data:
           }
         }
       }
+      {{- if .Values.openclaw.slack.enabled }},
+      "channels": {
+        "slack": {
+          "dm": {
+            "policy": "{{ .Values.openclaw.slack.dm.policy }}"
+          },
+          "groupPolicy": "{{ .Values.openclaw.slack.groupPolicy }}"
+        }
+      }
+      {{- end }}
     }
 {{- end }}

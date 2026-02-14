@@ -79,6 +79,18 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.openclaw.secrets.existingSecret }}
                   key: {{ .Values.openclaw.secrets.litellmApiKeyKey }}
+            {{- if .Values.openclaw.slack.enabled }}
+            - name: SLACK_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.openclaw.secrets.existingSecret }}
+                  key: {{ .Values.openclaw.secrets.slackBotTokenKey }}
+            - name: SLACK_APP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.openclaw.secrets.existingSecret }}
+                  key: {{ .Values.openclaw.secrets.slackAppTokenKey }}
+            {{- end }}
             {{- with .Values.openclaw.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
