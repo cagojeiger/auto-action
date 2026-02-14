@@ -42,17 +42,29 @@ helm install openclaw-stack auto-action/openclaw-stack -f values.yaml
 
 ### 3. Bot Token Scopes 설정
 
-**OAuth & Permissions > Bot Token Scopes**에 아래 scope 추가:
+**OAuth & Permissions > Bot Token Scopes**에 아래 scope **모두** 추가:
 
-- `app_mentions:read` — 멘션 감지
-- `chat:write` — 메시지 전송
-- `channels:history`, `channels:read` — 채널 메시지 읽기
-- `groups:history` — 프라이빗 채널 메시지 읽기
-- `im:history` — DM 읽기
-- `mpim:history` — 그룹 DM 읽기
-- `users:read` — 사용자 정보 조회
-- `reactions:read`, `reactions:write` — 리액션 읽기/쓰기
-- `files:read`, `files:write` — 파일 읽기/쓰기
+| Scope | 용도 |
+|-------|------|
+| `app_mentions:read` | @멘션 감지 |
+| `chat:write` | 메시지 전송 |
+| `channels:history` | 공개 채널 메시지 읽기 |
+| `channels:read` | 공개 채널 목록 조회 |
+| `groups:history` | 프라이빗 채널 메시지 읽기 |
+| `groups:read` | 프라이빗 채널 목록 조회 |
+| `im:history` | DM 메시지 읽기 |
+| `im:read` | DM 대화 목록 조회 |
+| `im:write` | DM 대화 시작 |
+| `mpim:history` | 그룹 DM 메시지 읽기 |
+| `mpim:read` | 그룹 DM 목록 조회 |
+| `users:read` | 사용자 정보 조회 |
+| `reactions:read` | 리액션 읽기 |
+| `reactions:write` | 리액션 쓰기 |
+| `files:read` | 파일 읽기 |
+| `files:write` | 파일 업로드 |
+
+> Scope 추가 후 반드시 **Reinstall to Workspace** 필요 (새 Bot Token 발급됨).
+> 새 Bot Token을 Vault에 다시 저장해야 합니다.
 
 ### 4. Event Subscriptions
 
