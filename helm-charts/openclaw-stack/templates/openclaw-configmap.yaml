@@ -9,6 +9,9 @@ metadata:
 data:
   openclaw.json: |
     {
+      "gateway": {
+        "trustedProxies": "loopback, uniquelocal"
+      },
       "agents": {
         "defaults": {
           "model": {
