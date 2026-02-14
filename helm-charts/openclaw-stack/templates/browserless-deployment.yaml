@@ -1,0 +1,58 @@
+{{- if .Values.browserless.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openclaw-stack.browserlessName" . }}
+  labels:
+    {{- include "openclaw-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: browserless
+spec:
+  {{- if not .Values.browserless.autoscaling.enabled }}
+  replicas: {{ .Values.browserless.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "openclaw-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: browserless
+  template:
+    metadata:
+      labels:
+        {{- include "openclaw-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: browserless
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: browserless
+          image: "{{ .Values.browserless.image.repository }}:{{ .Values.browserless.image.tag }}"
+          imagePullPolicy: {{ .Values.browserless.image.pullPolicy }}
+          env:
+            {{- with .Values.browserless.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.browserless.auth.enabled }}
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.browserless.auth.existingSecret }}
+                  key: {{ .Values.browserless.auth.tokenKey }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          {{- with .Values.browserless.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.browserless.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.browserless.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

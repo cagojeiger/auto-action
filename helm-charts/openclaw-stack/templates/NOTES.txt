@@ -1,0 +1,18 @@
+OpenClaw Stack has been deployed!
+
+{{- if .Values.openclaw.enabled }}
+
+=== OpenClaw Gateway ===
+  Access the UI:
+    kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "openclaw-stack.openclawName" . }} 18789:{{ .Values.openclaw.service.port }}
+    Then visit: http://127.0.0.1:18789
+{{- end }}
+
+{{- if .Values.browserless.enabled }}
+
+=== Browserless ===
+  Internal endpoint: {{ include "openclaw-stack.browserlessName" . }}:{{ .Values.browserless.service.port }}
+  {{- if .Values.browserless.autoscaling.enabled }}
+  Autoscaling: {{ .Values.browserless.autoscaling.minReplicas }}-{{ .Values.browserless.autoscaling.maxReplicas }} replicas
+  {{- end }}
+{{- end }}

@@ -1,0 +1,23 @@
+{{- if and .Values.openclaw.enabled .Values.openclaw.persistence.enabled (not .Values.openclaw.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "openclaw-stack.openclawName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "openclaw-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: openclaw
+spec:
+  accessModes:
+    - {{ .Values.openclaw.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.openclaw.persistence.size | quote }}
+  {{- if .Values.openclaw.persistence.storageClass }}
+  {{- if (eq "-" .Values.openclaw.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.openclaw.persistence.storageClass | quote }}
+  {{- end }}
+  {{- end }}
+{{- end }}
