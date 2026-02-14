@@ -186,4 +186,11 @@ jobs:
             -f container_name=code-server
 
           echo "docker-push 워크플로우 트리거 완료"
-          echo "::notice::Helm 차트는 publish-helm-charts.yaml에서 자동으로 배포됩니다 (GitHub Pages)"
+
+      - name: Trigger publish-helm-charts workflow
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          gh workflow run publish-helm-charts.yaml \
+            -f chart_name=code-server
+
+          echo "publish-helm-charts 워크플로우 트리거 완료"
