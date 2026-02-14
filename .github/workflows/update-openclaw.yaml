@@ -1,0 +1,140 @@
+name: Update OpenClaw
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 매일 00:00 UTC(09:00 KST) 실행
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  update-openclaw:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fetch latest version from npm
+        id: fetch_version
+        run: |
+          LATEST_VERSION=$(npm view openclaw@latest version)
+
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "undefined" ]; then
+            echo "::error::Failed to fetch latest version from npm registry"
+            exit 1
+          fi
+
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+          echo "::notice::Latest npm version: $LATEST_VERSION"
+
+      - name: Check current version
+        id: check_version
+        run: |
+          CURRENT_VERSION=$(grep '^ARG OPENCLAW_VERSION=' containers/openclaw/Dockerfile | cut -d'=' -f2)
+          echo "::notice::Current Dockerfile version: $CURRENT_VERSION"
+
+          if [ -z "$CURRENT_VERSION" ]; then
+            echo "::error::Dockerfile에서 OPENCLAW_VERSION을 찾을 수 없습니다"
+            exit 1
+          fi
+
+          if [ "$CURRENT_VERSION" = "${{ env.LATEST_VERSION }}" ]; then
+            echo "변경사항이 없습니다. 이미 최신 버전입니다."
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "새 버전이 감지되었습니다: $CURRENT_VERSION -> ${{ env.LATEST_VERSION }}"
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update Dockerfile version
+        if: steps.check_version.outputs.changes == 'true'
+        run: |
+          sed -i "s/^ARG OPENCLAW_VERSION=.*/ARG OPENCLAW_VERSION=${{ env.LATEST_VERSION }}/" containers/openclaw/Dockerfile
+          echo "Dockerfile의 OPENCLAW_VERSION을 ${{ env.LATEST_VERSION }}으로 업데이트했습니다."
+
+      - name: Set branch name
+        if: steps.check_version.outputs.changes == 'true'
+        run: |
+          echo "BRANCH_NAME=update-openclaw-v${{ env.LATEST_VERSION }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+
+      - name: Commit changes
+        if: steps.check_version.outputs.changes == 'true'
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git checkout -b "${BRANCH_NAME}"
+          git add containers/openclaw/Dockerfile
+          git commit -m "chore: openclaw 업데이트 (v${{ env.LATEST_VERSION }})"
+
+      - name: Push changes and create PR
+        id: create_pr
+        if: steps.check_version.outputs.changes == 'true'
+        run: |
+          git push -u origin "${BRANCH_NAME}"
+
+          PR_URL=$(gh pr create \
+            --title "chore: openclaw 업데이트 (v${{ env.LATEST_VERSION }})" \
+            --body "GitHub Action이 최신 openclaw 버전(v${{ env.LATEST_VERSION }})으로 업데이트하였습니다." \
+            --base main \
+            --head "${BRANCH_NAME}")
+
+          echo "생성된 PR URL: $PR_URL"
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+          sleep 10
+          gh pr merge "$PR_NUMBER" --auto --merge
+
+      - name: Wait for PR to be merged
+        if: steps.check_version.outputs.changes == 'true'
+        run: |
+          PR_NUMBER=${{ steps.create_pr.outputs.pr_number }}
+          PR_URL=${{ steps.create_pr.outputs.pr_url }}
+          echo "PR #$PR_NUMBER 병합을 기다리는 중..."
+
+          START_TIME=$(date +%s)
+
+          MERGED=false
+          for i in {1..30}; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+
+            PR_STATE=$(gh pr view "$PR_NUMBER" --json state -q .state)
+            if [ "$PR_STATE" = "MERGED" ]; then
+              echo "PR이 성공적으로 병합되었습니다. 총 소요 시간: ${ELAPSED_TIME}초"
+              MERGED=true
+              break
+            fi
+
+            echo "대기 중... ($i/30) - 경과 시간: ${ELAPSED_TIME}초"
+            sleep 15
+          done
+
+          if [ "$MERGED" != "true" ]; then
+            echo "::error::PR #$PR_NUMBER 병합 시간 초과"
+            exit 1
+          fi
+
+      - name: Trigger docker-push workflow
+        if: steps.check_version.outputs.changes == 'true'
+        run: |
+          echo "docker-push 워크플로우를 수동으로 트리거합니다..."
+
+          gh workflow run docker-push.yaml \
+            -f container_name=openclaw
+
+          echo "docker-push 워크플로우 트리거 완료"
