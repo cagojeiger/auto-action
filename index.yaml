@@ -3,7 +3,7 @@ entries:
   code-server:
   - apiVersion: v2
     appVersion: 4.109.2
-    created: '2026-02-14T06:04:21.688861491Z'
+    created: "2026-02-14T15:04:55.113507+09:00"
     description: A Helm chart for coder/code-server
     digest: 0e32c9b56550ceb8a00d8404a4eb0aba13539c23909dd4a18dd3635add285ee2
     name: code-server
@@ -13,7 +13,7 @@ entries:
     version: 3.32.1+4.109.2
   - apiVersion: v2
     appVersion: 4.108.1
-    created: '2026-02-14T06:04:21.687551581Z'
+    created: "2026-02-14T15:04:55.113211+09:00"
     description: A Helm chart for coder/code-server
     digest: 76f8ad1fccff30bd28b269239dbe5ac2c1f20ba54250f3418193fb35ce5c4e35
     name: code-server
@@ -24,7 +24,7 @@ entries:
   openclaw-stack:
   - apiVersion: v2
     appVersion: 2026.2.13
-    created: '2026-02-14T06:04:21.68945518Z'
+    created: "2026-02-14T15:04:55.113816+09:00"
     description: OpenClaw and Browserless stack chart
     digest: 9ea32deb1f8734925af095ab781e9a65a85973e1de15d18fcb46dcb126733b08
     name: openclaw-stack
@@ -32,20 +32,10 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.0+2026.2.13.tgz
     version: 0.1.0+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.9
-    created: '2026-02-14T06:04:21.69000174Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 133f07c515fa32d85c431921e6d6325d89ceb4f86777cd421ef51df47ba1f5f3
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.0.tgz
-    version: 0.1.0
   quick-deploy:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-02-14T06:04:21.690512122Z'
+    created: "2026-02-14T15:04:55.115117+09:00"
     description: Rapid multi-application deployment template for Kubernetes
     digest: 2be9ba4c228dc1db6d0fc7f178d6ccc5b9c7f09bd8cdd519a3a000de3dfa8dae
     keywords:
@@ -58,4 +48,4 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/quick-deploy-0.1.14.tgz
     version: 0.1.14
-generated: '2026-02-14T06:04:21.686871289Z'
+generated: "2026-02-14T15:04:55.112816+09:00"
