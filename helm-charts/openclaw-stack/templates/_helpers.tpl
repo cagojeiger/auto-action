@@ -28,7 +28,6 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
 {{- define "openclaw-stack.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "openclaw-stack.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
