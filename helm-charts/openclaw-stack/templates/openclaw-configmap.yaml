@@ -61,6 +61,7 @@ data:
             "policy": "{{ .Values.openclaw.slack.dm.policy }}",
             "allowFrom": {{ .Values.openclaw.slack.dm.allowFrom }}
           },
+          "replyToMode": "{{ .Values.openclaw.slack.replyToMode }}",
           "groupPolicy": "{{ .Values.openclaw.slack.groupPolicy }}"
         }
       }

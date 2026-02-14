@@ -118,6 +118,27 @@ openclaw:
   slack:
     enabled: true
     dm:
-      policy: "open"     # DM 정책: "open" (누구나) 또는 "pairing" (pairing code 필요)
-    groupPolicy: "open"  # 채널 정책: "open" (모든 채널) 또는 채널별 제한
+      policy: "open"       # DM 정책: "open" (누구나) 또는 "pairing" (pairing code 필요)
+      allowFrom: '["*"]'   # policy가 "open"일 때 필수 — 허용 대상 ("*" = 모든 사용자)
+    replyToMode: "off"     # 응답 방식: "off" (대화형), "all" (항상 쓰레드), "first" (첫 응답만 쓰레드)
+    groupPolicy: "open"    # 채널 정책: "open" (모든 채널) 또는 채널별 제한
 ```
+
+### DM 정책 (dm.policy)
+
+| 정책 | 동작 | allowFrom |
+|------|------|-----------|
+| `open` | 누구나 DM으로 바로 대화 가능 | **필수** — `'["*"]'` 또는 특정 사용자 목록 |
+| `pairing` | DM 시 pairing code 생성 → 관리자 승인 필요 | 불필요 |
+
+> **주의**: `dm.policy: "open"`인데 `allowFrom`이 없으면 validation 에러가 발생합니다.
+>
+> `pairing` 모드에서는 사용자가 DM을 보내면 pairing code가 생성되고, `openclaw pairing list slack` → `openclaw pairing approve slack <CODE>`로 승인해야 대화가 시작됩니다.
+
+### 응답 방식 (replyToMode)
+
+| 모드 | 동작 |
+|------|------|
+| `off` | DM/채널에 직접 응답 (대화하듯이) — 이미 쓰레드 안에 있으면 쓰레드 유지 |
+| `all` | 모든 응답을 쓰레드로 생성 (기본값 변경 전 OpenClaw 기본 동작) |
+| `first` | 첫 응답만 쓰레드, 이후 응답은 채널에 직접 |
