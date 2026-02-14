@@ -97,6 +97,9 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /home/openclaw/.openclaw
+            - name: config
+              mountPath: /config
+              readOnly: true
       volumes:
         - name: data
           {{- if .Values.openclaw.persistence.enabled }}
