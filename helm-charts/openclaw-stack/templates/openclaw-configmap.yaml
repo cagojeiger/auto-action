@@ -10,7 +10,9 @@ data:
   openclaw.json: |
     {
       "gateway": {
-        "trustedProxies": ["loopback", "uniquelocal"]
+        "controlUi": {
+          "allowInsecureAuth": true
+        }
       },
       "agents": {
         "defaults": {
