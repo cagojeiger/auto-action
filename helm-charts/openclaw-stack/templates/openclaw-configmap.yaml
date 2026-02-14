@@ -19,11 +19,11 @@ data:
         "defaults": {
           "model": {
             "primary": "litellm/{{ .Values.openclaw.litellm.model.id }}"
-          },
-          "tools": {
-            "profile": "{{ .Values.openclaw.tools.profile }}"
           }
         }
+      },
+      "tools": {
+        "profile": "{{ .Values.openclaw.tools.profile }}"
       },
       "models": {
         "providers": {
