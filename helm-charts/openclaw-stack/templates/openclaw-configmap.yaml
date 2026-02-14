@@ -1,0 +1,44 @@
+{{- if .Values.openclaw.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openclaw-stack.openclawName" . }}-config
+  labels:
+    {{- include "openclaw-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: openclaw
+data:
+  openclaw.json: |
+    {
+      "$schema": "https://openclaw.app/config-schema.json",
+      "agents": {
+        "defaults": {
+          "model": {
+            "primary": "litellm/gemini-2.0-flash"
+          }
+        }
+      },
+      "models": {
+        "providers": {
+          "litellm": {
+            "name": "LiteLLM",
+            "api": "openai-chat",
+            "baseUrl": "{{ .Values.openclaw.litellm.baseUrl }}",
+            "models": {
+              "gemini-2.0-flash": {
+                "name": "Gemini 2.0 Flash (via LiteLLM)"
+              }
+            }
+          }
+        }
+      },
+      "browser": {
+        "enabled": true,
+        "defaultProfile": "browserless",
+        "profiles": {
+          "browserless": {
+            "cdpUrl": "ws://{{ include "openclaw-stack.browserlessName" . }}:{{ .Values.browserless.service.port }}"
+          }
+        }
+      }
+    }
+{{- end }}

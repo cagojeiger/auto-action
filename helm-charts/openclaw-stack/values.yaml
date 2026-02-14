@@ -1,0 +1,133 @@
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+openclaw:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: cagojeiger/openclaw
+    tag: "2026.2.9"
+    pullPolicy: IfNotPresent
+  command:
+    - openclaw
+    - gateway
+    - --allow-unconfigured
+    - --bind
+    - lan
+    - --port
+    - "18789"
+  service:
+    type: ClusterIP
+    port: 18789
+  env:
+    - name: TZ
+      value: Asia/Seoul
+  secrets:
+    existingSecret: openclaw-secrets
+    gatewayTokenKey: gateway-token
+    litellmApiKeyKey: litellm-api-key
+    browserlessApiKeyKey: browserless-api-key
+  litellm:
+    baseUrl: "http://litellm:4000/v1"
+  podSecurityContext:
+    fsGroup: 1000
+  containerSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    allowPrivilegeEscalation: false
+  persistence:
+    enabled: true
+    size: 10Gi
+    accessMode: ReadWriteOnce
+    storageClass: ""
+    existingClaim: ""
+  init:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 5
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 3
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+
+browserless:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/browserless/chromium
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+  env:
+    - name: TIMEOUT
+      value: "60000"
+    - name: CONCURRENT
+      value: "5"
+    - name: QUEUED
+      value: "10"
+    - name: HEALTH
+      value: "true"
+    - name: EXIT_ON_HEALTH_FAILURE
+      value: "true"
+    - name: PREBOOT_CHROME
+      value: "true"
+    - name: MAX_CPU_PERCENT
+      value: "90"
+    - name: MAX_MEMORY_PERCENT
+      value: "90"
+  auth:
+    enabled: false
+    existingSecret: openclaw-secrets
+    tokenKey: browserless-token
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 5
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70

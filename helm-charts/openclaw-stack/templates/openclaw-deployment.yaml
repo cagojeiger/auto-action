@@ -1,0 +1,111 @@
+{{- if .Values.openclaw.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openclaw-stack.openclawName" . }}
+  labels:
+    {{- include "openclaw-stack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: openclaw
+spec:
+  replicas: {{ .Values.openclaw.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "openclaw-stack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: openclaw
+  template:
+    metadata:
+      labels:
+        {{- include "openclaw-stack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: openclaw
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/openclaw-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.openclaw.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if and .Values.openclaw.init.enabled .Values.openclaw.persistence.enabled }}
+      initContainers:
+        - name: bootstrap
+          image: "{{ .Values.openclaw.init.image.repository }}:{{ .Values.openclaw.init.image.tag }}"
+          imagePullPolicy: {{ .Values.openclaw.init.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -f /data/.initialized ]; then
+                echo "Already initialized, skipping bootstrap."
+                exit 0
+              fi
+              echo "Bootstrapping openclaw configuration..."
+              mkdir -p /data
+              cp /config/openclaw.json /data/openclaw.json
+              touch /data/.initialized
+              echo "Bootstrap complete."
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /config
+      {{- end }}
+      containers:
+        - name: openclaw
+          image: "{{ .Values.openclaw.image.repository }}:{{ .Values.openclaw.image.tag }}"
+          imagePullPolicy: {{ .Values.openclaw.image.pullPolicy }}
+          {{- with .Values.openclaw.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            {{- toYaml .Values.openclaw.command | nindent 12 }}
+          env:
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.openclaw.secrets.existingSecret }}
+                  key: {{ .Values.openclaw.secrets.gatewayTokenKey }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.openclaw.secrets.existingSecret }}
+                  key: {{ .Values.openclaw.secrets.litellmApiKeyKey }}
+            {{- with .Values.openclaw.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 18789
+              protocol: TCP
+          {{- with .Values.openclaw.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.openclaw.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.openclaw.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /home/openclaw/.openclaw
+      volumes:
+        - name: data
+          {{- if .Values.openclaw.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.openclaw.persistence.existingClaim | default (include "openclaw-stack.openclawName" .) }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: config
+          configMap:
+            name: {{ include "openclaw-stack.openclawName" . }}-config
+{{- end }}
