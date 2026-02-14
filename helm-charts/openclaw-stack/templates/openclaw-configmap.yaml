@@ -10,7 +10,7 @@ data:
   openclaw.json: |
     {
       "gateway": {
-        "trustedProxies": "loopback, uniquelocal"
+        "trustedProxies": ["loopback", "uniquelocal"]
       },
       "agents": {
         "defaults": {
