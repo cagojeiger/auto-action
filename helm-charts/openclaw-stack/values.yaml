@@ -8,7 +8,7 @@ openclaw:
   replicaCount: 1
   image:
     repository: cagojeiger/openclaw
-    tag: "2026.2.9"
+    tag: "2026.2.13"
     pullPolicy: IfNotPresent
   command:
     - openclaw
@@ -77,7 +77,7 @@ browserless:
   replicaCount: 1
   image:
     repository: ghcr.io/browserless/chromium
-    tag: "latest"
+    tag: "2026.2.13"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
