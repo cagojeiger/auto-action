@@ -31,6 +31,9 @@ openclaw:
     browserlessApiKeyKey: browserless-api-key
   litellm:
     baseUrl: "http://litellm:4000/v1"
+    model:
+      id: "gemini/gemini-2.5-flash"
+      name: "Gemini 2.5 Flash (via LiteLLM)"
   podSecurityContext:
     fsGroup: 1000
   containerSecurityContext:
@@ -45,6 +48,7 @@ openclaw:
     existingClaim: ""
   init:
     enabled: true
+    forceBootstrap: false
     image:
       repository: busybox
       tag: "1.36"
@@ -77,8 +81,8 @@ browserless:
   replicaCount: 1
   image:
     repository: ghcr.io/browserless/chromium
-    tag: "2026.2.13"
-    pullPolicy: IfNotPresent
+    tag: "latest"
+    pullPolicy: Always
   service:
     type: ClusterIP
     port: 3000

@@ -39,6 +39,10 @@ spec:
             - sh
             - -c
             - |
+              {{- if .Values.openclaw.init.forceBootstrap }}
+              echo "Force bootstrap enabled, resetting configuration..."
+              rm -f /data/.initialized
+              {{- end }}
               if [ -f /data/.initialized ]; then
                 echo "Already initialized, skipping bootstrap."
                 exit 0
@@ -70,7 +74,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.openclaw.secrets.existingSecret }}
                   key: {{ .Values.openclaw.secrets.gatewayTokenKey }}
-            - name: OPENAI_API_KEY
+            - name: LITELLM_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.openclaw.secrets.existingSecret }}
