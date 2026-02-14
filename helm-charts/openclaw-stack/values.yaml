@@ -35,6 +35,7 @@ openclaw:
     enabled: false
     dm:
       policy: "open"
+      allowFrom: '["*"]'
     groupPolicy: "open"
   tools:
     profile: "full"

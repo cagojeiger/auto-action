@@ -58,7 +58,8 @@ data:
       "channels": {
         "slack": {
           "dm": {
-            "policy": "{{ .Values.openclaw.slack.dm.policy }}"
+            "policy": "{{ .Values.openclaw.slack.dm.policy }}",
+            "allowFrom": {{ .Values.openclaw.slack.dm.allowFrom }}
           },
           "groupPolicy": "{{ .Values.openclaw.slack.groupPolicy }}"
         }
