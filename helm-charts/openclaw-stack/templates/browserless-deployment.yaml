@@ -32,6 +32,8 @@ spec:
             {{- with .Values.browserless.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+            - name: PORT
+              value: "3001"
             - name: EXTERNAL
               value: "ws://{{ include "openclaw-stack.browserlessName" . }}:{{ .Values.browserless.service.port }}"
             {{- if .Values.browserless.auth.enabled }}
@@ -42,9 +44,22 @@ spec:
                   key: {{ .Values.browserless.auth.tokenKey }}
             {{- end }}
           ports:
+            - name: browser
+              containerPort: 3001
+              protocol: TCP
+          {{- with .Values.browserless.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        - name: nginx-proxy
+          image: nginx:1.27-alpine
+          ports:
             - name: http
               containerPort: 3000
               protocol: TCP
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
           {{- with .Values.browserless.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
@@ -53,8 +68,14 @@ spec:
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.browserless.resources }}
           resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: {{ include "openclaw-stack.browserlessName" . }}-nginx
 {{- end }}
