@@ -64,6 +64,28 @@ jobs:
           sed -i "s/^ARG OPENCLAW_VERSION=.*/ARG OPENCLAW_VERSION=${{ env.LATEST_VERSION }}/" containers/openclaw/Dockerfile
           echo "Dockerfile의 OPENCLAW_VERSION을 ${{ env.LATEST_VERSION }}으로 업데이트했습니다."
 
+      - name: Update Helm chart versions
+        if: steps.check_version.outputs.changes == 'true'
+        run: |
+          CHART_DIR="helm-charts/openclaw-stack"
+          if [ ! -f "$CHART_DIR/Chart.yaml" ]; then
+            echo "::warning::Helm chart not found at $CHART_DIR, skipping chart update"
+            exit 0
+          fi
+
+          # Chart.yaml appVersion 업데이트
+          sed -i "s/^appVersion:.*/appVersion: \"${{ env.LATEST_VERSION }}\"/" "$CHART_DIR/Chart.yaml"
+          echo "Chart.yaml appVersion을 ${{ env.LATEST_VERSION }}으로 업데이트했습니다."
+
+          # Chart.yaml version에 build metadata 추가 (예: 0.1.0+2026.2.13)
+          CHART_VERSION=$(grep "^version:" "$CHART_DIR/Chart.yaml" | awk '{print $2}' | cut -d'+' -f1)
+          sed -i "s/^version:.*/version: ${CHART_VERSION}+${{ env.LATEST_VERSION }}/" "$CHART_DIR/Chart.yaml"
+          echo "Chart.yaml version을 ${CHART_VERSION}+${{ env.LATEST_VERSION }}으로 업데이트했습니다."
+
+          # values.yaml openclaw image tag 업데이트
+          sed -i "/^  image:/,/^  [a-z]/ s/tag: .*/tag: \"${{ env.LATEST_VERSION }}\"/" "$CHART_DIR/values.yaml"
+          echo "values.yaml openclaw image.tag를 ${{ env.LATEST_VERSION }}으로 업데이트했습니다."
+
       - name: Set branch name
         if: steps.check_version.outputs.changes == 'true'
         run: |
@@ -75,7 +97,7 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git checkout -b "${BRANCH_NAME}"
-          git add containers/openclaw/Dockerfile
+          git add containers/openclaw/Dockerfile helm-charts/openclaw-stack/Chart.yaml helm-charts/openclaw-stack/values.yaml
           git commit -m "chore: openclaw 업데이트 (v${{ env.LATEST_VERSION }})"
 
       - name: Push changes and create PR
