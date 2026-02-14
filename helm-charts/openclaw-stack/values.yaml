@@ -93,8 +93,6 @@ browserless:
       value: "true"
     - name: EXIT_ON_HEALTH_FAILURE
       value: "true"
-    - name: PREBOOT_CHROME
-      value: "true"
     - name: MAX_CPU_PERCENT
       value: "90"
     - name: MAX_MEMORY_PERCENT
@@ -105,7 +103,7 @@ browserless:
     tokenKey: browserless-token
   livenessProbe:
     httpGet:
-      path: /health
+      path: /json/version
       port: http
     initialDelaySeconds: 20
     periodSeconds: 10
@@ -113,7 +111,7 @@ browserless:
     failureThreshold: 5
   readinessProbe:
     httpGet:
-      path: /health
+      path: /json/version
       port: http
     initialDelaySeconds: 5
     periodSeconds: 5
