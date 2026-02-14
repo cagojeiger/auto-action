@@ -10,6 +10,7 @@ Thumbs.db
 # IDE 및 편집기 관련
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
 *~
