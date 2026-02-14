@@ -38,7 +38,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 # =============================================================================
 # 3) Security: run as non-root
 # =============================================================================
-RUN useradd -m -s /bin/bash openclaw
+RUN useradd -m -s /bin/bash openclaw && \
+    mkdir -p /home/openclaw/.openclaw && \
+    chown -R openclaw:openclaw /home/openclaw
 USER openclaw
 WORKDIR /home/openclaw
 

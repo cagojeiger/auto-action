@@ -61,10 +61,18 @@ apps:
       enabled: true
       port: 18789
       targetPort: 18789
+    podSecurityContext:
+      fsGroup: 1000
     persistence:
       enabled: true
-      mountPath: /home/openclaw/.openclaw
       size: 5Gi
+    volumeMounts:
+      - name: openclaw-data
+        mountPath: /home/openclaw/.openclaw
+    volumes:
+      - name: openclaw-data
+        persistentVolumeClaim:
+          claimName: openclaw
 ```
 
 ## 사전 설치된 도구
