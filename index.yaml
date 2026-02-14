@@ -3,7 +3,7 @@ entries:
   code-server:
   - apiVersion: v2
     appVersion: 4.109.2
-    created: '2026-02-14T08:51:40.50289834Z'
+    created: '2026-02-14T08:57:02.123951247Z'
     description: A Helm chart for coder/code-server
     digest: 0e32c9b56550ceb8a00d8404a4eb0aba13539c23909dd4a18dd3635add285ee2
     name: code-server
@@ -13,7 +13,7 @@ entries:
     version: 3.32.1+4.109.2
   - apiVersion: v2
     appVersion: 4.108.1
-    created: '2026-02-14T08:51:40.502307968Z'
+    created: '2026-02-14T08:57:02.123106138Z'
     description: A Helm chart for coder/code-server
     digest: 76f8ad1fccff30bd28b269239dbe5ac2c1f20ba54250f3418193fb35ce5c4e35
     name: code-server
@@ -24,7 +24,17 @@ entries:
   openclaw-stack:
   - apiVersion: v2
     appVersion: 2026.2.13
-    created: '2026-02-14T08:51:40.504095585Z'
+    created: '2026-02-14T08:57:02.127527909Z'
+    description: OpenClaw and Browserless stack chart
+    digest: 318acdc05d6230c265fafcac6e4b43f8e1baaac576092313d4f4d2d2ce99dec8
+    name: openclaw-stack
+    type: application
+    urls:
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.2+2026.2.13.tgz
+    version: 0.1.2+2026.2.13
+  - apiVersion: v2
+    appVersion: 2026.2.13
+    created: '2026-02-14T08:57:02.126225246Z'
     description: OpenClaw and Browserless stack chart
     digest: 1bf4a4f2b0e2662f8bea36bd4ea25e9de7ee369e59b569c1305a0797f6821531
     name: openclaw-stack
@@ -34,7 +44,7 @@ entries:
     version: 0.1.1+2026.2.13
   - apiVersion: v2
     appVersion: 2026.2.13
-    created: '2026-02-14T08:51:40.503508149Z'
+    created: '2026-02-14T08:57:02.124918734Z'
     description: OpenClaw and Browserless stack chart
     digest: 174ce1ec8b3b9b5aa54bbfe350c5c9a5d30b4e5ea419ac65007b84a6fd80b35f
     name: openclaw-stack
@@ -45,7 +55,7 @@ entries:
   quick-deploy:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-02-14T08:51:40.504615777Z'
+    created: '2026-02-14T08:57:02.128213412Z'
     description: Rapid multi-application deployment template for Kubernetes
     digest: 2be9ba4c228dc1db6d0fc7f178d6ccc5b9c7f09bd8cdd519a3a000de3dfa8dae
     keywords:
@@ -58,4 +68,4 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/quick-deploy-0.1.14.tgz
     version: 0.1.14
-generated: '2026-02-14T08:51:40.501641413Z'
+generated: '2026-02-14T08:57:02.121847425Z'
