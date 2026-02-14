@@ -2,5 +2,5 @@ apiVersion: v2
 name: openclaw-stack
 description: OpenClaw and Browserless stack chart
 type: application
-version: 0.1.0+2026.2.13
+version: 0.1.1+2026.2.13
 appVersion: "2026.2.13"
