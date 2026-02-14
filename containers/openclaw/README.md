@@ -13,112 +13,60 @@ docker run -d \
   cagojeiger/openclaw:latest
 ```
 
-http://localhost:18789 에서 Control UI(WebChat)에 접속합니다.
+http://localhost:18789 에서 Control UI에 접속합니다.
 
 ## 환경 변수
 
-### Gateway
-
 | 변수 | 필수 | 설명 |
 |---|---|---|
-| `OPENCLAW_GATEWAY_TOKEN` | **필수** | Gateway 접속 토큰 (auth mode=token) |
+| `OPENCLAW_GATEWAY_TOKEN` | **필수** | Gateway 접속 토큰 |
+| `ANTHROPIC_API_KEY` | | Anthropic API 키 |
+| `ANTHROPIC_BASE_URL` | | 커스텀 Anthropic 엔드포인트 |
+| `OPENAI_API_KEY` | | OpenAI API 키 |
+| `OPENAI_BASE_URL` | | 커스텀 OpenAI 엔드포인트 |
+| `OPENROUTER_API_KEY` | | OpenRouter API 키 |
+| `GEMINI_API_KEY` | | Google Gemini API 키 |
+| `SLACK_BOT_TOKEN` | | Slack 봇 토큰 (`xoxb-...`) |
+| `SLACK_APP_TOKEN` | | Slack 앱 토큰 (`xapp-...`) |
+| `TELEGRAM_BOT_TOKEN` | | Telegram 봇 토큰 |
+| `DISCORD_BOT_TOKEN` | | Discord 봇 토큰 |
 
-### AI 프로바이더 (최소 하나 필요)
+AI 프로바이더 키는 최소 하나 필요합니다.
 
-| 변수 | 설명 |
-|---|---|
-| `ANTHROPIC_API_KEY` | Anthropic API 키 |
-| `ANTHROPIC_BASE_URL` | Anthropic API 엔드포인트 (커스텀 프록시 사용 시) |
-| `OPENAI_API_KEY` | OpenAI API 키 |
-| `OPENAI_BASE_URL` | OpenAI API 엔드포인트 (커스텀 프록시 사용 시) |
-| `OPENROUTER_API_KEY` | OpenRouter API 키 (여러 모델 라우팅) |
-| `GEMINI_API_KEY` | Google Gemini API 키 |
-| `COPILOT_GITHUB_TOKEN` | GitHub Copilot 토큰 |
+## 데이터
 
-### 채널 (선택)
+`/home/openclaw/.openclaw`를 마운트하면 설정, 대화 기록, 크레덴셜이 보존됩니다.
 
-| 변수 | 설명 |
-|---|---|
-| `SLACK_BOT_TOKEN` | Slack 봇 토큰 (`xoxb-...`) |
-| `SLACK_APP_TOKEN` | Slack 앱 토큰 (`xapp-...`, Socket Mode용) |
-| `TELEGRAM_BOT_TOKEN` | Telegram 봇 토큰 |
-| `DISCORD_BOT_TOKEN` | Discord 봇 토큰 |
-
-### 도구 (선택)
-
-| 변수 | 설명 |
-|---|---|
-| `BRAVE_API_KEY` | 웹 검색용 Brave API 키 |
-
-## 데이터 볼륨
-
-`/home/openclaw/.openclaw` 하나만 마운트하면 모든 상태가 보존됩니다:
-
-- `openclaw.json` - 메인 설정
-- `credentials/` - OAuth 토큰, WhatsApp 크레덴셜
-- `agents/` - 에이전트 메모리, 대화 세션 로그
-- `devices/` - 디바이스 페어링 정보
-- `cron/` - 예약 작업
-
-## Docker Compose
+## Kubernetes (quick-deploy)
 
 ```yaml
-services:
+apps:
   openclaw:
-    image: cagojeiger/openclaw:latest
-    ports:
-      - "18789:18789"
-    volumes:
-      - openclaw-data:/home/openclaw/.openclaw
-    environment:
-      # Gateway (필수)
-      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
-      # AI 프로바이더 (최소 하나)
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      # - ANTHROPIC_BASE_URL=https://my-proxy.example.com  # 커스텀 엔드포인트
-      # - OPENAI_API_KEY=${OPENAI_API_KEY}
-      # - OPENAI_BASE_URL=https://my-proxy.example.com/v1  # 커스텀 엔드포인트
-      # 채널 (선택)
-      # - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
-      # - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
-    restart: unless-stopped
-
-volumes:
-  openclaw-data:
-```
-
-## Kubernetes (PVC)
-
-```yaml
-volumeMounts:
-  - name: openclaw-data
-    mountPath: /home/openclaw/.openclaw
+    enabled: true
+    image:
+      repository: cagojeiger/openclaw
+      tag: "2026.2.9"
+    env:
+      - name: OPENCLAW_GATEWAY_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: openclaw-secrets
+            key: gateway-token
+      - name: ANTHROPIC_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: openclaw-secrets
+            key: anthropic-api-key
+    service:
+      enabled: true
+      port: 18789
+      targetPort: 18789
+    persistence:
+      enabled: true
+      mountPath: /home/openclaw/.openclaw
+      size: 5Gi
 ```
 
 ## 사전 설치된 도구
 
-에이전트가 `exec` tool로 바로 사용할 수 있는 시스템 패키지:
-
-| 도구 | 용도 |
-|---|---|
-| `git` | 코드 관리, 레포 클론 |
-| `gh` | GitHub CLI (PR, 이슈, 릴리즈 관리) |
-| `curl`, `wget` | HTTP 요청, 파일 다운로드 |
-| `jq` | JSON 파싱 |
-| `python3` | 스크립팅 |
-| `ripgrep` (`rg`) | 빠른 코드/로그 검색 |
-| `ffmpeg` | 오디오/비디오 처리 (음성 메모 변환 등) |
-| `imagemagick` (`convert`) | 이미지 처리/변환 |
-| `unzip`, `zip` | 아카이브 파일 처리 |
-| `openssh-client` | SSH 접속 |
-
-## 포트
-
-| 포트 | 설명 |
-|---|---|
-| 18789 | Gateway (WebSocket + Control UI + WebChat) |
-
-## 지원 아키텍처
-
-- linux/amd64
-- linux/arm64
+`git`, `gh`, `curl`, `jq`, `python3`, `ripgrep`, `ffmpeg`, `imagemagick`, `pandoc`, `poppler-utils`, `unzip`, `zip`, `openssh-client`

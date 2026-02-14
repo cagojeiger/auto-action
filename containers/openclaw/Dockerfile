@@ -10,9 +10,11 @@ ARG OPENCLAW_VERSION
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       git openssh-client ca-certificates \
-      curl wget jq python3 \
+      curl jq python3 \
       unzip zip \
       ffmpeg imagemagick \
+      poppler-utils \
+      pandoc \
       ripgrep && \
     # npm install requires git+ssh redirect (@whiskeysockets/libsignal-node)
     git config --global url."https://github.com/".insteadOf "ssh://git@github.com/" && \
