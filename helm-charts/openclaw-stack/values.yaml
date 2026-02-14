@@ -29,6 +29,10 @@ openclaw:
     gatewayTokenKey: gateway-token
     litellmApiKeyKey: litellm-api-key
     browserlessApiKeyKey: browserless-api-key
+  gateway:
+    mode: "remote"
+  tools:
+    profile: "full"
   litellm:
     baseUrl: "http://litellm:4000/v1"
     model:

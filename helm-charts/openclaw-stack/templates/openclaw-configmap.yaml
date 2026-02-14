@@ -10,6 +10,7 @@ data:
   openclaw.json: |
     {
       "gateway": {
+        "mode": "{{ .Values.openclaw.gateway.mode }}",
         "controlUi": {
           "allowInsecureAuth": true
         }
@@ -18,6 +19,9 @@ data:
         "defaults": {
           "model": {
             "primary": "litellm/{{ .Values.openclaw.litellm.model.id }}"
+          },
+          "tools": {
+            "profile": "{{ .Values.openclaw.tools.profile }}"
           }
         }
       },
@@ -42,6 +46,7 @@ data:
       },
       "browser": {
         "enabled": {{ .Values.browserless.enabled }},
+        "attachOnly": true,
         "defaultProfile": "browserless",
         "profiles": {
           "browserless": {
