@@ -32,6 +32,8 @@ spec:
             {{- with .Values.browserless.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+            - name: EXTERNAL
+              value: "ws://{{ include "openclaw-stack.browserlessName" . }}:{{ .Values.browserless.service.port }}"
             {{- if .Values.browserless.auth.enabled }}
             - name: TOKEN
               valueFrom:
