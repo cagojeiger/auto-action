@@ -92,11 +92,6 @@ openclaw:
     existingClaim: ""
   init:
     enabled: true
-    forceBootstrap: false
-    image:
-      repository: busybox
-      tag: "1.36"
-      pullPolicy: IfNotPresent
   livenessProbe:
     httpGet:
       path: /
