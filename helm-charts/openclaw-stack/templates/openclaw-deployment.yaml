@@ -35,26 +35,26 @@ spec:
       {{- end }}
       {{- if and .Values.openclaw.init.enabled .Values.openclaw.persistence.enabled }}
       initContainers:
-        - name: bootstrap
-          image: "{{ .Values.openclaw.init.image.repository }}:{{ .Values.openclaw.init.image.tag }}"
-          imagePullPolicy: {{ .Values.openclaw.init.image.pullPolicy }}
+        - name: config-sync
+          image: "{{ .Values.openclaw.image.repository }}:{{ .Values.openclaw.image.tag }}"
+          imagePullPolicy: {{ .Values.openclaw.image.pullPolicy }}
           command:
             - sh
             - -c
             - |
-              {{- if .Values.openclaw.init.forceBootstrap }}
-              echo "Force bootstrap enabled, resetting configuration..."
-              rm -f /data/.initialized
-              {{- end }}
-              if [ -f /data/.initialized ]; then
-                echo "Already initialized, skipping bootstrap."
-                exit 0
-              fi
-              echo "Bootstrapping openclaw configuration..."
               mkdir -p /data
-              cp /config/openclaw.json /data/openclaw.json
-              touch /data/.initialized
-              echo "Bootstrap complete."
+              if [ -f /data/openclaw.json ] && jq empty /data/openclaw.json 2>/dev/null; then
+                cp /data/openclaw.json /data/openclaw.json.bak
+                echo "Merging ConfigMap onto existing config..."
+                jq -s '.[0] * .[1]' /data/openclaw.json /config/openclaw.json > /tmp/merged.json
+                mv /tmp/merged.json /data/openclaw.json
+                echo "Configuration merged (backup: openclaw.json.bak)."
+              else
+                [ -f /data/openclaw.json ] && echo "Existing config is invalid JSON, replacing..."
+                echo "Initializing config from ConfigMap..."
+                cp /config/openclaw.json /data/openclaw.json
+                echo "Configuration initialized."
+              fi
           volumeMounts:
             - name: data
               mountPath: /data
