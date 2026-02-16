@@ -8,7 +8,7 @@ openclaw:
   replicaCount: 1
   image:
     repository: cagojeiger/openclaw
-    tag: "2026.2.13"
+    tag: "2026.2.14"
     pullPolicy: IfNotPresent
   command:
     - openclaw
@@ -123,7 +123,7 @@ browserless:
   replicaCount: 1
   image:
     repository: ghcr.io/browserless/chromium
-    tag: "latest"
+    tag: "2026.2.14"
     pullPolicy: Always
   nginxImage:
     repository: nginx
