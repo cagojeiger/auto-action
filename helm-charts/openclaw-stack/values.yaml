@@ -128,7 +128,7 @@ browserless:
   replicaCount: 1
   image:
     repository: ghcr.io/browserless/chromium
-    tag: "2026.2.14"
+    tag: "latest"
     pullPolicy: Always
   nginxImage:
     repository: nginx
