@@ -38,3 +38,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "openclaw-stack.browserlessName" -}}
 {{- printf "%s-browserless" (include "openclaw-stack.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{- define "openclaw-stack.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{- default (include "openclaw-stack.fullname" .) .Values.serviceAccount.name -}}
+{{- else -}}
+{{- default "default" .Values.serviceAccount.name -}}
+{{- end -}}
+{{- end -}}

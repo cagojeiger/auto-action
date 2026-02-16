@@ -20,6 +20,8 @@ spec:
         {{- include "openclaw-stack.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: browserless
     spec:
+      serviceAccountName: {{ include "openclaw-stack.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
