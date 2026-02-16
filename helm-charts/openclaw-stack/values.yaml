@@ -3,6 +3,11 @@ fullnameOverride: ""
 
 imagePullSecrets: []
 
+serviceAccount:
+  create: true
+  name: ""
+  automountServiceAccountToken: false
+
 openclaw:
   enabled: true
   replicaCount: 1
