@@ -122,6 +122,8 @@ openclaw:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  extraVolumeMounts: []
+  extraVolumes: []
 
 browserless:
   enabled: true
