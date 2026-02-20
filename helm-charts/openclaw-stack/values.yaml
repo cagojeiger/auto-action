@@ -13,7 +13,7 @@ openclaw:
   replicaCount: 1
   image:
     repository: cagojeiger/openclaw
-    tag: "2026.2.17"
+    tag: "2026.2.19-2"
     pullPolicy: IfNotPresent
   command:
     - openclaw
