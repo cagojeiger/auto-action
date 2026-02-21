@@ -22,8 +22,6 @@ cat >"$SETTINGS_FILE" <<'EOF'
         "**/.zshrc": true,
         "**/.p10k.zsh": true,
         "**/.cache": true,
-        "**/.config": true,
-        "**/.local": true,
         "**/.npm": true
     }
 }
