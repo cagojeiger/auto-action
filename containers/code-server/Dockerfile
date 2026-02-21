@@ -274,8 +274,9 @@ RUN cat >> /usr/lib/code-server/lib/vscode/out/vs/code/browser/workbench/workben
 }
 CSSEOF
 
-RUN mkdir -p /etc/entrypoint.d
+RUN mkdir -p /etc/entrypoint.d /etc/zsh
 
+COPY defaults.zsh               /etc/zsh/defaults.zsh
 COPY setup-zsh.sh               /etc/entrypoint.d/10-setup-zsh.sh
 COPY setup-vscode-settings.sh   /etc/entrypoint.d/20-setup-vscode-settings.sh
 COPY p10k.zsh                   /etc/entrypoint.d/p10k.zsh
