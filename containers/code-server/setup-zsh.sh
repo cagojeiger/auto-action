@@ -14,6 +14,8 @@ fi
 
 export ZSH="/usr/share/oh-my-zsh"
 export ZSH_CACHE_DIR="$HOME/.cache/oh-my-zsh"
+export ZSH_COMPDUMP="$ZSH_CACHE_DIR/.zcompdump"
+export HISTFILE="$ZSH_CACHE_DIR/.zsh_history"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 source "$ZSH/oh-my-zsh.sh"

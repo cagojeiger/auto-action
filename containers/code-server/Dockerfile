@@ -276,11 +276,8 @@ CSSEOF
 
 RUN mkdir -p /etc/entrypoint.d
 
-COPY setup-zsh.sh           /etc/entrypoint.d/10-setup-zsh.sh
-COPY setup-npm-global.sh    /etc/entrypoint.d/20-setup-npm-global.sh
-COPY setup-go.sh            /etc/entrypoint.d/30-setup-go.sh
-COPY setup-python-pipx.sh       /etc/entrypoint.d/40-setup-python-pipx.sh
-COPY setup-vscode-settings.sh   /etc/entrypoint.d/50-setup-vscode-settings.sh
+COPY setup-zsh.sh               /etc/entrypoint.d/10-setup-zsh.sh
+COPY setup-vscode-settings.sh   /etc/entrypoint.d/20-setup-vscode-settings.sh
 COPY p10k.zsh                   /etc/entrypoint.d/p10k.zsh
 
 COPY gen_kube_config.sh     /tmp/gen_kube_config.sh

@@ -14,7 +14,12 @@ cat >"$SETTINGS_FILE" <<'EOF'
 {
     "workbench.colorTheme": "Default Dark Modern",
     "terminal.integrated.fontFamily": "'MesloLGS NF', monospace",
-    "terminal.integrated.defaultProfile.linux": "zsh"
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "files.exclude": {
+        "**/.bash_logout": true,
+        "**/.bashrc": true,
+        "**/.profile": true
+    }
 }
 EOF
 
