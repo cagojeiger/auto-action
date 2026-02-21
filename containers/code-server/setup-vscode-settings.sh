@@ -18,7 +18,9 @@ cat >"$SETTINGS_FILE" <<'EOF'
     "files.exclude": {
         "**/.bash_logout": true,
         "**/.bashrc": true,
-        "**/.profile": true
+        "**/.profile": true,
+        "**/.zshrc": true,
+        "**/.p10k.zsh": true
     }
 }
 EOF
