@@ -27,11 +27,4 @@ fi
 [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && source /usr/share/doc/fzf/examples/key-bindings.zsh
 [ -f /usr/share/doc/fzf/examples/completion.zsh ] && source /usr/share/doc/fzf/examples/completion.zsh
 
-alias k='kubectl'
-alias kns='kubectl config set-context --current --namespace'
-alias kctx='kubectl config use-context'
-alias dc='docker compose'
-alias ll='ls -alFh'
-alias la='ls -A'
-
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
