@@ -282,7 +282,6 @@ COPY setup-vscode-settings.sh   /etc/entrypoint.d/20-setup-vscode-settings.sh
 COPY p10k.zsh                   /etc/entrypoint.d/p10k.zsh
 
 COPY gen_kube_config.sh     /tmp/gen_kube_config.sh
-COPY install-claude-code.sh /tmp/install-claude-code.sh
 
 RUN chmod +x /etc/entrypoint.d/*.sh /tmp/*.sh && \
     chown coder:coder /etc/entrypoint.d/* /tmp/*.sh
