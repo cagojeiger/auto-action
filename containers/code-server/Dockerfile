@@ -223,17 +223,70 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
 RUN apt-get update && apt-get install -y pipx bash-completion tig fzf make tree pre-commit && \
     rm -rf /var/lib/apt/lists/*
 
-# 스크립트들 복사
-COPY gen_kube_config.sh /tmp/gen_kube_config.sh
-COPY setup-npm-global.sh /tmp/setup-npm-global.sh
-COPY install-claude-code.sh /tmp/install-claude-code.sh
-COPY setup-python-pipx.sh /tmp/setup-python-pipx.sh
-COPY setup-go.sh /tmp/setup-go.sh
+RUN git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git /usr/share/oh-my-zsh && \
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git /usr/share/oh-my-zsh/custom/themes/powerlevel10k && \
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git /usr/share/oh-my-zsh/custom/plugins/zsh-autosuggestions && \
+    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git /usr/share/oh-my-zsh/custom/plugins/zsh-syntax-highlighting && \
+    rm -rf /usr/share/oh-my-zsh/.git \
+           /usr/share/oh-my-zsh/custom/themes/powerlevel10k/.git \
+           /usr/share/oh-my-zsh/custom/plugins/zsh-autosuggestions/.git \
+           /usr/share/oh-my-zsh/custom/plugins/zsh-syntax-highlighting/.git && \
+    chsh -s /usr/bin/zsh coder
 
-# 실행 권한 부여 및 소유권 설정
-RUN chmod +x /tmp/*.sh && chown coder:coder /tmp/*.sh
+# MesloLGS NF 웹폰트 설치 (powerlevel10k 아이콘 브라우저 렌더링용)
+RUN mkdir -p /usr/lib/code-server/lib/vscode/out/vs/code/browser/workbench/fonts && \
+    cd /usr/lib/code-server/lib/vscode/out/vs/code/browser/workbench/fonts && \
+    curl -fsSLO "https://github.com/uncon/MesloLGSNF-web-fonts/raw/874c562a09457f52242b36ba5f7f2a85557131de/fonts/MesloLGS-NF-Regular.woff2" && \
+    curl -fsSLO "https://github.com/uncon/MesloLGSNF-web-fonts/raw/874c562a09457f52242b36ba5f7f2a85557131de/fonts/MesloLGS-NF-Bold.woff2" && \
+    curl -fsSLO "https://github.com/uncon/MesloLGSNF-web-fonts/raw/874c562a09457f52242b36ba5f7f2a85557131de/fonts/MesloLGS-NF-Italic.woff2" && \
+    curl -fsSLO "https://github.com/uncon/MesloLGSNF-web-fonts/raw/874c562a09457f52242b36ba5f7f2a85557131de/fonts/MesloLGS-NF-Bold-Italic.woff2"
 
-# 환경 변수 설정 (빌드 시점에 고정)
+# @font-face CSS를 workbench.css에 append (브라우저에서 MesloLGS NF 사용 가능하게)
+RUN cat >> /usr/lib/code-server/lib/vscode/out/vs/code/browser/workbench/workbench.css << 'CSSEOF'
+
+@font-face {
+    font-family: 'MesloLGS NF';
+    src: url('fonts/MesloLGS-NF-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'MesloLGS NF';
+    src: url('fonts/MesloLGS-NF-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'MesloLGS NF';
+    src: url('fonts/MesloLGS-NF-Italic.woff2') format('woff2');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'MesloLGS NF';
+    src: url('fonts/MesloLGS-NF-Bold-Italic.woff2') format('woff2');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+CSSEOF
+
+RUN mkdir -p /etc/entrypoint.d /etc/zsh
+
+COPY defaults.zsh               /etc/zsh/defaults.zsh
+COPY setup-zsh.sh               /etc/entrypoint.d/10-setup-zsh.sh
+COPY setup-vscode-settings.sh   /etc/entrypoint.d/20-setup-vscode-settings.sh
+COPY p10k.zsh                   /etc/entrypoint.d/p10k.zsh
+
+COPY gen_kube_config.sh     /tmp/gen_kube_config.sh
+
+RUN chmod +x /etc/entrypoint.d/*.sh /tmp/*.sh && \
+    chown coder:coder /etc/entrypoint.d/* /tmp/*.sh
+
+ENV ENTRYPOINTD=/etc/entrypoint.d
 ENV NPM_CONFIG_PREFIX="/home/coder/.npm-global"
 ENV PIPX_HOME="/home/coder/.local/pipx"
 ENV PIPX_BIN_DIR="/home/coder/.local/bin"
