@@ -4,13 +4,7 @@ set -e
 SETTINGS_DIR="$HOME/.local/share/code-server/User"
 SETTINGS_FILE="$SETTINGS_DIR/settings.json"
 
-if [ -f "$SETTINGS_FILE" ]; then
-	exit 0
-fi
-
-mkdir -p "$SETTINGS_DIR"
-
-cat >"$SETTINGS_FILE" <<'EOF'
+read -r -d '' DEFAULTS <<'JSONEOF' || true
 {
     "workbench.colorTheme": "Default Dark Modern",
     "terminal.integrated.fontFamily": "'MesloLGS NF', monospace",
@@ -25,6 +19,15 @@ cat >"$SETTINGS_FILE" <<'EOF'
         "**/.npm": true
     }
 }
-EOF
+JSONEOF
 
-echo "✓ vscode settings configured"
+mkdir -p "$SETTINGS_DIR"
+
+if [ -f "$SETTINGS_FILE" ]; then
+	jq -s '.[0] * .[1]' <(echo "$DEFAULTS") "$SETTINGS_FILE" >"$SETTINGS_FILE.tmp"
+	mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
+	echo "✓ vscode settings merged"
+else
+	echo "$DEFAULTS" >"$SETTINGS_FILE"
+	echo "✓ vscode settings created"
+fi
