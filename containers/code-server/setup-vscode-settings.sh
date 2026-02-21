@@ -20,7 +20,11 @@ cat >"$SETTINGS_FILE" <<'EOF'
         "**/.bashrc": true,
         "**/.profile": true,
         "**/.zshrc": true,
-        "**/.p10k.zsh": true
+        "**/.p10k.zsh": true,
+        "**/.cache": true,
+        "**/.config": true,
+        "**/.local": true,
+        "**/.npm": true
     }
 }
 EOF
