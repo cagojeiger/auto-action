@@ -3,7 +3,7 @@ entries:
   code-server:
   - apiVersion: v2
     appVersion: 4.109.2
-    created: '2026-02-24T00:18:28.21730082Z'
+    created: '2026-02-25T00:19:50.4682515Z'
     description: A Helm chart for coder/code-server
     digest: 0e32c9b56550ceb8a00d8404a4eb0aba13539c23909dd4a18dd3635add285ee2
     name: code-server
@@ -13,7 +13,7 @@ entries:
     version: 3.32.1+4.109.2
   - apiVersion: v2
     appVersion: 4.108.1
-    created: '2026-02-24T00:18:28.216835162Z'
+    created: '2026-02-25T00:19:50.467650307Z'
     description: A Helm chart for coder/code-server
     digest: 76f8ad1fccff30bd28b269239dbe5ac2c1f20ba54250f3418193fb35ce5c4e35
     name: code-server
@@ -23,18 +23,28 @@ entries:
     version: 3.32.0+4.108.1
   openclaw-stack:
   - apiVersion: v2
-    appVersion: 2026.2.15
-    created: '2026-02-24T00:18:28.224522106Z'
+    appVersion: 2026.2.19-2
+    created: '2026-02-25T00:19:50.473243811Z'
     description: OpenClaw and Browserless stack chart
-    digest: ef568eb251ba86429b3a0d625a9e81f3349817f1732a0f2516f3c6824988bd4f
+    digest: dd4308244ea996852f1354a34037718bd584adbe8d0e354040fe6dff3ea7e086
     name: openclaw-stack
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.15.tgz
-    version: 0.5.0+2026.2.15
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.19-2.tgz
+    version: 0.5.0+2026.2.19-2
+  - apiVersion: v2
+    appVersion: 2026.2.21-2
+    created: '2026-02-25T00:19:50.473962985Z'
+    description: OpenClaw and Browserless stack chart
+    digest: 3c7c3e033a480252b39be3fb87c1160c000d09e87b61fe4d54218c27e5dd4e82
+    name: openclaw-stack
+    type: application
+    urls:
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.21-2.tgz
+    version: 0.5.0+2026.2.21-2
   - apiVersion: v2
     appVersion: 2026.2.22-2
-    created: '2026-02-24T00:18:28.22573168Z'
+    created: '2026-02-25T00:19:50.474669165Z'
     description: OpenClaw and Browserless stack chart
     digest: 9c68dc3f864d7cce4bd133cf769aa0ac2fdd474cebda3cab878546bec7d59e82
     name: openclaw-stack
@@ -42,6 +52,16 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.22-2.tgz
     version: 0.5.0+2026.2.22-2
+  - apiVersion: v2
+    appVersion: 2026.2.23
+    created: '2026-02-25T00:19:50.475368982Z'
+    description: OpenClaw and Browserless stack chart
+    digest: 76dd3c20b21ba29904fb90bd6898cab465f9334c7a76981dcc33f2b5d2d092a0
+    name: openclaw-stack
+    type: application
+    urls:
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.23.tgz
+    version: 0.5.0+2026.2.23
   - apiVersion: v2
     appVersion: 2026.2.14
     created: '2026-02-24T00:18:28.223074377Z'
@@ -53,16 +73,6 @@ entries:
     - https://cagojeiger.github.io/auto-action/openclaw-stack-0.4.0+2026.2.14.tgz
     version: 0.4.0+2026.2.14
   - apiVersion: v2
-    appVersion: 2026.2.15
-    created: '2026-02-24T00:18:28.223782748Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 9256fdc27ac96f4e9e2df65a813f264a8af32e51709b69874f2e658568b8b884
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.4.0+2026.2.15.tgz
-    version: 0.4.0+2026.2.15
-  - apiVersion: v2
     appVersion: 2026.2.13
     created: '2026-02-24T00:18:28.22163796Z'
     description: OpenClaw and Browserless stack chart
@@ -72,16 +82,6 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/openclaw-stack-0.3.0+2026.2.13.tgz
     version: 0.3.0+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.14
-    created: '2026-02-24T00:18:28.22236226Z'
-    description: OpenClaw and Browserless stack chart
-    digest: e9097aff207259104564a88000479e8ff21b0e5ddd63119188ede56d18103fac
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.3.0+2026.2.14.tgz
-    version: 0.3.0+2026.2.14
   - apiVersion: v2
     appVersion: 2026.2.13
     created: '2026-02-24T00:18:28.220906626Z'
@@ -104,7 +104,7 @@ entries:
     version: 0.2.0+2026.2.13
   - apiVersion: v2
     appVersion: 2026.2.13
-    created: '2026-02-19T00:19:15.3193381Z'
+    created: '2026-02-25T00:19:50.46889903Z'
     description: OpenClaw and Browserless stack chart
     digest: bf416403b4230e25156caf4a57c708649aaee8982b47b37dc47b9a9c157b5e52
     name: openclaw-stack
@@ -164,7 +164,7 @@ entries:
     version: 0.1.7+2026.2.13
   - apiVersion: v2
     appVersion: 2026.2.13
-    created: '2026-02-20T00:16:59.465453658Z'
+    created: '2026-02-25T00:19:50.472527844Z'
     description: OpenClaw and Browserless stack chart
     digest: 5388970e51ba8d1da6b46fbe0404653ae7ddd9a2d038b0a1f83a71f0ead56344
     name: openclaw-stack
@@ -174,7 +174,7 @@ entries:
     version: 0.1.6+2026.2.13
   - apiVersion: v2
     appVersion: 2026.2.13
-    created: '2026-02-18T09:27:46.488058741Z'
+    created: '2026-02-25T00:19:50.471946187Z'
     description: OpenClaw and Browserless stack chart
     digest: 5fa86b124ebbce2b4294b24d865e1895463beccd24376b2235500551cb4d9be7
     name: openclaw-stack
@@ -184,7 +184,7 @@ entries:
     version: 0.1.5+2026.2.13
   - apiVersion: v2
     appVersion: 2026.2.13
-    created: '2026-02-18T09:27:46.487434407Z'
+    created: '2026-02-25T00:19:50.470511102Z'
     description: OpenClaw and Browserless stack chart
     digest: 01fe5a50b45449bfbe6b3015faf25c711cb03549d9022a9d00e5640e62d064da
     name: openclaw-stack
@@ -194,7 +194,7 @@ entries:
     version: 0.1.4+2026.2.13
   - apiVersion: v2
     appVersion: 2026.2.13
-    created: '2026-02-17T00:19:17.640986126Z'
+    created: '2026-02-25T00:19:50.469989828Z'
     description: OpenClaw and Browserless stack chart
     digest: e21b33eb4d72c2ea7a41e238f535ea9e50015be12b7d24a1780c203cf0d2b077
     name: openclaw-stack
@@ -204,7 +204,7 @@ entries:
     version: 0.1.3+2026.2.13
   - apiVersion: v2
     appVersion: 2026.2.13
-    created: '2026-02-19T00:19:15.320105069Z'
+    created: '2026-02-25T00:19:50.469495064Z'
     description: OpenClaw and Browserless stack chart
     digest: 318acdc05d6230c265fafcac6e4b43f8e1baaac576092313d4f4d2d2ce99dec8
     name: openclaw-stack
@@ -235,7 +235,7 @@ entries:
   quick-deploy:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-02-24T00:18:28.226523041Z'
+    created: '2026-02-25T00:19:50.475867273Z'
     description: Rapid multi-application deployment template for Kubernetes
     digest: 2be9ba4c228dc1db6d0fc7f178d6ccc5b9c7f09bd8cdd519a3a000de3dfa8dae
     keywords:
@@ -248,4 +248,4 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/quick-deploy-0.1.14.tgz
     version: 0.1.14
-generated: '2026-02-24T00:18:28.216160364Z'
+generated: '2026-02-25T00:19:50.467023235Z'
