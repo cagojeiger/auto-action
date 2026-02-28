@@ -1,15 +1,22 @@
-# code-server with Kubernetes Tools
+# code-server with DevOps Tools
 
-웹 브라우저에서 사용할 수 있는 VS Code(code-server)와 Kubernetes 도구들을 포함한 Docker 이미지입니다.
+웹 브라우저에서 사용할 수 있는 VS Code(code-server)와 DevOps/클라우드 도구들을 포함한 Docker 이미지입니다.
 
 ## 포함된 도구
-- code-server (브라우저 기반 VS Code)
+
+- **에디터**: code-server (브라우저 기반 VS Code)
 - **VS Code Extensions (Offline Support)**:
   - Continue AI code assistant (pre-downloaded VSIX)
-- Kubernetes: kubectl, helm, k9s
-- GitOps: ArgoCD CLI
-- 개발 도구: Node.js LTS, Python 3.11, pipx, jq, yq, gh (GitHub CLI)
-- 컨테이너 도구: skopeo, mc (MinIO Client)
+- **쉘**: Oh My Zsh + Powerlevel10k + zsh-autosuggestions + zsh-syntax-highlighting
+- **Kubernetes**: kubectl, helm, k9s
+- **GitOps**: ArgoCD CLI
+- **IaC**: Terraform
+- **시크릿**: Vault CLI, SOPS
+- **클라우드**: AWS CLI v2
+- **컨테이너**: Docker CLI, Docker Compose, skopeo, mc (MinIO Client)
+- **런타임**: Node.js LTS, Python 3, Go
+- **AI 코딩**: OpenCode
+- **개발 도구**: jq, yq, gh (GitHub CLI), ripgrep (rg), pipx, fzf, tig, make, tree, pre-commit, direnv, bash-completion
 
 ## 빠른 시작
 
@@ -35,39 +42,34 @@ helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
 ## 환경 설정
 
 이미지에는 다음 환경 변수가 사전 설정되어 있습니다:
-- `PATH`: pipx와 npm global 경로 포함
+- `PATH`: Go, pipx, npm global 경로 포함
 - `NPM_CONFIG_PREFIX`: `/home/coder/.npm-global`
 - `PIPX_HOME`: `/home/coder/.local/pipx`
 - `PIPX_BIN_DIR`: `/home/coder/.local/bin`
 
-## 유용한 스크립트
+## 스크립트 및 설정 파일
 
-이미지에는 다음 스크립트들이 `/tmp/`에 포함되어 있습니다:
-- `gen_kube_config.sh` - Service Account를 사용한 kubeconfig 생성
-- `setup-npm-global.sh` - npm 전역 패키지 prefix 설정 (최초 1회 필요)
-- `setup-python-pipx.sh` - pipx PATH 설정 (최초 1회 필요)
-- `install-claude-code.sh` - Claude Code CLI 설치
+### 자동 실행 (entrypoint.d)
 
-**VS Code Extensions (오프라인 지원):**
+컨테이너 시작 시 `/etc/entrypoint.d/`의 스크립트가 자동 실행됩니다:
+- `10-setup-zsh.sh` — Oh My Zsh + Powerlevel10k 초기 설정
+- `20-setup-vscode-settings.sh` — VS Code 기본 설정 적용
+
+### 수동 실행
+
+- `/tmp/gen_kube_config.sh` — Service Account를 사용한 kubeconfig 생성
+
+### VS Code Extensions (오프라인 지원)
+
 - Continue AI extension VSIX: `/tmp/extensions/continue.vsix`
 
 사용 예시:
 ```bash
-# npm global 설정 (최초 1회)
-/tmp/setup-npm-global.sh
-
-# pipx PATH 설정 (최초 1회)
-/tmp/setup-python-pipx.sh
-
-# Claude Code CLI 설치
-/tmp/install-claude-code.sh
-
 # Continue AI extension 설치 (오프라인)
 code-server --install-extension /tmp/extensions/continue.vsix
 
-# 이후 pipx로 Python 도구 설치
+# pipx로 Python 도구 설치
 pipx install poetry
-pipx install black
 pipx install ruff
 ```
 

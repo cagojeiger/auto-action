@@ -37,11 +37,17 @@ containers/{name}/  →  {DOCKERHUB_USERNAME}/{name}:{version}
 | `containers/code-server/` | `cagojeiger/code-server:4.108.1` |
 | `containers/my-app/` | `cagojeiger/my-app:1.0.0` |
 
-### 버전 결정 규칙 (2단계, 완전 독립)
+### 버전 결정 규칙 (3단계 폴백)
 
-Docker 이미지 빌드는 **Dockerfile만** 참조합니다 (Helm Chart 독립).
+Docker 이미지 태그에 사용할 버전을 다음 순서로 결정합니다.
 
-1. **Dockerfile ARG** (명시적 버전)
+1. **Helm Chart appVersion** (최우선)
+   ```
+   helm-charts/{name}/Chart.yaml → appVersion 필드
+   ```
+   해당 컨테이너와 이름이 같은 Helm 차트가 있으면 `appVersion`을 사용합니다.
+
+2. **Dockerfile ARG** (폴백)
    ```dockerfile
    ARG {ANY}_VERSION=x.x.x
    ```
@@ -50,21 +56,19 @@ Docker 이미지 빌드는 **Dockerfile만** 참조합니다 (Helm Chart 독립)
 
    | Dockerfile | 추출 버전 |
    |------------|----------|
-   | `ARG CODE_SERVER_VERSION=4.108.1` | ✅ 4.108.1 |
+   | `ARG CODE_SERVER_VERSION=4.109.2` | ✅ 4.109.2 |
    | `ARG APP_VERSION=1.0.0` | ✅ 1.0.0 |
    | `ARG MY_TOOL_VERSION=2.3.4` | ✅ 2.3.4 |
    | `ARG VERSION=1.0.0` | ❌ 인식 안 됨 (`_VERSION` 패턴 필요) |
-   | `ARG CODE_SERVER_VERSION=v4.108.1` | ⚠️ `v` 제외하고 `4.108.1` |
+   | `ARG CODE_SERVER_VERSION=v4.109.2` | ⚠️ `v` 제외하고 `4.109.2` |
 
-2. **커밋 날짜** (폴백, 멱등성 보장)
+3. **날짜** (최종 폴백)
    ```bash
-   git log -1 --format=%cd --date=format:%Y.%m.%d -- containers/{name}/
-   # 예: 2026.01.20 (언제 빌드해도 동일!)
+   date +%Y.%m.%d
+   # 예: 2026.02.28
    ```
 
-> **참고**: Helm Chart appVersion은 Docker 버전 결정에 사용되지 않습니다.
-> Docker와 Helm은 각각 독립적으로 버전을 관리합니다.
-
+> **참고**: Helm Chart가 없는 컨테이너(예: file-fetcher)는 2단계부터 적용됩니다.
 ### 생성되는 태그
 
 ```
