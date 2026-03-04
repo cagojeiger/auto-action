@@ -169,18 +169,6 @@ RUN DIRENV_VERSION=$(curl -s https://api.github.com/repos/direnv/direnv/releases
     install -o root -g root -m 0755 direnv.linux-${TARGETARCH} /usr/local/bin/direnv && \
     rm -f direnv.linux-${TARGETARCH}
 
-# OpenCode 설치 (jq 사용 - QEMU 에뮬레이션에서 grep/cut 불안정)
-RUN OPENCODE_VERSION=$(curl -s https://api.github.com/repos/anomalyco/opencode/releases/latest | jq -r '.tag_name') && \
-    echo "➡️  Using OpenCode version: ${OPENCODE_VERSION}" && \
-    if [ "$TARGETARCH" = "amd64" ]; then \
-        OPENCODE_ARCH="x64"; \
-    elif [ "$TARGETARCH" = "arm64" ]; then \
-        OPENCODE_ARCH="arm64"; \
-    fi && \
-    curl -fsSL "https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-${OPENCODE_ARCH}.tar.gz" | \
-    tar -xz -C /tmp && \
-    install -o root -g root -m 0755 /tmp/opencode /usr/local/bin/opencode
-
 # =============================================
 # 2) Final Stage
 # =============================================
@@ -212,7 +200,6 @@ COPY --from=builder /usr/local/bin/terraform /usr/local/bin/terraform
 COPY --from=builder /usr/local/bin/vault     /usr/local/bin/vault
 COPY --from=builder /usr/local/bin/sops      /usr/local/bin/sops
 COPY --from=builder /usr/local/bin/direnv    /usr/local/bin/direnv
-COPY --from=builder /usr/local/bin/opencode  /usr/local/bin/opencode
 
 
 # Node.js 최신 버전 설치 (NodeSource 사용) - Python3도 함께 설치됨
@@ -279,6 +266,7 @@ RUN mkdir -p /etc/entrypoint.d /etc/zsh
 COPY defaults.zsh               /etc/zsh/defaults.zsh
 COPY setup-zsh.sh               /etc/entrypoint.d/10-setup-zsh.sh
 COPY setup-vscode-settings.sh   /etc/entrypoint.d/20-setup-vscode-settings.sh
+COPY setup-ai-tools.sh          /etc/entrypoint.d/30-setup-ai-tools.sh
 COPY p10k.zsh                   /etc/entrypoint.d/p10k.zsh
 
 COPY gen_kube_config.sh     /tmp/gen_kube_config.sh
@@ -290,13 +278,7 @@ ENV ENTRYPOINTD=/etc/entrypoint.d
 ENV NPM_CONFIG_PREFIX="/home/coder/.npm-global"
 ENV PIPX_HOME="/home/coder/.local/pipx"
 ENV PIPX_BIN_DIR="/home/coder/.local/bin"
-ENV PATH="/usr/local/go/bin:/home/coder/.local/bin:/home/coder/.npm-global/bin:${PATH}"
-
-# VS Code Extensions (Offline Support)
-ARG CACHEBUST=1
-RUN mkdir -p /tmp/extensions && \
-    curl -sL "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/Continue/vsextensions/continue/latest/vspackage" | \
-    gunzip > /tmp/extensions/continue.vsix
+ENV PATH="/usr/local/go/bin:/home/coder/.local/bin:/home/coder/.opencode/bin:/home/coder/.npm-global/bin:${PATH}"
 
 # coder 유저로 전환
 USER coder
