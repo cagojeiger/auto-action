@@ -5,8 +5,7 @@
 ## 포함된 도구
 
 - **에디터**: code-server (브라우저 기반 VS Code)
-- **VS Code Extensions (Offline Support)**:
-  - Continue AI code assistant (pre-downloaded VSIX)
+- **AI 코딩**: Claude Code, OpenCode (컨테이너 시작 시 자동 설치)
 - **쉘**: Oh My Zsh + Powerlevel10k + zsh-autosuggestions + zsh-syntax-highlighting
 - **Kubernetes**: kubectl, helm, k9s
 - **GitOps**: ArgoCD CLI
@@ -15,7 +14,6 @@
 - **클라우드**: AWS CLI v2
 - **컨테이너**: Docker CLI, Docker Compose, skopeo, mc (MinIO Client)
 - **런타임**: Node.js LTS, Python 3, Go
-- **AI 코딩**: OpenCode
 - **개발 도구**: jq, yq, gh (GitHub CLI), ripgrep (rg), pipx, fzf, tig, make, tree, pre-commit, direnv, bash-completion
 
 ## 빠른 시작
@@ -54,20 +52,14 @@ helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
 컨테이너 시작 시 `/etc/entrypoint.d/`의 스크립트가 자동 실행됩니다:
 - `10-setup-zsh.sh` — Oh My Zsh + Powerlevel10k 초기 설정
 - `20-setup-vscode-settings.sh` — VS Code 기본 설정 적용
+- `30-setup-ai-tools.sh` — Claude Code, OpenCode 자동 설치 (첫 부팅 시)
 
 ### 수동 실행
 
 - `/tmp/gen_kube_config.sh` — Service Account를 사용한 kubeconfig 생성
 
-### VS Code Extensions (오프라인 지원)
-
-- Continue AI extension VSIX: `/tmp/extensions/continue.vsix`
-
 사용 예시:
 ```bash
-# Continue AI extension 설치 (오프라인)
-code-server --install-extension /tmp/extensions/continue.vsix
-
 # pipx로 Python 도구 설치
 pipx install poetry
 pipx install ruff
