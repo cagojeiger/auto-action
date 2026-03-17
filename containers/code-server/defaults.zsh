@@ -18,7 +18,7 @@ export PIPX_HOME="$HOME/.local/pipx"
 export PIPX_BIN_DIR="$HOME/.local/bin"
 export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 
-export PATH="/usr/local/go/bin:$GOBIN:$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
+export PATH="/usr/local/go/bin:$GOBIN:$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.npm-global/bin:$PATH"
 
 if command -v direnv &>/dev/null; then
   eval "$(direnv hook zsh)"
