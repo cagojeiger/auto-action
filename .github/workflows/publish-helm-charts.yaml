@@ -114,37 +114,35 @@ jobs:
             fi
           done
 
-          # index.yaml 생성/병합
-          if [ -f index.yaml ]; then
-            helm repo index . --merge index.yaml --url https://cagojeiger.github.io/auto-action
-          else
-            helm repo index . --url https://cagojeiger.github.io/auto-action
-          fi
+          helm repo index . --url https://cagojeiger.github.io/auto-action
 
-          # index.yaml 정렬: build metadata 버전이 기본 선택되도록 정렬
-          # 정렬 기준: 1) base version 내림차순, 2) build metadata 있는 버전 우선
           python3 -c "
           import yaml
-          def sort_key(entry):
-              ver = entry.get('version', '')
+          def parse_version(ver):
               base = ver.split('+')[0]
-              has_metadata = '+' in ver
-              # base version 파싱 (예: 3.32.0 -> (3, 32, 0))
-              parts = []
+              metadata = ver.split('+')[1] if '+' in ver else ''
+              bp = []
               for p in base.split('.'):
-                  try: parts.append(int(p))
-                  except: parts.append(0)
-              while len(parts) < 3: parts.append(0)
-              # 정렬: base version 내림차순, build metadata 있으면 우선
-              return (-parts[0], -parts[1], -parts[2], 0 if has_metadata else 1)
+                  try: bp.append(int(p))
+                  except: bp.append(0)
+              while len(bp) < 3: bp.append(0)
+              mp = []
+              if metadata:
+                  for p in metadata.replace('-', '.').split('.'):
+                      try: mp.append(int(p))
+                      except: mp.append(0)
+              while len(mp) < 4: mp.append(0)
+              return bp, mp, bool(metadata)
+          def sort_key(entry):
+              bp, mp, has_meta = parse_version(entry.get('version', ''))
+              return (-bp[0], -bp[1], -bp[2], 0 if has_meta else 1, -mp[0], -mp[1], -mp[2], -mp[3])
           with open('index.yaml', 'r') as f:
               index = yaml.safe_load(f)
-          for chart_name, versions in index.get('entries', {}).items():
+          for versions in index.get('entries', {}).values():
               versions.sort(key=sort_key)
           with open('index.yaml', 'w') as f:
               yaml.dump(index, f, default_flow_style=False, allow_unicode=True)
           "
-          echo "index.yaml을 정렬했습니다 (build metadata 버전 우선)."
 
       - name: Push to gh-pages
         run: |
