@@ -51,76 +51,17 @@ jobs:
             echo "changes=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Set branch name
+      - name: Create PR, merge, and trigger downstream
         if: steps.check_changes.outputs.changes == 'true'
-        run: |
-          echo "BRANCH_NAME=update-file-fetcher-v${{ env.LATEST_VERSION }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+        uses: ./.github/actions/create-merge-trigger
+        with:
+          version: ${{ env.LATEST_VERSION }}
+          branch_prefix: update-file-fetcher
+          files_to_add: containers/file-fetcher/Dockerfile
+          commit_message: "chore: file-fetcher 업데이트 (rclone v${{ env.LATEST_VERSION }})"
+          pr_title: "chore: file-fetcher 업데이트 (rclone v${{ env.LATEST_VERSION }})"
+          pr_body: |
+            GitHub Action이 rclone을 업데이트하였습니다.
 
-      - name: Commit changes
-        if: steps.check_changes.outputs.changes == 'true'
-        run: |
-          git config --global user.name 'GitHub Action'
-          git config --global user.email 'action@github.com'
-          git checkout -b "${BRANCH_NAME}"
-          git add containers/file-fetcher/Dockerfile
-          git commit -m "chore: file-fetcher 업데이트 (rclone v${{ env.LATEST_VERSION }})"
-
-      - name: Push changes and create PR
-        id: create_pr
-        if: steps.check_changes.outputs.changes == 'true'
-        run: |
-          git push -u origin "${BRANCH_NAME}"
-
-          BODY="GitHub Action이 rclone을 업데이트하였습니다."
-          BODY="$BODY\n\n- rclone: ${{ env.CURRENT_VERSION }} → ${{ env.LATEST_VERSION }}"
-
-          PR_URL=$(gh pr create \
-            --title "chore: file-fetcher 업데이트 (rclone v${{ env.LATEST_VERSION }})" \
-            --body "$(echo -e "$BODY")" \
-            --base main \
-            --head "${BRANCH_NAME}")
-
-          echo "생성된 PR URL: $PR_URL"
-          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
-
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-
-          sleep 10
-          gh pr merge "$PR_NUMBER" --auto --merge
-
-      - name: Wait for PR to be merged
-        if: steps.check_changes.outputs.changes == 'true'
-        run: |
-          PR_NUMBER=${{ steps.create_pr.outputs.pr_number }}
-          echo "PR #$PR_NUMBER 병합을 기다리는 중..."
-
-          START_TIME=$(date +%s)
-
-          MERGED=false
-          for i in {1..30}; do
-            CURRENT_TIME=$(date +%s)
-            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
-
-            PR_STATE=$(gh pr view "$PR_NUMBER" --json state -q .state)
-            if [ "$PR_STATE" = "MERGED" ]; then
-              echo "PR이 성공적으로 병합되었습니다. 총 소요 시간: ${ELAPSED_TIME}초"
-              MERGED=true
-              break
-            fi
-
-            echo "대기 중... ($i/30) - 경과 시간: ${ELAPSED_TIME}초"
-            sleep 15
-          done
-
-          if [ "$MERGED" != "true" ]; then
-            echo "::error::PR #$PR_NUMBER 병합 시간 초과"
-            exit 1
-          fi
-
-      - name: Trigger docker-push workflow
-        if: steps.check_changes.outputs.changes == 'true'
-        run: |
-          gh workflow run docker-push.yaml \
-            -f container_name=file-fetcher
-
-          echo "::notice::docker-push 워크플로우 트리거 완료"
+            - rclone: ${{ env.CURRENT_VERSION }} → ${{ env.LATEST_VERSION }}
+          container_name: file-fetcher
