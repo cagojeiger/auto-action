@@ -105,9 +105,13 @@ jobs:
 
           cd gh-pages
 
-          # 차트당 최근 10개 버전만 유지
-          for CHART in code-server quick-deploy openclaw-stack; do
-            ls -t ${CHART}-*.tgz 2>/dev/null | tail -n +11 | xargs -r rm -f
+          # 차트당 최근 10개 버전만 유지 (동적 차트 목록, SemVer 정렬)
+          for CHART in $(ls *.tgz 2>/dev/null | sed 's/-[0-9].*//' | sort -u); do
+            OLD=$(ls ${CHART}-*.tgz 2>/dev/null | sort -V | head -n -10)
+            if [ -n "$OLD" ]; then
+              echo "$OLD" | xargs git rm -f
+              echo "::notice::${CHART}: $(echo "$OLD" | wc -l | tr -d ' ')개 오래된 버전 삭제"
+            fi
           done
 
           # index.yaml 생성/병합
@@ -147,7 +151,7 @@ jobs:
           cd gh-pages
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add *.tgz index.yaml
+          git add *.tgz index.yaml 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "Publish:${{ steps.package.outputs.published }}"
             git push
