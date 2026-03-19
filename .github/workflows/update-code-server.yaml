@@ -151,13 +151,13 @@ jobs:
       - name: Wait for PR to be merged
         if: steps.check_changes.outputs.changes == 'true'
         run: |
-          # PR이 병합될 때까지 기다립니다
           PR_NUMBER=${{ steps.create_pr.outputs.pr_number }}
           PR_URL=${{ steps.create_pr.outputs.pr_url }}
           echo "PR #$PR_NUMBER 병합을 기다리는 중..."
 
           START_TIME=$(date +%s)
 
+          MERGED=false
           for i in {1..30}; do
             CURRENT_TIME=$(date +%s)
             ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
@@ -165,6 +165,7 @@ jobs:
             PR_STATE=$(gh pr view "$PR_NUMBER" --json state -q .state)
             if [ "$PR_STATE" = "MERGED" ]; then
               echo "PR이 성공적으로 병합되었습니다. 총 소요 시간: ${ELAPSED_TIME}초"
+              MERGED=true
               break
             fi
 
@@ -172,9 +173,10 @@ jobs:
             sleep 15
           done
 
-          FINAL_TIME=$(date +%s)
-          TOTAL_TIME=$((FINAL_TIME - START_TIME))
-          echo "PR 병합 대기 총 시간: ${TOTAL_TIME}초"
+          if [ "$MERGED" != "true" ]; then
+            echo "::error::PR #$PR_NUMBER 병합 시간 초과"
+            exit 1
+          fi
 
       - name: Trigger docker-push workflow
         if: steps.check_changes.outputs.changes == 'true'
