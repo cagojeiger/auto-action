@@ -2,7 +2,7 @@ name: Update Code-Server
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 매일 00:00 UTC(09:00 KST) 실행
+    - cron: '15 0 * * *'  # 매일 00:15 UTC(09:15 KST) 실행
   workflow_dispatch:
 
 permissions:
