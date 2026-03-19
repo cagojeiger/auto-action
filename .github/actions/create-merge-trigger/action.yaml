@@ -1,0 +1,109 @@
+name: 'Create PR, Merge, and Trigger'
+description: 'Commit changes, create PR, auto-merge, wait, and trigger downstream workflows'
+
+inputs:
+  version:
+    description: 'Version string for branch naming'
+    required: true
+  branch_prefix:
+    description: 'Branch name prefix (e.g., update-openclaw)'
+    required: true
+  files_to_add:
+    description: 'Files to git add (space-separated)'
+    required: true
+  commit_message:
+    description: 'Git commit message'
+    required: true
+  pr_title:
+    description: 'Pull request title'
+    required: true
+  pr_body:
+    description: 'Pull request body'
+    required: true
+  container_name:
+    description: 'Container name for docker-push trigger'
+    required: false
+    default: ''
+  chart_name:
+    description: 'Chart name for publish-helm-charts trigger'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Commit and push changes
+      shell: bash
+      run: |
+        BRANCH_NAME="${{ inputs.branch_prefix }}-v${{ inputs.version }}-$(date +%Y%m%d-%H%M%S)"
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git checkout -b "${BRANCH_NAME}"
+        git add ${{ inputs.files_to_add }}
+        git commit -m "${{ inputs.commit_message }}"
+        git push -u origin "${BRANCH_NAME}"
+        echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+
+    - name: Create PR and enable auto-merge
+      id: create_pr
+      shell: bash
+      env:
+        PR_TITLE: ${{ inputs.pr_title }}
+        PR_BODY: ${{ inputs.pr_body }}
+      run: |
+        PR_URL=$(gh pr create \
+          --title "$PR_TITLE" \
+          --body "$PR_BODY" \
+          --base main \
+          --head "${{ env.BRANCH_NAME }}")
+
+        PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+        sleep 10
+        gh pr merge "$PR_NUMBER" --auto --merge
+
+    - name: Wait for PR to be merged
+      shell: bash
+      run: |
+        PR_NUMBER=${{ steps.create_pr.outputs.pr_number }}
+        echo "PR #$PR_NUMBER 병합을 기다리는 중..."
+
+        START_TIME=$(date +%s)
+
+        MERGED=false
+        for i in {1..30}; do
+          CURRENT_TIME=$(date +%s)
+          ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+
+          PR_STATE=$(gh pr view "$PR_NUMBER" --json state -q .state)
+          if [ "$PR_STATE" = "MERGED" ]; then
+            echo "PR이 성공적으로 병합되었습니다. 총 소요 시간: ${ELAPSED_TIME}초"
+            MERGED=true
+            break
+          fi
+
+          echo "대기 중... ($i/30) - 경과 시간: ${ELAPSED_TIME}초"
+          sleep 15
+        done
+
+        if [ "$MERGED" != "true" ]; then
+          echo "::error::PR #$PR_NUMBER 병합 시간 초과"
+          exit 1
+        fi
+
+    - name: Trigger docker-push workflow
+      if: inputs.container_name != ''
+      shell: bash
+      run: |
+        gh workflow run docker-push.yaml \
+          -f container_name=${{ inputs.container_name }}
+        echo "::notice::docker-push 트리거 완료 (${{ inputs.container_name }})"
+
+    - name: Trigger publish-helm-charts workflow
+      if: inputs.chart_name != ''
+      shell: bash
+      run: |
+        gh workflow run publish-helm-charts.yaml \
+          -f chart_name=${{ inputs.chart_name }}
+        echo "::notice::publish-helm-charts 트리거 완료 (${{ inputs.chart_name }})"
