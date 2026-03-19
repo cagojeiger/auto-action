@@ -2,18 +2,18 @@ apiVersion: v1
 entries:
   code-server:
   - apiVersion: v2
-    appVersion: 4.109.5
-    created: '2026-03-19T04:54:13.962846911Z'
+    appVersion: 4.111.0
+    created: '2026-03-19T05:06:49.814476929Z'
     description: A Helm chart for coder/code-server
-    digest: 6ada09030c611321a9d52a9ed0552dfe29fd0064effe4eb1dd2633cb238c04ba
+    digest: 275dd2767deec1a3a82bb065772d953d26798e83fdedb12851cc00ddf6e32dcc
     name: code-server
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/code-server-3.33.0+4.109.5.tgz
-    version: 3.33.0+4.109.5
+    - https://cagojeiger.github.io/auto-action/code-server-3.33.0+4.111.0.tgz
+    version: 3.33.0+4.111.0
   - apiVersion: v2
     appVersion: 4.110.0
-    created: '2026-03-19T04:54:13.963351153Z'
+    created: '2026-03-19T05:06:49.814013255Z'
     description: A Helm chart for coder/code-server
     digest: aad176698af4b682908284299350517bdf7d6c092a8f6cac4a9231b0104d8180
     name: code-server
@@ -22,28 +22,18 @@ entries:
     - https://cagojeiger.github.io/auto-action/code-server-3.33.0+4.110.0.tgz
     version: 3.33.0+4.110.0
   - apiVersion: v2
-    appVersion: 4.111.0
-    created: '2026-03-19T04:54:13.963850014Z'
+    appVersion: 4.109.5
+    created: '2026-03-19T05:06:49.813524554Z'
     description: A Helm chart for coder/code-server
-    digest: 2a616ef6322786513d19b64a1ffcb1fd0a8cfa06cada6c6596c45763399f7de7
+    digest: 6ada09030c611321a9d52a9ed0552dfe29fd0064effe4eb1dd2633cb238c04ba
     name: code-server
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/code-server-3.33.0+4.111.0.tgz
-    version: 3.33.0+4.111.0
-  - apiVersion: v2
-    appVersion: 4.109.2
-    created: '2026-03-19T04:54:13.961866791Z'
-    description: A Helm chart for coder/code-server
-    digest: 0e32c9b56550ceb8a00d8404a4eb0aba13539c23909dd4a18dd3635add285ee2
-    name: code-server
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/code-server-3.32.1+4.109.2.tgz
-    version: 3.32.1+4.109.2
+    - https://cagojeiger.github.io/auto-action/code-server-3.33.0+4.109.5.tgz
+    version: 3.33.0+4.109.5
   - apiVersion: v2
     appVersion: 4.109.5
-    created: '2026-03-19T04:54:13.962373357Z'
+    created: '2026-03-19T05:06:49.813028209Z'
     description: A Helm chart for coder/code-server
     digest: 3f389e97018ae3d017e0d7f856403775ac85194d31f8b56209590e34154c37a5
     name: code-server
@@ -52,8 +42,18 @@ entries:
     - https://cagojeiger.github.io/auto-action/code-server-3.32.1+4.109.5.tgz
     version: 3.32.1+4.109.5
   - apiVersion: v2
+    appVersion: 4.109.2
+    created: '2026-03-19T05:06:49.812536964Z'
+    description: A Helm chart for coder/code-server
+    digest: 0e32c9b56550ceb8a00d8404a4eb0aba13539c23909dd4a18dd3635add285ee2
+    name: code-server
+    type: application
+    urls:
+    - https://cagojeiger.github.io/auto-action/code-server-3.32.1+4.109.2.tgz
+    version: 3.32.1+4.109.2
+  - apiVersion: v2
     appVersion: 4.108.1
-    created: '2026-03-19T04:54:13.96130366Z'
+    created: '2026-03-19T05:06:49.812008129Z'
     description: A Helm chart for coder/code-server
     digest: 76f8ad1fccff30bd28b269239dbe5ac2c1f20ba54250f3418193fb35ce5c4e35
     name: code-server
@@ -63,58 +63,18 @@ entries:
     version: 3.32.0+4.108.1
   openclaw-stack:
   - apiVersion: v2
-    appVersion: 2026.2.23
-    created: '2026-03-19T04:54:13.964695071Z'
+    appVersion: 2026.3.13
+    created: '2026-03-19T05:06:49.820296345Z'
     description: OpenClaw and Browserless stack chart
-    digest: 76dd3c20b21ba29904fb90bd6898cab465f9334c7a76981dcc33f2b5d2d092a0
+    digest: e4fe4c626ac1938bfd075494b9ad5c49bb206f9636f0f57506a914a0c681be85
     name: openclaw-stack
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.23.tgz
-    version: 0.5.0+2026.2.23
-  - apiVersion: v2
-    appVersion: 2026.2.24
-    created: '2026-03-19T04:54:13.96541233Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 9895b27dddbb85f0c5bc0c20ab198750feda24ed2ef3c8441593c0275f642b7d
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.24.tgz
-    version: 0.5.0+2026.2.24
-  - apiVersion: v2
-    appVersion: 2026.2.26
-    created: '2026-03-19T04:54:13.966120643Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 4b5ee53747f0281cc54925d2b5abea020d40c9836ff08c1eacb052b418cfe673
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.26.tgz
-    version: 0.5.0+2026.2.26
-  - apiVersion: v2
-    appVersion: 2026.3.1
-    created: '2026-03-19T04:54:13.967746635Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 0518a1efa936d6cec3b047bec1ac4607bd8726baac0267181dd441adaba4fc37
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.1.tgz
-    version: 0.5.0+2026.3.1
-  - apiVersion: v2
-    appVersion: 2026.3.11
-    created: '2026-03-19T04:54:13.96852569Z'
-    description: OpenClaw and Browserless stack chart
-    digest: e4bb3c34c20ea6a5fede1dba1b90e79ff9231915a8999bf1f0e7d242ac82f307
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.11.tgz
-    version: 0.5.0+2026.3.11
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.13.tgz
+    version: 0.5.0+2026.3.13
   - apiVersion: v2
     appVersion: 2026.3.12
-    created: '2026-03-19T04:54:13.969244211Z'
+    created: '2026-03-19T05:06:49.819580221Z'
     description: OpenClaw and Browserless stack chart
     digest: bca8b133bd7917d3565eeed7242862b7757fc4be178380b1ed89896185c1262b
     name: openclaw-stack
@@ -123,38 +83,18 @@ entries:
     - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.12.tgz
     version: 0.5.0+2026.3.12
   - apiVersion: v2
-    appVersion: 2026.3.13
-    created: '2026-03-19T04:54:13.96996631Z'
+    appVersion: 2026.3.11
+    created: '2026-03-19T05:06:49.818890606Z'
     description: OpenClaw and Browserless stack chart
-    digest: aa7991ef6c806f3d328ce624bf4394943341cc1173539df367837d63b6bdcbd5
+    digest: e4bb3c34c20ea6a5fede1dba1b90e79ff9231915a8999bf1f0e7d242ac82f307
     name: openclaw-stack
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.13.tgz
-    version: 0.5.0+2026.3.13
-  - apiVersion: v2
-    appVersion: 2026.3.2
-    created: '2026-03-19T04:54:13.970684681Z'
-    description: OpenClaw and Browserless stack chart
-    digest: a93977b1d7af6b767102c89a486a8310ade1bd59866fbe30880b261a24c5f934
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.2.tgz
-    version: 0.5.0+2026.3.2
-  - apiVersion: v2
-    appVersion: 2026.3.7
-    created: '2026-03-19T04:54:13.971430984Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 1b7d5370678c96d188c74a8d878549b429009e3f5928da6a7508fbae9a94a530
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.7.tgz
-    version: 0.5.0+2026.3.7
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.11.tgz
+    version: 0.5.0+2026.3.11
   - apiVersion: v2
     appVersion: 2026.3.8
-    created: '2026-03-19T04:54:13.972143574Z'
+    created: '2026-03-19T05:06:49.822394715Z'
     description: OpenClaw and Browserless stack chart
     digest: 24dd7d4c231983892b30b4de84b84bcee21c467487afaa563ebcde4847ad10dd
     name: openclaw-stack
@@ -163,181 +103,71 @@ entries:
     - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.8.tgz
     version: 0.5.0+2026.3.8
   - apiVersion: v2
-    appVersion: 2026.2.14
-    created: '2026-03-13T00:18:21.616202075Z'
+    appVersion: 2026.3.7
+    created: '2026-03-19T05:06:49.821708036Z'
     description: OpenClaw and Browserless stack chart
-    digest: b2440961a48cb43c1c553fbc93a7d43a721261d1fdc783bec681c72cb9a1a7a8
+    digest: 1b7d5370678c96d188c74a8d878549b429009e3f5928da6a7508fbae9a94a530
     name: openclaw-stack
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.4.0+2026.2.14.tgz
-    version: 0.4.0+2026.2.14
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.7.tgz
+    version: 0.5.0+2026.3.7
   - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-15T00:20:42.904631387Z'
+    appVersion: 2026.3.2
+    created: '2026-03-19T05:06:49.821016547Z'
     description: OpenClaw and Browserless stack chart
-    digest: 27c2a69d446ac97af4372558bbe1790433afa5edd2b66935a1d052a686ead2f4
+    digest: a93977b1d7af6b767102c89a486a8310ade1bd59866fbe30880b261a24c5f934
     name: openclaw-stack
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.3.0+2026.2.13.tgz
-    version: 0.3.0+2026.2.13
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.2.tgz
+    version: 0.5.0+2026.3.2
   - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-15T00:20:42.903978437Z'
+    appVersion: 2026.3.1
+    created: '2026-03-19T05:06:49.818194699Z'
     description: OpenClaw and Browserless stack chart
-    digest: 2d1daa4954e5ba1b15911e3903a66c8eaea09b3498962fbbbed02a7fc6676d4e
+    digest: 0518a1efa936d6cec3b047bec1ac4607bd8726baac0267181dd441adaba4fc37
     name: openclaw-stack
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.2.1+2026.2.13.tgz
-    version: 0.2.1+2026.2.13
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.3.1.tgz
+    version: 0.5.0+2026.3.1
   - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-15T00:20:42.903264162Z'
+    appVersion: 2026.2.26
+    created: '2026-03-19T05:06:49.817469478Z'
     description: OpenClaw and Browserless stack chart
-    digest: 9df93aa6492a1fbad43e41115663c0f7dbe4466e961fc96a9b1d75cd026e3ea8
+    digest: 4b5ee53747f0281cc54925d2b5abea020d40c9836ff08c1eacb052b418cfe673
     name: openclaw-stack
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.2.0+2026.2.13.tgz
-    version: 0.2.0+2026.2.13
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.26.tgz
+    version: 0.5.0+2026.2.26
   - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-02-25T00:19:50.46889903Z'
+    appVersion: 2026.2.24
+    created: '2026-03-19T05:06:49.816274007Z'
     description: OpenClaw and Browserless stack chart
-    digest: bf416403b4230e25156caf4a57c708649aaee8982b47b37dc47b9a9c157b5e52
+    digest: 9895b27dddbb85f0c5bc0c20ab198750feda24ed2ef3c8441593c0275f642b7d
     name: openclaw-stack
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.12+2026.2.13.tgz
-    version: 0.1.12+2026.2.13
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.24.tgz
+    version: 0.5.0+2026.2.24
   - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-02-22T00:17:38.807297388Z'
+    appVersion: 2026.2.23
+    created: '2026-03-19T05:06:49.815216477Z'
     description: OpenClaw and Browserless stack chart
-    digest: b64be03ab3d19597d43b2a2e42de5e5e5d4716a7b33119ae0f4cdb3f7923d935
+    digest: 76dd3c20b21ba29904fb90bd6898cab465f9334c7a76981dcc33f2b5d2d092a0
     name: openclaw-stack
     type: application
     urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.11+2026.2.13.tgz
-    version: 0.1.11+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-02-22T00:17:38.806655589Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 79368fe35fb9937b6a0cfffe35e872dbce292329fe55d224fab0eb6830a70e4b
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.10+2026.2.13.tgz
-    version: 0.1.10+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-15T00:20:42.902491418Z'
-    description: OpenClaw and Browserless stack chart
-    digest: e2654db2e9cdfb43c021d49f2a4992ecfdad755f822e39b306244f1ac8f75d78
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.9+2026.2.13.tgz
-    version: 0.1.9+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-15T00:20:42.901095363Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 64c974a7b8ce0d279e05ee9ce7a0a17b355d3e61df5eeaeb5dc35698d3a3539b
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.8+2026.2.13.tgz
-    version: 0.1.8+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-15T00:20:42.900570071Z'
-    description: OpenClaw and Browserless stack chart
-    digest: a6a8d36d5ad6149452be1d19c664934d9a57c8c06daac47aef2340c40a396943
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.7+2026.2.13.tgz
-    version: 0.1.7+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-14T00:17:48.751398738Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 5388970e51ba8d1da6b46fbe0404653ae7ddd9a2d038b0a1f83a71f0ead56344
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.6+2026.2.13.tgz
-    version: 0.1.6+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-12T00:13:50.303023655Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 5fa86b124ebbce2b4294b24d865e1895463beccd24376b2235500551cb4d9be7
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.5+2026.2.13.tgz
-    version: 0.1.5+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-10T00:15:32.162592313Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 01fe5a50b45449bfbe6b3015faf25c711cb03549d9022a9d00e5640e62d064da
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.4+2026.2.13.tgz
-    version: 0.1.4+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-04T00:17:25.352340248Z'
-    description: OpenClaw and Browserless stack chart
-    digest: e21b33eb4d72c2ea7a41e238f535ea9e50015be12b7d24a1780c203cf0d2b077
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.3+2026.2.13.tgz
-    version: 0.1.3+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-04T00:17:25.351780883Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 318acdc05d6230c265fafcac6e4b43f8e1baaac576092313d4f4d2d2ce99dec8
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.2+2026.2.13.tgz
-    version: 0.1.2+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-04T00:15:22.342301235Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 1bf4a4f2b0e2662f8bea36bd4ea25e9de7ee369e59b569c1305a0797f6821531
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.1+2026.2.13.tgz
-    version: 0.1.1+2026.2.13
-  - apiVersion: v2
-    appVersion: 2026.2.13
-    created: '2026-03-04T00:15:22.341754575Z'
-    description: OpenClaw and Browserless stack chart
-    digest: 174ce1ec8b3b9b5aa54bbfe350c5c9a5d30b4e5ea419ac65007b84a6fd80b35f
-    name: openclaw-stack
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.1.0+2026.2.13.tgz
-    version: 0.1.0+2026.2.13
+    - https://cagojeiger.github.io/auto-action/openclaw-stack-0.5.0+2026.2.23.tgz
+    version: 0.5.0+2026.2.23
   quick-deploy:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-03-19T04:54:13.972793858Z'
+    created: '2026-03-19T05:06:49.823359674Z'
     description: Rapid multi-application deployment template for Kubernetes
-    digest: 05a891be63721586fad3df5e2de3cd62bd984f064ec8f781118fe1a55f3ac842
+    digest: c6a9f0f999e08d5589d6208e2056cb70a7497c20941665cf6a08b7db2cb0b528
     keywords:
     - deployment
     - multi-app
@@ -348,4 +178,4 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/quick-deploy-0.1.14.tgz
     version: 0.1.14
-generated: '2026-03-19T04:54:13.960386217Z'
+generated: '2026-03-19T05:06:49.811389556Z'
