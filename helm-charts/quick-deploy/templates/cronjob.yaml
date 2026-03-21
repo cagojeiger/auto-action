@@ -1,0 +1,99 @@
+{{- range $name, $app := .Values.apps }}
+{{- if or (not (hasKey $app "enabled")) $app.enabled }}
+{{- range $cronJob := $app.cronJobs }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app) }}-{{ $cronJob.name }}
+  labels:
+    {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
+spec:
+  schedule: {{ $cronJob.schedule | quote }}
+  {{- with $cronJob.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  {{- if hasKey $cronJob "suspend" }}
+  suspend: {{ $cronJob.suspend }}
+  {{- end }}
+  concurrencyPolicy: {{ $cronJob.concurrencyPolicy | default "Forbid" }}
+  successfulJobsHistoryLimit: {{ $cronJob.successfulJobsHistoryLimit | default 1 }}
+  failedJobsHistoryLimit: {{ $cronJob.failedJobsHistoryLimit | default 1 }}
+  {{- with $cronJob.startingDeadlineSeconds }}
+  startingDeadlineSeconds: {{ . }}
+  {{- end }}
+  jobTemplate:
+    spec:
+      {{- with $cronJob.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ . }}
+      {{- end }}
+      {{- if hasKey $cronJob "backoffLimit" }}
+      backoffLimit: {{ $cronJob.backoffLimit }}
+      {{- end }}
+      {{- with $cronJob.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ . }}
+      {{- end }}
+      template:
+        metadata:
+          {{- with $cronJob.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "quick-deploy.selectorLabels" (dict "root" $ "name" $name "app" $app) | nindent 12 }}
+        spec:
+          {{- if $cronJob.serviceAccountName }}
+          serviceAccountName: {{ $cronJob.serviceAccountName }}
+          {{- else if and $app.serviceAccount $app.serviceAccount.create }}
+          serviceAccountName: {{ include "quick-deploy.serviceAccountName" (dict "root" $ "name" $name "app" $app) }}
+          {{- end }}
+          restartPolicy: {{ $cronJob.restartPolicy | default "OnFailure" }}
+          {{- with $.Values.global.imagePullSecrets | default $app.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            {{- range $container := $cronJob.containers }}
+            - name: {{ $container.name }}
+              image: "{{ $container.image }}:{{ $container.tag | default "latest" }}"
+              imagePullPolicy: {{ $container.imagePullPolicy | default "IfNotPresent" }}
+              {{- with $container.command }}
+              command:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.args }}
+              args:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.env }}
+              env:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.envFrom }}
+              envFrom:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.volumeMounts }}
+              volumeMounts:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+            {{- end }}
+          {{- with $cronJob.volumes }}
+          volumes:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $cronJob.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $cronJob.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
