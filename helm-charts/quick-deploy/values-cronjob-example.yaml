@@ -26,12 +26,20 @@ apps:
     # SA/RBAC: Deployment + CronJob 공유
     serviceAccount:
       create: true
-    clusterRole:
+    # role: 해당 네임스페이스로 권한 제한 (권장)
+    role:
       enabled: true
       rules:
         - apiGroups: ["apps"]
           resources: ["deployments"]
           verbs: ["get", "list", "patch"]
+    # clusterRole: 모든 네임스페이스에 권한 필요할 때 사용
+    # clusterRole:
+    #   enabled: true
+    #   rules:
+    #     - apiGroups: ["apps"]
+    #       resources: ["deployments"]
+    #       verbs: ["get", "list", "patch"]
 
     volumes:
       - name: registry-data
