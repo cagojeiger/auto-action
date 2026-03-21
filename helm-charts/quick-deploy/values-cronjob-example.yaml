@@ -1,0 +1,88 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+apps:
+  dev-registry:
+    enabled: true
+
+    image:
+      repository: registry
+      tag: "2"
+      pullPolicy: IfNotPresent
+
+    replicaCount: 1
+
+    env:
+      - name: REGISTRY_STORAGE_DELETE_ENABLED
+        value: "true"
+
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 5000
+      targetPort: 5000
+
+    # SA/RBAC: Deployment + CronJob 공유
+    serviceAccount:
+      create: true
+    clusterRole:
+      enabled: true
+      rules:
+        - apiGroups: ["apps"]
+          resources: ["deployments"]
+          verbs: ["get", "list", "patch"]
+
+    volumes:
+      - name: registry-data
+        emptyDir:
+          sizeLimit: 10Gi
+
+    volumeMounts:
+      - name: registry-data
+        mountPath: /var/lib/registry
+
+    resources:
+      limits:
+        memory: "2Gi"
+        cpu: "500m"
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+
+    livenessProbe:
+      tcpSocket:
+        port: 5000
+      initialDelaySeconds: 10
+      periodSeconds: 30
+
+    readinessProbe:
+      tcpSocket:
+        port: 5000
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+    # CronJobs: 주기적 재시작으로 emptyDir 초기화
+    cronJobs:
+      - name: restart
+        schedule: "0 2 * * 0"    # 매주 일요일 02:00
+        concurrencyPolicy: "Forbid"
+        successfulJobsHistoryLimit: 1
+        failedJobsHistoryLimit: 1
+        containers:
+          - name: kubectl
+            image: bitnami/kubectl
+            tag: "latest"
+            command:
+              - /bin/sh
+              - -c
+              - |
+                echo "Restarting deployment: dev-registry"
+                kubectl rollout restart deployment/dev-registry -n $POD_NAMESPACE
+                kubectl rollout status deployment/dev-registry -n $POD_NAMESPACE --timeout=300s
+                echo "Restart completed."
+            env:
+              - name: POD_NAMESPACE
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
