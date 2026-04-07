@@ -2,8 +2,18 @@ apiVersion: v1
 entries:
   code-server:
   - apiVersion: v2
+    appVersion: 4.114.1
+    created: '2026-04-07T00:58:40.8383141Z'
+    description: A Helm chart for coder/code-server
+    digest: db61c5f6e8a077d9ad1629e8c594cfc42154f27a3182838f32466ec250f86d10
+    name: code-server
+    type: application
+    urls:
+    - https://cagojeiger.github.io/auto-action/code-server-3.34.0+4.114.1.tgz
+    version: 3.34.0+4.114.1
+  - apiVersion: v2
     appVersion: 4.114.0
-    created: '2026-04-05T01:01:30.274134841Z'
+    created: '2026-04-07T00:58:40.837853244Z'
     description: A Helm chart for coder/code-server
     digest: 33810bb07d81814591eb4a7e27c9ac5a4f6bdab1ee71f5023278805246fd73e9
     name: code-server
@@ -13,7 +23,7 @@ entries:
     version: 3.33.0+4.114.0
   - apiVersion: v2
     appVersion: 4.113.1
-    created: '2026-04-05T01:01:30.273623808Z'
+    created: '2026-04-07T00:58:40.837342976Z'
     description: A Helm chart for coder/code-server
     digest: db7410106c1c796f4f6882cad03127885799f3ce0f0b30b03d070521ea4b3dd9
     name: code-server
@@ -23,7 +33,7 @@ entries:
     version: 3.33.0+4.113.1
   - apiVersion: v2
     appVersion: 4.113.0
-    created: '2026-04-05T01:01:30.273166965Z'
+    created: '2026-04-07T00:58:40.83683901Z'
     description: A Helm chart for coder/code-server
     digest: 7e12a844dfee26b2cf832c1947507ad3a916945effc1368455c07b04a8453ce9
     name: code-server
@@ -33,7 +43,7 @@ entries:
     version: 3.33.0+4.113.0
   - apiVersion: v2
     appVersion: 4.112.0
-    created: '2026-04-05T01:01:30.272658517Z'
+    created: '2026-04-07T00:58:40.836286203Z'
     description: A Helm chart for coder/code-server
     digest: 7281b2b7d696d2f61185c270caca4413d110d7570cf6a4f2d8a4c36ad98e9350
     name: code-server
@@ -43,7 +53,7 @@ entries:
     version: 3.33.0+4.112.0
   - apiVersion: v2
     appVersion: 4.111.0
-    created: '2026-04-05T01:01:30.272167761Z'
+    created: '2026-04-07T00:58:40.835835265Z'
     description: A Helm chart for coder/code-server
     digest: 275dd2767deec1a3a82bb065772d953d26798e83fdedb12851cc00ddf6e32dcc
     name: code-server
@@ -53,7 +63,7 @@ entries:
     version: 3.33.0+4.111.0
   - apiVersion: v2
     appVersion: 4.110.0
-    created: '2026-04-05T01:01:30.271199026Z'
+    created: '2026-04-07T00:58:40.835308496Z'
     description: A Helm chart for coder/code-server
     digest: aad176698af4b682908284299350517bdf7d6c092a8f6cac4a9231b0104d8180
     name: code-server
@@ -63,7 +73,7 @@ entries:
     version: 3.33.0+4.110.0
   - apiVersion: v2
     appVersion: 4.109.5
-    created: '2026-04-05T01:01:30.270095647Z'
+    created: '2026-04-07T00:58:40.834816312Z'
     description: A Helm chart for coder/code-server
     digest: 6ada09030c611321a9d52a9ed0552dfe29fd0064effe4eb1dd2633cb238c04ba
     name: code-server
@@ -73,7 +83,7 @@ entries:
     version: 3.33.0+4.109.5
   - apiVersion: v2
     appVersion: 4.109.5
-    created: '2026-04-05T01:01:30.269565849Z'
+    created: '2026-04-07T00:58:40.834308859Z'
     description: A Helm chart for coder/code-server
     digest: 3f389e97018ae3d017e0d7f856403775ac85194d31f8b56209590e34154c37a5
     name: code-server
@@ -83,7 +93,7 @@ entries:
     version: 3.32.1+4.109.5
   - apiVersion: v2
     appVersion: 4.109.2
-    created: '2026-04-05T01:01:30.26908432Z'
+    created: '2026-04-07T00:58:40.833731005Z'
     description: A Helm chart for coder/code-server
     digest: 0e32c9b56550ceb8a00d8404a4eb0aba13539c23909dd4a18dd3635add285ee2
     name: code-server
@@ -91,20 +101,10 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/code-server-3.32.1+4.109.2.tgz
     version: 3.32.1+4.109.2
-  - apiVersion: v2
-    appVersion: 4.108.1
-    created: '2026-04-05T01:01:30.268562867Z'
-    description: A Helm chart for coder/code-server
-    digest: 76f8ad1fccff30bd28b269239dbe5ac2c1f20ba54250f3418193fb35ce5c4e35
-    name: code-server
-    type: application
-    urls:
-    - https://cagojeiger.github.io/auto-action/code-server-3.32.0+4.108.1.tgz
-    version: 3.32.0+4.108.1
   openclaw-stack:
   - apiVersion: v2
     appVersion: 2026.3.13
-    created: '2026-04-05T01:01:30.280823862Z'
+    created: '2026-04-07T00:58:40.847696321Z'
     description: OpenClaw and Browserless stack chart
     digest: e4fe4c626ac1938bfd075494b9ad5c49bb206f9636f0f57506a914a0c681be85
     name: openclaw-stack
@@ -114,7 +114,7 @@ entries:
     version: 0.5.0+2026.3.13
   - apiVersion: v2
     appVersion: 2026.3.12
-    created: '2026-04-05T01:01:30.279747073Z'
+    created: '2026-04-07T00:58:40.846281433Z'
     description: OpenClaw and Browserless stack chart
     digest: bca8b133bd7917d3565eeed7242862b7757fc4be178380b1ed89896185c1262b
     name: openclaw-stack
@@ -124,7 +124,7 @@ entries:
     version: 0.5.0+2026.3.12
   - apiVersion: v2
     appVersion: 2026.3.11
-    created: '2026-04-05T01:01:30.277911608Z'
+    created: '2026-04-07T00:58:40.844769193Z'
     description: OpenClaw and Browserless stack chart
     digest: e4bb3c34c20ea6a5fede1dba1b90e79ff9231915a8999bf1f0e7d242ac82f307
     name: openclaw-stack
@@ -134,7 +134,7 @@ entries:
     version: 0.5.0+2026.3.11
   - apiVersion: v2
     appVersion: 2026.3.8
-    created: '2026-04-05T01:01:30.283209053Z'
+    created: '2026-04-07T00:58:40.852423092Z'
     description: OpenClaw and Browserless stack chart
     digest: 24dd7d4c231983892b30b4de84b84bcee21c467487afaa563ebcde4847ad10dd
     name: openclaw-stack
@@ -144,7 +144,7 @@ entries:
     version: 0.5.0+2026.3.8
   - apiVersion: v2
     appVersion: 2026.3.7
-    created: '2026-04-05T01:01:30.282436902Z'
+    created: '2026-04-07T00:58:40.85042992Z'
     description: OpenClaw and Browserless stack chart
     digest: 1b7d5370678c96d188c74a8d878549b429009e3f5928da6a7508fbae9a94a530
     name: openclaw-stack
@@ -154,7 +154,7 @@ entries:
     version: 0.5.0+2026.3.7
   - apiVersion: v2
     appVersion: 2026.3.2
-    created: '2026-04-05T01:01:30.281628003Z'
+    created: '2026-04-07T00:58:40.849060356Z'
     description: OpenClaw and Browserless stack chart
     digest: a93977b1d7af6b767102c89a486a8310ade1bd59866fbe30880b261a24c5f934
     name: openclaw-stack
@@ -164,7 +164,7 @@ entries:
     version: 0.5.0+2026.3.2
   - apiVersion: v2
     appVersion: 2026.3.1
-    created: '2026-04-05T01:01:30.277209799Z'
+    created: '2026-04-07T00:58:40.843440234Z'
     description: OpenClaw and Browserless stack chart
     digest: 0518a1efa936d6cec3b047bec1ac4607bd8726baac0267181dd441adaba4fc37
     name: openclaw-stack
@@ -174,7 +174,7 @@ entries:
     version: 0.5.0+2026.3.1
   - apiVersion: v2
     appVersion: 2026.2.26
-    created: '2026-04-05T01:01:30.27641193Z'
+    created: '2026-04-07T00:58:40.842128177Z'
     description: OpenClaw and Browserless stack chart
     digest: 4b5ee53747f0281cc54925d2b5abea020d40c9836ff08c1eacb052b418cfe673
     name: openclaw-stack
@@ -184,7 +184,7 @@ entries:
     version: 0.5.0+2026.2.26
   - apiVersion: v2
     appVersion: 2026.2.24
-    created: '2026-04-05T01:01:30.275630191Z'
+    created: '2026-04-07T00:58:40.840807884Z'
     description: OpenClaw and Browserless stack chart
     digest: 9895b27dddbb85f0c5bc0c20ab198750feda24ed2ef3c8441593c0275f642b7d
     name: openclaw-stack
@@ -194,7 +194,7 @@ entries:
     version: 0.5.0+2026.2.24
   - apiVersion: v2
     appVersion: 2026.2.23
-    created: '2026-04-05T01:01:30.274853823Z'
+    created: '2026-04-07T00:58:40.839039828Z'
     description: OpenClaw and Browserless stack chart
     digest: 76dd3c20b21ba29904fb90bd6898cab465f9334c7a76981dcc33f2b5d2d092a0
     name: openclaw-stack
@@ -205,7 +205,7 @@ entries:
   quick-deploy:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-04-05T01:01:30.284746181Z'
+    created: '2026-04-07T00:58:40.854042501Z'
     description: Rapid multi-application deployment template for Kubernetes
     digest: 137f3b34b6e45dd70513bd48cac605450e33cdbeb2e3bbfd98c79dbc1d4ebbc8
     keywords:
@@ -220,7 +220,7 @@ entries:
     version: 0.1.16
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-04-05T01:01:30.284235859Z'
+    created: '2026-04-07T00:58:40.853439821Z'
     description: Rapid multi-application deployment template for Kubernetes
     digest: 91a4d8596b3adf3c24163cb88ce11dd80245e2208d647871040bce7e2129f4a0
     keywords:
@@ -235,7 +235,7 @@ entries:
     version: 0.1.15
   - apiVersion: v2
     appVersion: 1.0.0
-    created: '2026-04-05T01:01:30.283716219Z'
+    created: '2026-04-07T00:58:40.852949641Z'
     description: Rapid multi-application deployment template for Kubernetes
     digest: c6a9f0f999e08d5589d6208e2056cb70a7497c20941665cf6a08b7db2cb0b528
     keywords:
@@ -248,4 +248,4 @@ entries:
     urls:
     - https://cagojeiger.github.io/auto-action/quick-deploy-0.1.14.tgz
     version: 0.1.14
-generated: '2026-04-05T01:01:30.267851981Z'
+generated: '2026-04-07T00:58:40.832224575Z'
