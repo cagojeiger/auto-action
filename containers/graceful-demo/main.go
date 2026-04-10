@@ -66,6 +66,8 @@ func main() {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 
+	shutdownDone := make(chan struct{})
+
 	go func() {
 		sig := <-sigCh
 		log.Printf("[SHUTDOWN] signal=%s graceful=%v pod=%s time=%s",
@@ -84,10 +86,16 @@ func main() {
 			log.Printf("[SHUTDOWN] error: %v", err)
 		}
 		log.Println("[SHUTDOWN] graceful shutdown complete")
+		close(shutdownDone)
 	}()
 
 	log.Printf("[START] pod=%s graceful=%v addr=:8080", podName, graceful)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("[FATAL] %v", err)
+	}
+
+	// graceful shutdown이 끝날 때까지 main 대기 (in-flight 요청 drain 보장)
+	if graceful {
+		<-shutdownDone
 	}
 }
