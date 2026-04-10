@@ -20,6 +20,14 @@ func main() {
 		podName = "unknown"
 	}
 
+	// graceful drain 최대 대기 시간 (초). 기본 30초.
+	shutdownTimeoutSec := 30
+	if v := os.Getenv("SHUTDOWN_TIMEOUT_SEC"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			shutdownTimeoutSec = n
+		}
+	}
+
 	mux := http.NewServeMux()
 
 	// 즉시 응답 — 어떤 파드가 응답했는지 확인용
@@ -69,8 +77,8 @@ func main() {
 		}
 
 		// graceful shutdown: 새 연결 거부 + 기존 요청 마무리
-		log.Println("[SHUTDOWN] graceful — draining connections")
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		log.Printf("[SHUTDOWN] graceful — draining connections (timeout=%ds)", shutdownTimeoutSec)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(shutdownTimeoutSec)*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
 			log.Printf("[SHUTDOWN] error: %v", err)
