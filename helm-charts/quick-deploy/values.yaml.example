@@ -222,6 +222,11 @@ apps:
         memory: 128Mi                  # Memory request
         ephemeral-storage: 100Mi       # Ephemeral storage request
 
+    # Grace period before K8s force-kills the pod on termination.
+    # Must be >= preStop sleep + application graceful drain budget + buffer.
+    # Default K8s value is 30s; raise it for services with long in-flight work.
+    terminationGracePeriodSeconds: 60
+
     # Container lifecycle hooks
     lifecycle:
       preStop:                         # Execute before container stops

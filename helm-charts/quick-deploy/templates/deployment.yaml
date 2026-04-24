@@ -38,6 +38,9 @@ spec:
       {{- if and $app.serviceAccount $app.serviceAccount.create }}
       serviceAccountName: {{ include "quick-deploy.serviceAccountName" (dict "root" $ "name" $name "app" $app) }}
       {{- end }}
+      {{- with $app.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end }}
       {{- with $app.podSecurityContext | default $app.securityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
