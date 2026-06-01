@@ -31,6 +31,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- if hasKey $app "enableServiceLinks" }}
+      enableServiceLinks: {{ $app.enableServiceLinks }}
+      {{- end }}
       {{- with $.Values.global.imagePullSecrets | default $app.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
