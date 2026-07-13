@@ -1,4 +1,4 @@
-ARG RCLONE_VERSION=1.74.3
+ARG RCLONE_VERSION=1.74.4
 ARG ALPINE_VERSION=3.21
 
 # =============================================
