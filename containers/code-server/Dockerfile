@@ -278,7 +278,7 @@ ENV ENTRYPOINTD=/etc/entrypoint.d
 ENV NPM_CONFIG_PREFIX="/home/coder/.npm-global"
 ENV PIPX_HOME="/home/coder/.local/pipx"
 ENV PIPX_BIN_DIR="/home/coder/.local/bin"
-ENV PATH="/usr/local/go/bin:/home/coder/.local/bin:/home/coder/.opencode/bin:/home/coder/.npm-global/bin:${PATH}"
+ENV PATH="/usr/local/go/bin:/home/coder/.local/bin:/home/coder/.npm-global/bin:${PATH}"
 
 # coder 유저로 전환
 USER coder

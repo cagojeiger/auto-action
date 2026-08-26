@@ -5,7 +5,7 @@
 ## 포함된 도구
 
 - **에디터**: code-server (브라우저 기반 VS Code)
-- **AI 코딩**: Claude Code, OpenCode (컨테이너 시작 시 자동 설치)
+- **AI 코딩**: Pi Coding Agent (컨테이너 시작 시 자동 설치)
 - **쉘**: Oh My Zsh + Powerlevel10k + zsh-autosuggestions + zsh-syntax-highlighting
 - **Kubernetes**: kubectl, helm, k9s
 - **GitOps**: ArgoCD CLI
@@ -52,7 +52,7 @@ helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
 컨테이너 시작 시 `/etc/entrypoint.d/`의 스크립트가 자동 실행됩니다:
 - `10-setup-zsh.sh` — Oh My Zsh + Powerlevel10k 초기 설정
 - `20-setup-vscode-settings.sh` — VS Code 기본 설정 적용
-- `30-setup-ai-tools.sh` — Claude Code, OpenCode 자동 설치 (첫 부팅 시)
+- `30-setup-ai-tools.sh` — Pi Coding Agent 자동 설치 (첫 부팅 시)
 
 ### 수동 실행
 
