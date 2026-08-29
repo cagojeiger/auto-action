@@ -11,13 +11,15 @@ USER root
 
 # kubectl 최신 버전 확인 및 설치
 RUN KUBECTL_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://dl.k8s.io/release/stable.txt) && \
+    : "${KUBECTL_LATEST_VERSION:?kubectl 버전 조회 실패}" && \
     echo "➡️  Using kubectl version: ${KUBECTL_LATEST_VERSION}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://dl.k8s.io/release/${KUBECTL_LATEST_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
     rm kubectl
 
 # Helm 최신 버전 설치
-RUN HELM_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/helm/helm/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/') && \
+RUN HELM_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/helm/helm/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${HELM_LATEST_VERSION:?helm 버전 조회 실패}" && \
     echo "➡️  Using Helm version: ${HELM_LATEST_VERSION}" && \
     HELM_FILENAME="helm-${HELM_LATEST_VERSION}-linux-${TARGETARCH}.tar.gz" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://get.helm.sh/${HELM_FILENAME}" && \
@@ -27,7 +29,8 @@ RUN HELM_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 
 
 # K9s 설치
 RUN echo "➡️  Using TARGETARCH: ${TARGETARCH}"
-RUN K9S_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/derailed/k9s/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+RUN K9S_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/derailed/k9s/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${K9S_LATEST_VERSION:?k9s 버전 조회 실패}" && \
     echo "➡️  Using K9s version: ${K9S_LATEST_VERSION}" && \
     K9S_FILENAME="k9s_Linux_${TARGETARCH}.tar.gz" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/derailed/k9s/releases/download/${K9S_LATEST_VERSION}/${K9S_FILENAME}" && \
@@ -36,7 +39,8 @@ RUN K9S_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3
     rm -rf "${K9S_FILENAME}" k9s
 
 # Skopeo 설치 (lework/skopeo-binary 사용)
-RUN SKOPEO_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/lework/skopeo-binary/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+RUN SKOPEO_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/lework/skopeo-binary/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${SKOPEO_LATEST_VERSION:?skopeo 버전 조회 실패}" && \
     echo "➡️  Using Skopeo version: ${SKOPEO_LATEST_VERSION}" && \
     SKOPEO_FILENAME="skopeo-linux-${TARGETARCH}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/lework/skopeo-binary/releases/download/${SKOPEO_LATEST_VERSION}/${SKOPEO_FILENAME}" && \
@@ -44,35 +48,40 @@ RUN SKOPEO_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-dela
     rm -f "${SKOPEO_FILENAME}"
 
 # MinIO Client (mc) 설치
-RUN MC_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/minio/mc/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+RUN MC_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/minio/mc/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${MC_LATEST_VERSION:?mc 버전 조회 실패}" && \
     echo "➡️  Using MinIO Client version: ${MC_LATEST_VERSION}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://dl.min.io/client/mc/release/linux-${TARGETARCH}/mc" && \
     install -o root -g root -m 0755 mc /usr/local/bin/mc && \
     rm -f mc
 
 # ArgoCD CLI 설치
-RUN ARGOCD_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/argoproj/argo-cd/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+RUN ARGOCD_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/argoproj/argo-cd/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${ARGOCD_LATEST_VERSION:?argocd 버전 조회 실패}" && \
     echo "➡️  Using ArgoCD version: ${ARGOCD_LATEST_VERSION}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_LATEST_VERSION}/argocd-linux-${TARGETARCH}" && \
     install -o root -g root -m 0755 argocd-linux-${TARGETARCH} /usr/local/bin/argocd && \
     rm -f argocd-linux-${TARGETARCH}
 
 # jq 설치
-RUN JQ_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/jqlang/jq/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+RUN JQ_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/jqlang/jq/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${JQ_LATEST_VERSION:?jq 버전 조회 실패}" && \
     echo "➡️  Using jq version: ${JQ_LATEST_VERSION}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/jqlang/jq/releases/download/${JQ_LATEST_VERSION}/jq-linux-${TARGETARCH}" && \
     install -o root -g root -m 0755 jq-linux-${TARGETARCH} /usr/local/bin/jq && \
     rm -f jq-linux-${TARGETARCH}
 
 # yq 설치
-RUN YQ_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/mikefarah/yq/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+RUN YQ_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/mikefarah/yq/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${YQ_LATEST_VERSION:?yq 버전 조회 실패}" && \
     echo "➡️  Using yq version: ${YQ_LATEST_VERSION}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/mikefarah/yq/releases/download/${YQ_LATEST_VERSION}/yq_linux_${TARGETARCH}" && \
     install -o root -g root -m 0755 yq_linux_${TARGETARCH} /usr/local/bin/yq && \
     rm -f yq_linux_${TARGETARCH}
 
 # GitHub CLI (gh) 설치
-RUN GH_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+RUN GH_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/cli/cli/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+    : "${GH_LATEST_VERSION:?gh 버전 조회 실패}" && \
     echo "➡️  Using gh version: ${GH_LATEST_VERSION}" && \
     GH_FILENAME="gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}.tar.gz" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/cli/cli/releases/download/v${GH_LATEST_VERSION}/${GH_FILENAME}" && \
@@ -81,7 +90,8 @@ RUN GH_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 
     rm -rf "${GH_FILENAME}" "gh_${GH_LATEST_VERSION}_linux_${TARGETARCH}"
 
 # ripgrep (rg) 설치
-RUN RG_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+RUN RG_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${RG_LATEST_VERSION:?rg 버전 조회 실패}" && \
     echo "➡️  Using ripgrep version: ${RG_LATEST_VERSION}" && \
     if [ "$TARGETARCH" = "amd64" ]; then \
         RG_ARCH="x86_64-unknown-linux-musl"; \
@@ -96,6 +106,7 @@ RUN RG_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 
 
 # Go 설치
 RUN GO_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://go.dev/VERSION?m=text | head -n1) && \
+    : "${GO_LATEST_VERSION:?go 버전 조회 실패}" && \
     echo "➡️  Using Go version: ${GO_LATEST_VERSION}" && \
     GO_FILENAME="${GO_LATEST_VERSION}.linux-${TARGETARCH}.tar.gz" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://go.dev/dl/${GO_FILENAME}" && \
@@ -121,7 +132,8 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     elif [ "$TARGETARCH" = "arm64" ]; then \
         DOCKER_ARCH="aarch64"; \
     fi && \
-    DOCKER_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/moby/moby/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^docker-v//') && \
+    DOCKER_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/moby/moby/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4 | sed 's/^docker-v//') && \
+    : "${DOCKER_VERSION:?docker 버전 조회 실패}" && \
     echo "➡️  Using Docker version: ${DOCKER_VERSION}" && \
     curl -fsSL "https://download.docker.com/linux/static/stable/${DOCKER_ARCH}/docker-${DOCKER_VERSION}.tgz" | \
     tar -xz --strip-components=1 -C /usr/local/bin docker/docker
@@ -133,14 +145,16 @@ RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
     elif [ "$TARGETARCH" = "arm64" ]; then \
         COMPOSE_ARCH="aarch64"; \
     fi && \
-    COMPOSE_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+    COMPOSE_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/docker/compose/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${COMPOSE_VERSION:?compose 버전 조회 실패}" && \
     echo "➡️  Using Docker Compose version: ${COMPOSE_VERSION}" && \
     curl -fSL --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-${COMPOSE_ARCH}" \
     -o /usr/local/lib/docker/cli-plugins/docker-compose && \
     chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Terraform 설치
-RUN TERRAFORM_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/hashicorp/terraform/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+RUN TERRAFORM_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/hashicorp/terraform/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+    : "${TERRAFORM_VERSION:?terraform 버전 조회 실패}" && \
     echo "➡️  Using Terraform version: ${TERRAFORM_VERSION}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip" && \
     unzip -o terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip && \
@@ -148,7 +162,8 @@ RUN TERRAFORM_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 
     rm -f terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip terraform
 
 # Vault CLI 설치
-RUN VAULT_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/hashicorp/vault/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+RUN VAULT_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/hashicorp/vault/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4 | sed 's/^v//') && \
+    : "${VAULT_VERSION:?vault 버전 조회 실패}" && \
     echo "➡️  Using Vault version: ${VAULT_VERSION}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip" && \
     unzip -o vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip && \
@@ -156,14 +171,16 @@ RUN VAULT_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 http
     rm -f vault_${VAULT_VERSION}_linux_${TARGETARCH}.zip vault
 
 # SOPS 설치
-RUN SOPS_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/getsops/sops/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+RUN SOPS_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/getsops/sops/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${SOPS_VERSION:?sops 버전 조회 실패}" && \
     echo "➡️  Using SOPS version: ${SOPS_VERSION}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.${TARGETARCH}" && \
     install -o root -g root -m 0755 sops-${SOPS_VERSION}.linux.${TARGETARCH} /usr/local/bin/sops && \
     rm -f sops-${SOPS_VERSION}.linux.${TARGETARCH}
 
 # direnv 설치
-RUN DIRENV_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/direnv/direnv/releases/latest | grep '"tag_name":' | head -n1 | cut -d'"' -f4) && \
+RUN DIRENV_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/direnv/direnv/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
+    : "${DIRENV_VERSION:?direnv 버전 조회 실패}" && \
     echo "➡️  Using direnv version: ${DIRENV_VERSION}" && \
     curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/direnv/direnv/releases/download/${DIRENV_VERSION}/direnv.linux-${TARGETARCH}" && \
     install -o root -g root -m 0755 direnv.linux-${TARGETARCH} /usr/local/bin/direnv && \
