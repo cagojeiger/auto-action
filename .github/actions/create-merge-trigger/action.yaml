@@ -92,14 +92,41 @@ runs:
           exit 1
         fi
 
-    - name: Trigger docker-push workflow
+    # 이미지 빌드가 끝날 때까지 기다린다. 실패하면 여기서 멈추고 아래 차트
+    # 발행이 실행되지 않는다 — 차트의 image.tag 가 없는 이미지를 가리키면
+    # 이를 소비하는 GitOps 리포에서 ErrImagePull 이 난다.
+    - name: Trigger docker-push workflow and wait
       if: inputs.container_name != ''
       shell: bash
       run: |
-        gh workflow run docker-push.yaml \
-          -f container_name=${{ inputs.container_name }}
-        echo "::notice::docker-push 트리거 완료 (${{ inputs.container_name }})"
+        # workflow_dispatch 는 run id 를 돌려주지 않는다. gh run list 는
+        # --workflow 로만 거를 수 있어 "가장 최근 실행"을 집으면 같은 시각에
+        # 뜬 다른 실행(다른 컨테이너 업데이트, 수동 실행, push 트리거)을
+        # 잘못 붙잡는다. 그래서 고유값을 입력으로 넘기고 제목으로 되찾는다.
+        CORRELATION_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${RANDOM}"
 
+        gh workflow run docker-push.yaml \
+          -f container_name=${{ inputs.container_name }} \
+          -f correlation_id="$CORRELATION_ID"
+
+        RUN_ID=""
+        for i in $(seq 1 24); do
+          sleep 5
+          RUN_ID=$(gh run list --workflow=docker-push.yaml --event workflow_dispatch \
+                     --limit 30 --json databaseId,displayTitle \
+                     -q "[.[] | select((.displayTitle // \"\") | contains(\"[$CORRELATION_ID]\"))] | .[0].databaseId // empty")
+          [ -n "$RUN_ID" ] && break
+        done
+
+        if [ -z "$RUN_ID" ]; then
+          echo "::error::docker-push 실행을 찾지 못했다 (correlation_id=$CORRELATION_ID)"
+          exit 1
+        fi
+
+        echo "::notice::docker-push run ${RUN_ID} 완료 대기 (${{ inputs.container_name }})"
+        gh run watch "$RUN_ID" --exit-status --interval 15
+
+    # 위 단계가 실패하면 composite action 이 중단되므로 여기까지 오지 않는다.
     - name: Trigger publish-helm-charts workflow
       if: inputs.chart_name != ''
       shell: bash

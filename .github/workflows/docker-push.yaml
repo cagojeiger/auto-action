@@ -1,5 +1,12 @@
 name: Docker Image Push
 
+# 호출 측이 자기가 띄운 실행을 목록에서 찾아내기 위해 correlation_id 를
+# 제목에 노출한다. gh workflow run 은 run id 를 돌려주지 않고,
+# gh run list 는 workflow 로만 거를 수 있어 이것 없이는 동시에 뜬 다른
+# 실행과 구분되지 않는다.
+run-name: >-
+  Docker Image Push${{ inputs.correlation_id && format(' [{0}]', inputs.correlation_id) || '' }}
+
 on:
   push:
     branches: [ main ]
@@ -9,6 +16,10 @@ on:
     inputs:
       container_name:
         description: 'Docker 이미지 이름 (예: code-server)'
+        required: false
+        type: string
+      correlation_id:
+        description: '호출 측이 이 실행을 식별하기 위한 값 (자동 생성)'
         required: false
         type: string
 
