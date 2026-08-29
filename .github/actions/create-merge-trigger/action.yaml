@@ -99,21 +99,27 @@ runs:
       if: inputs.container_name != ''
       shell: bash
       run: |
-        BEFORE=$(gh run list --workflow=docker-push.yaml --limit 1 --json databaseId -q '.[0].databaseId // 0')
+        # workflow_dispatch 는 run id 를 돌려주지 않는다. gh run list 는
+        # --workflow 로만 거를 수 있어 "가장 최근 실행"을 집으면 같은 시각에
+        # 뜬 다른 실행(다른 컨테이너 업데이트, 수동 실행, push 트리거)을
+        # 잘못 붙잡는다. 그래서 고유값을 입력으로 넘기고 제목으로 되찾는다.
+        CORRELATION_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${RANDOM}"
 
         gh workflow run docker-push.yaml \
-          -f container_name=${{ inputs.container_name }}
+          -f container_name=${{ inputs.container_name }} \
+          -f correlation_id="$CORRELATION_ID"
 
-        # workflow_dispatch 는 run id 를 돌려주지 않아 목록에서 새 run 을 찾는다
         RUN_ID=""
         for i in $(seq 1 24); do
           sleep 5
-          CAND=$(gh run list --workflow=docker-push.yaml --limit 1 --json databaseId -q '.[0].databaseId // 0')
-          if [ "$CAND" != "$BEFORE" ]; then RUN_ID="$CAND"; break; fi
+          RUN_ID=$(gh run list --workflow=docker-push.yaml --event workflow_dispatch \
+                     --limit 30 --json databaseId,displayTitle \
+                     -q "[.[] | select((.displayTitle // \"\") | contains(\"[$CORRELATION_ID]\"))] | .[0].databaseId // empty")
+          [ -n "$RUN_ID" ] && break
         done
 
         if [ -z "$RUN_ID" ]; then
-          echo "::error::docker-push 실행을 찾지 못했다 (${{ inputs.container_name }})"
+          echo "::error::docker-push 실행을 찾지 못했다 (correlation_id=$CORRELATION_ID)"
           exit 1
         fi
 
