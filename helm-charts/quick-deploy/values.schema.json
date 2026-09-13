@@ -306,6 +306,46 @@
               "accessMode": {
                 "type": "string",
                 "description": "Access mode"
+              },
+              "annotations": {
+                "type": "object",
+                "description": "PVC annotations",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "persistentVolumeClaims": {
+            "type": "object",
+            "description": "Additional PVCs keyed by resource name",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Enable PVC creation",
+                  "default": true
+                },
+                "size": {
+                  "type": "string",
+                  "description": "PVC size"
+                },
+                "storageClassName": {
+                  "type": "string",
+                  "description": "Storage class name"
+                },
+                "accessMode": {
+                  "type": "string",
+                  "description": "Access mode"
+                },
+                "annotations": {
+                  "type": "object",
+                  "description": "PVC annotations",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
               }
             }
           },
