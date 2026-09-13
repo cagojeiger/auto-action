@@ -1,35 +1,56 @@
-{{- range $name, $app := .Values.apps }}
-{{- if or (not (hasKey $app "enabled")) $app.enabled }}
----
-{{- if and $app.persistence $app.persistence.enabled }}
+{{- define "quick-deploy.persistentVolumeClaim" -}}
+{{- $root := .root -}}
+{{- $name := .name -}}
+{{- $app := .app -}}
+{{- $claim := .claim -}}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ $app.persistence.name | default (include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app)) }}
+  name: {{ .claimName }}
   labels:
-    {{- include "quick-deploy.labels" (dict "root" $ "name" $name "app" $app) | nindent 4 }}
+    {{- include "quick-deploy.labels" (dict "root" $root "name" $name "app" $app) | nindent 4 }}
   annotations:
     helm.sh/resource-policy: keep
-    {{- with $app.persistence.annotations }}
+    {{- with $claim.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   accessModes:
-    - {{ $app.persistence.accessMode | default "ReadWriteOnce" }}
+    - {{ $claim.accessMode | default "ReadWriteOnce" }}
   resources:
     requests:
-      storage: {{ $app.persistence.size }}
+      storage: {{ required (printf "apps.%s PVC %s requires size" $name .claimName) $claim.size }}
   {{- $storageClass := "" }}
-  {{- if $.Values.global.storageClass }}
-    {{- $storageClass = $.Values.global.storageClass }}
-  {{- else if $.Values.global.defaultStorageClass }}
-    {{- $storageClass = $.Values.global.defaultStorageClass }}
-  {{- else if $app.persistence.storageClassName }}
-    {{- $storageClass = $app.persistence.storageClassName }}
+  {{- if $root.Values.global.storageClass }}
+    {{- $storageClass = $root.Values.global.storageClass }}
+  {{- else if $root.Values.global.defaultStorageClass }}
+    {{- $storageClass = $root.Values.global.defaultStorageClass }}
+  {{- else if $claim.storageClassName }}
+    {{- $storageClass = $claim.storageClassName }}
   {{- end }}
   {{- if $storageClass }}
   storageClassName: {{ $storageClass }}
   {{- end }}
+{{- end }}
+
+{{- range $name, $app := .Values.apps }}
+{{- if or (not (hasKey $app "enabled")) $app.enabled }}
+{{- if and $app.persistence $app.persistence.enabled }}
+{{- $claimName := $app.persistence.name | default (include "quick-deploy.fullname" (dict "root" $ "name" $name "app" $app)) }}
+{{- if and $app.persistentVolumeClaims (hasKey $app.persistentVolumeClaims $claimName) }}
+{{- $duplicate := index $app.persistentVolumeClaims $claimName }}
+{{- if or (not (hasKey $duplicate "enabled")) $duplicate.enabled }}
+{{- fail (printf "apps.%s defines duplicate PVC name %s" $name $claimName) }}
+{{- end }}
+{{- end }}
+---
+{{ include "quick-deploy.persistentVolumeClaim" (dict "root" $ "name" $name "app" $app "claimName" $claimName "claim" $app.persistence) }}
+{{- end }}
+{{- range $claimName, $claim := $app.persistentVolumeClaims }}
+{{- if or (not (hasKey $claim "enabled")) $claim.enabled }}
+---
+{{ include "quick-deploy.persistentVolumeClaim" (dict "root" $ "name" $name "app" $app "claimName" $claimName "claim" $claim) }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

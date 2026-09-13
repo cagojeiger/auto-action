@@ -162,6 +162,15 @@ apps:
       #   name: existing-snapshot
       #   kind: VolumeSnapshot
 
+    # Additional Persistent Volume Claims
+    persistentVolumeClaims:            # PVC resource name -> claim configuration
+      example-app-cache:
+        enabled: true
+        size: 5Gi
+        storageClassName: ""           # Uses global.storageClass if empty
+        accessMode: ReadWriteOnce
+        annotations: {}
+
     # Volume configuration
     volumes:                           # Pod volumes
       - name: config
