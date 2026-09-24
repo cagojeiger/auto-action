@@ -71,9 +71,11 @@ jobs:
               echo "matrix=$CONTAINERS" >> $GITHUB_OUTPUT
             fi
           else
+            # 디렉토리를 지운 커밋도 변경으로 잡히므로, 지금 남아 있는 것만 빌드한다.
             changed=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
                      | grep '^containers/' \
-                     | awk -F/ '{print $2}' | sort -u)
+                     | awk -F/ '{print $2}' | sort -u \
+                     | while read -r c; do if [ -f "containers/$c/Dockerfile" ]; then echo "$c"; fi; done)
 
             if [ -z "$changed" ]; then
               echo "matrix=[]" >> $GITHUB_OUTPUT

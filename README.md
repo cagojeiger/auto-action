@@ -14,13 +14,10 @@ GitOps 기반 자동화 인프라 배포 저장소입니다. GitHub Actions를 �
 
 ```
 containers/           # Docker 이미지 소스
-├── code-server/      # 웹 기반 VS Code + K8s/DevOps 도구
-├── file-fetcher/     # rclone 기반 경량 파일 전송 init container
-└── openclaw/         # OpenClaw AI Gateway
+└── code-server/      # 웹 기반 VS Code + K8s/DevOps 도구
 
 helm-charts/          # Helm 차트
 ├── code-server/      # code-server 배포용 차트
-├── openclaw-stack/   # OpenClaw + Browserless 통합 차트
 └── quick-deploy/     # 범용 빠른 배포 차트
 
 docs/                 # 문서
@@ -35,17 +32,12 @@ docs/                 # 문서
 helm repo add auto-action https://cagojeiger.github.io/auto-action
 helm repo update
 helm search repo auto-action --versions
-helm install my-release auto-action/openclaw-stack
+helm install my-release auto-action/quick-deploy -f values.yaml
 ```
 
 ### Docker 이미지
 
 ```bash
-# OpenClaw Gateway
-docker run -d -p 18789:18789 \
-  -e OPENCLAW_GATEWAY_TOKEN=my-token \
-  cagojeiger/openclaw:latest
-
 # Code-Server (K8s 도구 포함)
 docker run -d -p 8080:8080 -e PASSWORD=mypassword \
   cagojeiger/code-server:latest
@@ -58,8 +50,6 @@ docker run -d -p 8080:8080 -e PASSWORD=mypassword \
 | Docker Image Push | `containers/**` 변경 | Docker Hub에 멀티 아키텍처 이미지 빌드/푸시 |
 | Publish Helm Charts | `helm-charts/**` 변경 | GitHub Pages에 차트 패키징/배포 |
 | Update Code-Server | 일일 | code-server 최신 버전 감지 → PR 생성 |
-| Update File-Fetcher | 일일 | rclone 최신 버전 감지 → PR 생성 |
-| Update OpenClaw | 일일 | OpenClaw npm 최신 버전 감지 → PR 생성 |
 | Slack Notifications | 워크플로우 실패 시 | Slack 채널에 실패 알림 전송 |
 
 상세 정보는 [docs/ci-cd.md](docs/ci-cd.md)를 참고하세요.
