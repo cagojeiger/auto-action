@@ -1,6 +1,6 @@
 # code-server with DevOps Tools
 
-웹 브라우저에서 사용할 수 있는 VS Code(code-server)와 DevOps/클라우드 도구들을 포함한 Docker 이미지입니다.
+웹 브라우저에서 사용할 수 있는 VS Code(code-server)와 DevOps/클라우드 도구들을 포함한 컨테이너 이미지입니다. `ghcr.io/cagojeiger/code-server` 로 발행됩니다.
 
 ## 포함된 도구
 
@@ -19,11 +19,11 @@
 ## 빠른 시작
 
 ```bash
-# Docker Hub에서 이미지 받기
-docker pull cagojeiger/code-server:latest
+# GHCR 에서 이미지 받기
+docker pull ghcr.io/cagojeiger/code-server:latest
 
 # 로컬에서 실행
-docker run -d -p 8080:8080 -e PASSWORD=mypassword cagojeiger/code-server:latest
+docker run -d -p 8080:8080 -e PASSWORD=mypassword ghcr.io/cagojeiger/code-server:latest
 
 # http://localhost:8080 에서 접속
 ```
@@ -32,7 +32,7 @@ docker run -d -p 8080:8080 -e PASSWORD=mypassword cagojeiger/code-server:latest
 
 Helm 차트로 설치:
 ```bash
-helm install code-server oci://registry-1.docker.io/cagojeiger/code-server \
+helm install code-server oci://ghcr.io/cagojeiger/charts/code-server \
   --set persistence.enabled=true \
   --set password="mypassword"
 ```

@@ -1,4 +1,4 @@
-name: Publish Helm Charts to GitHub Pages
+name: Publish Helm Charts
 
 on:
   push:
@@ -17,7 +17,14 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
+  packages: write
+
+# 차트는 OCI 아티팩트로 oci://ghcr.io/<owner>/charts/<chart> 에 올린다.
+# 이미지(ghcr.io/<owner>/<container>)와 경로가 겹치지 않도록 charts/ 아래에 둔다.
+env:
+  REGISTRY: ghcr.io
+  CHART_REPO: oci://ghcr.io/${{ github.repository_owner }}/charts
 
 jobs:
   detect-charts:
@@ -75,84 +82,24 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
-      - name: Package charts
-        id: package
+      - name: Login to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GITHUB_TOKEN" | helm registry login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
+
+      # OCI 태그에는 + 를 쓸 수 없어 helm 이 3.53.0+4.138.0 을 3.53.0_4.138.0 으로 올린다.
+      # 설치할 때 --version 3.53.0+4.138.0 으로 지정하면 helm 이 다시 바꿔 찾는다.
+      - name: Package and push charts
+        env:
+          CHARTS: ${{ needs.detect-charts.outputs.matrix }}
         run: |
           mkdir -p .deploy
-          CHARTS='${{ needs.detect-charts.outputs.matrix }}'
-          PUBLISHED=""
-
-          for CHART in $(echo $CHARTS | jq -r '.[]'); do
+          for CHART in $(echo "$CHARTS" | jq -r '.[]'); do
             DIR="helm-charts/$CHART"
-            if [ -d "$DIR" ]; then
-              NAME=$(helm show chart "$DIR" | awk '/^name:/ {print $2}')
-              VERSION=$(helm show chart "$DIR" | awk '/^version:/ {print $2}')
-              helm package "$DIR" -d .deploy/
-              PUBLISHED="$PUBLISHED $NAME-$VERSION"
-              echo "::notice::Packaged $NAME-$VERSION"
-            fi
+            NAME=$(helm show chart "$DIR" | awk '/^name:/ {print $2}')
+            VERSION=$(helm show chart "$DIR" | awk '/^version:/ {print $2}')
+            helm package "$DIR" -d .deploy/
+            helm push ".deploy/$NAME-$VERSION.tgz" "$CHART_REPO"
+            echo "::notice::Published $CHART_REPO/$NAME:$VERSION"
           done
-
-          echo "published=$PUBLISHED" >> $GITHUB_OUTPUT
-
-      - name: Checkout gh-pages
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: gh-pages
-
-      - name: Update gh-pages
-        run: |
-          cp .deploy/*.tgz gh-pages/
-
-          cd gh-pages
-
-          # 차트당 최근 10개 버전만 유지 (동적 차트 목록, SemVer 정렬)
-          for CHART in $(ls *.tgz 2>/dev/null | sed 's/-[0-9].*//' | sort -u); do
-            OLD=$(ls ${CHART}-*.tgz 2>/dev/null | sort -V | head -n -10)
-            if [ -n "$OLD" ]; then
-              echo "$OLD" | xargs git rm -f
-              echo "::notice::${CHART}: $(echo "$OLD" | wc -l | tr -d ' ')개 오래된 버전 삭제"
-            fi
-          done
-
-          helm repo index . --url https://cagojeiger.github.io/auto-action
-
-          python3 -c "
-          import yaml
-          def parse_version(ver):
-              base = ver.split('+')[0]
-              metadata = ver.split('+')[1] if '+' in ver else ''
-              bp = []
-              for p in base.split('.'):
-                  try: bp.append(int(p))
-                  except: bp.append(0)
-              while len(bp) < 3: bp.append(0)
-              mp = []
-              if metadata:
-                  for p in metadata.replace('-', '.').split('.'):
-                      try: mp.append(int(p))
-                      except: mp.append(0)
-              while len(mp) < 4: mp.append(0)
-              return bp, mp, bool(metadata)
-          def sort_key(entry):
-              bp, mp, has_meta = parse_version(entry.get('version', ''))
-              return (-bp[0], -bp[1], -bp[2], 0 if has_meta else 1, -mp[0], -mp[1], -mp[2], -mp[3])
-          with open('index.yaml', 'r') as f:
-              index = yaml.safe_load(f)
-          for versions in index.get('entries', {}).values():
-              versions.sort(key=sort_key)
-          with open('index.yaml', 'w') as f:
-              yaml.dump(index, f, default_flow_style=False, allow_unicode=True)
-          "
-
-      - name: Push to gh-pages
-        run: |
-          cd gh-pages
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add *.tgz index.yaml 2>/dev/null || true
-          if ! git diff --staged --quiet; then
-            git commit -m "Publish:${{ steps.package.outputs.published }}"
-            git push
-          fi

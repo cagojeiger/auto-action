@@ -5,7 +5,7 @@ on:
     workflows:
       - "Docker Image Push"
       - "Update Code-Server"
-      - "Publish Helm Charts to GitHub Pages"
+      - "Publish Helm Charts"
     types:
       - completed
 

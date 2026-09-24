@@ -88,9 +88,9 @@ jobs:
           sed -i "s/^version:.*/version: ${CHART_VERSION}+${{ env.APP_VERSION }}/" helm-charts/code-server/Chart.yaml
           echo "Chart.yaml version을 ${CHART_VERSION}+${{ env.APP_VERSION }}으로 업데이트했습니다."
 
-          # repository 변경
-          sed -i 's|repository: codercom/code-server|repository: ${{ secrets.DOCKERHUB_USERNAME }}/code-server|' helm-charts/code-server/values.yaml
-          echo "values.yaml repository를 ${{ secrets.DOCKERHUB_USERNAME }}/code-server로 수정했습니다."
+          # repository 변경 (upstream 이미지 → 이 리포가 GHCR 에 올리는 이미지)
+          sed -i 's|repository: codercom/code-server|repository: ghcr.io/${{ github.repository_owner }}/code-server|' helm-charts/code-server/values.yaml
+          echo "values.yaml repository를 ghcr.io/${{ github.repository_owner }}/code-server로 수정했습니다."
 
           # image.tag 업데이트
           sed -i "s/^  tag: .*/  tag: '${{ env.APP_VERSION }}'/" helm-charts/code-server/values.yaml
