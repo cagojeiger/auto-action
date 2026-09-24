@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: cagojeiger/code-server
+  repository: ghcr.io/cagojeiger/code-server
   tag: '4.138.0'
   pullPolicy: Always
 
