@@ -48,12 +48,17 @@ RUN SKOPEO_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-dela
     rm -f "${SKOPEO_FILENAME}"
 
 # MinIO Client (mc) 설치
-RUN MC_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/minio/mc/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
-    : "${MC_LATEST_VERSION:?mc 버전 조회 실패}" && \
-    echo "➡️  Using MinIO Client version: ${MC_LATEST_VERSION}" && \
-    curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://dl.min.io/client/mc/release/linux-${TARGETARCH}/mc" && \
-    install -o root -g root -m 0755 mc /usr/local/bin/mc && \
-    rm -f mc
+# minio/mc 리포는 archived 되었고 dl.min.io 는 410 을 돌려준다.
+# 더 이상 새 릴리스가 없으므로 마지막 GitHub 릴리스로 고정하고 체크섬을 검증한다.
+# (.sha256sum 안의 파일명은 mc.RELEASE... 라서 해시만 떼어 실제 파일명과 맞춘다)
+ARG MC_VERSION=RELEASE.2025-08-13T08-35-41Z
+RUN MC_FILENAME="mc.linux-${TARGETARCH}.${MC_VERSION}" && \
+    echo "➡️  Using MinIO Client version: ${MC_VERSION}" && \
+    curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/minio/mc/releases/download/${MC_VERSION}/${MC_FILENAME}" && \
+    curl -fLO --retry 5 --retry-all-errors --retry-delay 3 "https://github.com/minio/mc/releases/download/${MC_VERSION}/${MC_FILENAME}.sha256sum" && \
+    echo "$(cut -d' ' -f1 "${MC_FILENAME}.sha256sum")  ${MC_FILENAME}" | sha256sum -c - && \
+    install -o root -g root -m 0755 "${MC_FILENAME}" /usr/local/bin/mc && \
+    rm -f "${MC_FILENAME}" "${MC_FILENAME}.sha256sum"
 
 # ArgoCD CLI 설치
 RUN ARGOCD_LATEST_VERSION=$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 https://api.github.com/repos/argoproj/argo-cd/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4) && \
